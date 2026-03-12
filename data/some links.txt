@@ -1,0 +1,13 @@
+https://eodhd.com/
+https://massive.com/
+
+3. External Compute (Best for Real Training)
+For serious training, you connect GitHub with:
+
+Platform	            Purpose
+Google Colab	        cheap GPU training
+Kaggle	                GPU notebooks
+Paperspace	            ML cloud
+AWS / GCP / Azure	    production training
+RunPod / Lambda Labs	cheaper GPUs
+

@@ -1,0 +1,103 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.8 Chrome/140.0.7339.240 Electron/38.4.0 Safari/537.36" version="28.2.8">
+  <diagram name="Page-1" id="pOU5axpuhPC5wvpzgvaa">
+    <mxGraphModel dx="1345" dy="669" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="nIkberF95Un8m_xXePM9-36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-2" target="nIkberF95Un8m_xXePM9-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="65" />
+              <mxPoint x="380" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-2" value="Sentiment Analyst&lt;div&gt;(&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Analyze &lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot; data-end=&quot;2596&quot; data-start=&quot;2539&quot;&gt;market sentiment from social media and public opinion also we can get rid of this)&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="425" width="170" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-37" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-3" target="nIkberF95Un8m_xXePM9-5">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="210" y="180" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-3" value="News Analyst&lt;div&gt;(Analyze macroeconomic and company-related news,&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;News articles,&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Government announcements,&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Global economic events&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;)&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="80" width="200" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-4" value="Technical agent&amp;nbsp;&lt;div&gt;(Analyze market price behavior, Analyze market price behavior using technical indicators,&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Predict &lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot; data-end=&quot;3361&quot; data-start=&quot;3310&quot;&gt;future price movements and optimal trade timing&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;)&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="520" y="290" width="320" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-5" value="All analysts produce structured reports summarizing their findings" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="210" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.342;entryY=0.033;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-1" target="nIkberF95Un8m_xXePM9-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-9" value="In-favor Debater&lt;div&gt;(&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Argue &lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot; data-end=&quot;3820&quot; data-start=&quot;3792&quot;&gt;for investing in a stock)&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="330" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-10" value="Against Debator&lt;div&gt;(&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Argue &lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot; data-end=&quot;4038&quot; data-start=&quot;3998&quot;&gt;against investing)&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="330" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.033;entryY=0.275;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-9" target="nIkberF95Un8m_xXePM9-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.975;entryY=0.725;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-10" target="nIkberF95Un8m_xXePM9-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.558;entryY=0.013;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-5" target="nIkberF95Un8m_xXePM9-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-5" target="nIkberF95Un8m_xXePM9-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-16" target="nIkberF95Un8m_xXePM9-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-16" value="Quantitative Analysis" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="460" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-17" value="Qualitative Anlysis" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="430" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-18" value="Combine Outputs&lt;div&gt;(To assess the synthesized information, combining quantitative and qualitative inputs, and then decide what to do in the market&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="620" width="280" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.608;entryY=-0.017;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-17" target="nIkberF95Un8m_xXePM9-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-24" target="nIkberF95Un8m_xXePM9-33">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="790" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="100" y="810" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-24" value="Buy/Sell Agents" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="610" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-41" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="nIkberF95Un8m_xXePM9-25" target="nIkberF95Un8m_xXePM9-33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-25" value="Size+Time Decider&lt;div&gt;(decide the timing and size of trades to maximize returns)&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="190" y="610" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-26" value="Positive Risk Calculater" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="10" y="420" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-27" value="Negative risk Calulcater" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="220" y="430" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-33" value="Final Trade Approver" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="770" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-1" value="Fundamental Analyst&lt;div&gt;(&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Evaluate company fundamentals and intrinsic value.&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Analyse:&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Financial statements,&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Earnings reports,&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Insider transactions,&amp;nbsp;&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Company financial metrics. It i&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;dentifies whether a stock is &lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot; data-end=&quot;2414&quot; data-start=&quot;2385&quot;&gt;undervalued or overvalued&lt;/span&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt; and assess long-term investment potential)&lt;/span&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="5" y="10" width="365" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="nIkberF95Un8m_xXePM9-38" value="&lt;br&gt;The &lt;span style=&quot;&quot; data-end=&quot;5101&quot; data-start=&quot;5054&quot;&gt;Risk Management Team monitors risk exposure&lt;/span&gt; and evaluates trading decisions.&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="130" y="410" width="90" height="120" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

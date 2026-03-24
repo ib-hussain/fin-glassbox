@@ -1,14 +1,19 @@
 # Ib added ignore files
 venv/
+venv_windows/
 secrets.toml
 *makefile
 *.tmp
 .streamlit/
-TradingAgents-main/
+TradingAgents/
 *.toml
 *.zip
 *.env
 ignore/
+Data2/
+data/Huge Stock Market Dataset/
+data/data_FRED/*
+data/data_FRED_Copy/*
 # Ignore compiled files
 *.pyc
 *.pyo

@@ -1,1 +1,42 @@
-*.model filter=lfs diff=lfs merge=lfs -text
+# -------------------------------------------------------
+# FIN-GLASSBOX  –  .gitattributes
+# Git LFS: track large binary & data files only.
+# Python source, notebooks, configs → stay in regular Git.
+# -------------------------------------------------------
+
+# ── Datasets & serialised model weights ─────────────────
+assignment2work/**/*.csv           filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.npy           filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.npz           filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.parquet       filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.h5            filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.hdf5          filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.pkl           filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.pt            filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.pth           filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.onnx          filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.safetensors   filter=lfs diff=lfs merge=lfs -text
+
+# ── Compressed archives ──────────────────────────────────
+assignment2work/**/*.zip           filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.tar.gz        filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.tar.bz2       filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.gz            filter=lfs diff=lfs merge=lfs -text
+
+# ── Figures & media ──────────────────────────────────────
+assignment2work/**/*.png           filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.jpg           filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.jpeg          filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.pdf           filter=lfs diff=lfs merge=lfs -text
+assignment2work/**/*.svg           filter=lfs diff=lfs merge=lfs -text
+
+# ── Line-ending normalisation for text files ────────────
+*.py    text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.toml  text eol=lf
+*.json  text eol=lf
+*.sh    text eol=lf
+*.ipynb text eol=lf

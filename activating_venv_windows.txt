@@ -1,9 +1,9 @@
-python -m venv venv_windows
+python -m venv venv3.12.7_windows
 
 PowerShell:
-.\venv\Scripts\Activate.ps1
+.\venv3.12.7_windows\Scripts\Activate.ps1
 Command Prompt (cmd.exe):
-.\venv\Scripts\activate.bat
+.\venv3.12.7_windows\Scripts\activate.bat
 
 # for getting list
 pip freeze > requirements.txt

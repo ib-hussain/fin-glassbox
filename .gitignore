@@ -1,6 +1,5 @@
 # -------------------------------------------------------
 # FIN-GLASSBOX  –  .gitignore
-# Covers: Python ML project (GNN / LSTM / ARIMA / VAR)
 # -------------------------------------------------------
 
 # ── OS & editor noise ───────────────────────────────────
@@ -24,7 +23,7 @@ cython_debug/
 .envrc
 .venv
 env/
-venv/
+venv*/
 ENV/
 env.bak/
 venv.bak/

@@ -9,7 +9,6 @@ import torch.nn as nn
 from hyperopt import fmin, hp, space_eval, tpe
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
 from config import data_dict, data_information, device
 from model.FourierGNN import FGN
 from utils.utils import evaluate, load_model, save_model
@@ -56,7 +55,6 @@ def main():
     for _ in tqdm(range(10), desc="Main Loop Crypto"):
         run(hparams_as_args, 104)
 
-
 def search_hyperparameters(data, pre_length, train_epochs, batch_size, train_ratio, val_ratio, week):
     print(f"Searching hyperparameters at week: {week}")
     hpo_max_evals = 100
@@ -86,8 +84,6 @@ def search_hyperparameters(data, pre_length, train_epochs, batch_size, train_rat
     print(f"Best hparams: {best_hparams}")
 
     return best_hparams
-
-
 def run(args, week, hparam_search=False):
     result_train_file = create_output_directories(args.data)
     data_info = data_information[args.data]
@@ -171,8 +167,6 @@ def run(args, week, hparam_search=False):
         test_set,
         hparam_search,
     )
-
-
 def parse_arguments():
     parser = argparse.ArgumentParser(description="fourier graph network for multivariate time series forecasting")
     parser.add_argument(
@@ -199,8 +193,6 @@ def parse_arguments():
 
     print(f"Training arguments: {args}")
     return args
-
-
 def create_output_directories(data):
     result_train_file = os.path.join("output", data, "train")
     result_test_file = os.path.join("output", data, "test")
@@ -209,8 +201,6 @@ def create_output_directories(data):
     if not os.path.exists(result_test_file):
         os.makedirs(result_test_file)
     return result_train_file
-
-
 def execute_training_and_prediction(
     args,
     week,
@@ -269,8 +259,6 @@ def execute_training_and_prediction(
         test(args, week, test_dataloader, test_set)
 
     return best_val_loss
-
-
 def validate(model, vali_loader, forecast_loss):
     model.eval()
     cnt = 0
@@ -295,8 +283,6 @@ def validate(model, vali_loader, forecast_loss):
     print(f"valid RAW : MAPE {score[0]:7.9%}; MAE {score[1]:7.9f}; RMSE {score[2]:7.9f}; A20 {score[3]:7.9f}.")
     model.train()
     return loss_total / cnt
-
-
 def test(args, week, test_dataloader, test_set):
     result_test_file = "output/" + args.data + "/train"
     model = load_model(result_test_file)
@@ -321,7 +307,4 @@ def test(args, week, test_dataloader, test_set):
     score = evaluate(trues, preds)
     print(f"test RAW : MAPE {score[0]:7.9%}; MAE {score[1]:7.9f}; RMSE {score[2]:7.9f}; A20 {score[3]:7.9f}.")
     np.save(f"output/{args.data}/{week - 1}.npy", preds[-args.pre_length].reshape((1, -1)))
-
-
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()

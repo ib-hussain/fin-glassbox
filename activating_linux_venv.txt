@@ -1,17 +1,24 @@
 sudo apt update
 sudo apt install python3-venv
-sudo apt install python3
+sudo apt install python3.12.7
 
 python3 -m venv venv3.12.7
 
 source venv3.12.7/bin/activate
+
 # for getting list
 pip freeze > requirements.txt
+
 # for installing list
 pip install -r requirements.txt
+
 # for installing package
 pip install <package_name>
+
 #for uninstalling 
 pip uninstall <package_name> -y
+
+#for uninstalling multiple packages
+pip uninstall -y -r requirements.txt 
 
 deactivate

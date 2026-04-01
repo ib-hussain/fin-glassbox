@@ -7,10 +7,13 @@ Command Prompt (cmd.exe):
 
 # for getting list
 pip freeze > requirements.txt
+
 # for installing list
 pip install -r requirements.txt
+
 # for installing package
 pip install <package_name>
+
 #for uninstalling 
 pip uninstall <package_name> 
 

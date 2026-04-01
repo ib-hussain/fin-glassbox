@@ -93,7 +93,7 @@ ipython_config.py
 **/output/
 **/prediction/
 **/old_simulations/
-model*/
+models*/
 runs*/
 figs*/
 

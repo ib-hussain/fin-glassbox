@@ -1,3 +1,11 @@
+"""
+This script generates a visualization showing standardized price movements for selected cryptocurrencies
+(ADA, BTC, ETH, XTZ) over a specified period. It attempts to visually divide the data into "Bull" and "Bear" phases.
+
+System Arguments:
+    This script does not accept any system arguments. It has hardcoded paths, specifically reading from:
+    "out/crypto/daily_20_2189_marked.csv"
+"""
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns

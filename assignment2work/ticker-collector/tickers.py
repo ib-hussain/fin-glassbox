@@ -1,3 +1,10 @@
+"""
+This module contains standard lists of financial ticker symbols used throughout the application.
+It defines cryptocurrency and foreign exchange (FX) fiat currencies for historical data collection.
+
+System Arguments:
+    This module only provides data and logic structures; it expects no system arguments.
+"""
 crypto_tickers = [
     "BTC-USD",
     "ETH-USD",

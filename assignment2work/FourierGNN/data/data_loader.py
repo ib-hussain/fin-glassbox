@@ -1,3 +1,10 @@
+"""
+This module provides standard torch Dataset abstractions for slicing historical sliding windows
+off various benchmark datasets including ECG, Solar, Crypto, and predefined numerical arrays.
+
+System Arguments:
+    This module only provides class definitions; it expects no system arguments.
+"""
 import datetime
 import os
 
@@ -9,8 +16,23 @@ from torch.utils.data import Dataset
 
 # traffic data
 class Dataset_Dhfm(Dataset):
+    """
+    Standard loader sequence sliding window for DHFM numerical configurations.
+    """
 
     def __init__(self, root_path, flag, seq_len, pre_len, type, train_ratio, val_ratio):
+        """
+        Initializes sequence boundaries and fetches targeted data.
+
+        Args:
+            root_path (str): Relative URI. Example: "data/traffic.npy"
+            flag (str): Operation phase limiters ("train", "val", "test"). Example: "train"
+            seq_len (int): X input sequence size. Example: 12
+            pre_len (int): Y target prediction size. Example: 12
+            type (str): Signals initialization triggers (e.g., standardizing logic). Example: "1"
+            train_ratio (float): Traing set size multiplier. Example: 0.7
+            val_ratio (float): Validation set multiplier. Example: 0.2
+        """
         assert flag in ["train", "test", "val"]
         self.path = root_path
         self.flag = flag
@@ -62,8 +84,23 @@ class Dataset_Dhfm(Dataset):
 
 # ECG dataset
 class Dataset_ECG(Dataset):
+    """
+    Data generator for the ECG raw numeric baseline mapped over csv columns.
+    """
 
     def __init__(self, root_path, flag, seq_len, pre_len, type, train_ratio, val_ratio):
+        """
+        Initializes boundaries and limits data based on ratios.
+
+        Args:
+            root_path (str): CSV location path. Example: "data/ECG_data.csv"
+            flag (str): Phase setting ("train", "val", "test"). Example: "test"
+            seq_len (int): Historical trace size. Example: 12
+            pre_len (int): Predictive forecast size. Example: 12
+            type (str): Standardization routing parameters. Example: "0"
+            train_ratio (float): Relative split proportion. Example: 0.7
+            val_ratio (float): Relative split proportion. Example: 0.2
+        """
         assert flag in ["train", "test", "val"]
         self.path = root_path
         self.flag = flag
@@ -119,6 +156,9 @@ class Dataset_ECG(Dataset):
 
 
 class Dataset_Solar(Dataset):
+    """
+    Reads multiple disjoint hourly/daily sequences extracting target periods per iteration for solar prediction tasks.
+    """
 
     def __init__(self, root_path, flag, seq_len, pre_len, type, train_ratio, val_ratio):
         assert flag in ["train", "test", "val"]
@@ -195,6 +235,9 @@ class Dataset_Solar(Dataset):
 
 
 class Dataset_Wiki(Dataset):
+    """
+    Parser loading multi-variate Wikipedia numerical arrays skipping nan alignments.
+    """
 
     def __init__(self, root_path, flag, seq_len, pre_len, type, train_ratio, val_ratio):
         assert flag in ["train", "test", "val"]
@@ -256,8 +299,20 @@ class Dataset_Wiki(Dataset):
 
 
 class DatasetFinancial(Dataset):
+    """
+    Specific implementation mapping trailing temporal financial records backward matching target evaluation thresholds.
+    """
 
     def __init__(self, root_path, week, flag, seq_len, pre_len, type, train_ratio, val_ratio):
+        """
+        Splits pre-marked CSV outputs extracting only rows mapped to limits.
+        
+        Args:
+            root_path (str): The merged CSV. Example: "../ticker-collector/out/crypto/daily_20_2189_marked.csv"
+            week (int): Evaluation temporal index logic parameter. Example: 50
+            flag (str): Phase logic parameter. Example: "train"
+            seq_len, pre_len, type, train_ratio, val_ratio: Dimension sizing.
+        """
         assert flag in ["train", "test", "val"]
         self.flag = flag
         self.seq_len = seq_len
@@ -312,6 +367,15 @@ class DatasetFinancial(Dataset):
 
     @classmethod
     def read_price_returns(cls, path, week, num_weeks, horizon):
+        """
+        Coordinates price sequence gathering executing conversion logic explicitly over specified horizon variables.
+        
+        Args:
+            path (str): File boundary path limit.
+            week (int): Stopping mark for index tracking. Example: 104
+            num_weeks (int): Length logic maximum. Example: 156
+            horizon (int): Division scale mapping offset limit. Example: 14
+        """
         prices_np = cls._read_raw_data(path=path, week=week, num_weeks=num_weeks)
         simple_returns_np = cls._convert_to_simple_returns(prices_np, horizon)
         return simple_returns_np

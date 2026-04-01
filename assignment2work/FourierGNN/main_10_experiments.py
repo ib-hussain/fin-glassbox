@@ -1,3 +1,11 @@
+"""
+This script runs a static batch of 10 sequential experiments for specific predefined datasets (fx, crypto).
+It initializes models via hardcoded hyperparameters and overrides argparse arguments dynamically under main().
+
+System Arguments Expected:
+    Even though argparse is retained, `main()` bypasses system arguments in favor of hard-coded defaults.
+    For completeness, the parser exposes similar variables as `main.py` like `--data`, `--batch_size`, etc.
+"""
 import argparse
 import os
 import time
@@ -15,6 +23,10 @@ from utils.utils import evaluate, load_model, save_model
 
 
 def main():
+    """
+    Primary entry loop setting robust hardcoded configurations for 10 isolated experiments
+    for FX data followed by 10 for Crypto data. It essentially ignores command-line inputs.
+    """
     hparams = {
         "batch_size": 32,
         "data": "fx",
@@ -56,6 +68,21 @@ def main():
         run(hparams_as_args, 104)
 
 def search_hyperparameters(data, pre_length, train_epochs, batch_size, train_ratio, val_ratio, week):
+    """
+    Uses hyperopt to automate hyperparameter tuning over predefined boundaries.
+    
+    Args:
+        data (str): Dataset name flag. Example: 'ECG'
+        pre_length (int): Forecasting horizon. Example: 12
+        train_epochs (int): Number of epochs to train for. Example: 100
+        batch_size (int): Data batching slice. Example: 32
+        train_ratio (float): Traing set size ratio. Example: 0.7
+        val_ratio (float): Validation set size ratio. Example: 0.2
+        week (int): Evaluation temporal index indicating rolling horizon. Example: 20
+        
+    Returns:
+        dict: The best hyperparameter combination dict.
+    """
     print(f"Searching hyperparameters at week: {week}")
     hpo_max_evals = 100
 
@@ -85,6 +112,15 @@ def search_hyperparameters(data, pre_length, train_epochs, batch_size, train_rat
 
     return best_hparams
 def run(args, week, hparam_search=False):
+    """
+    Executes a single workflow iteration including data loading, model instantiation, 
+    compilation, and triggering training or evaluation execution for the given week limit.
+    
+    Args:
+        args (SimpleNamespace): Hyperparameters and parameters bundled into attributes.
+        week (int): Current week for data truncation. Example: 15
+        hparam_search (bool): Flag whether this execution is part of HPO (true) or normal (false).
+    """
     result_train_file = create_output_directories(args.data)
     data_info = data_information[args.data]
 
@@ -168,6 +204,12 @@ def run(args, week, hparam_search=False):
         hparam_search,
     )
 def parse_arguments():
+    """
+    Parses command-line system arguments (Note: Mostly unused due to hardcoded overrides in main()).
+    
+    Returns:
+        argparse.Namespace: Object wrapping argument variables.
+    """
     parser = argparse.ArgumentParser(description="fourier graph network for multivariate time series forecasting")
     parser.add_argument(
         "--hparam_search_freq",
@@ -194,6 +236,15 @@ def parse_arguments():
     print(f"Training arguments: {args}")
     return args
 def create_output_directories(data):
+    """
+    Generates required train and test log directories securely.
+    
+    Args:
+        data (str): Name of data model. Example: "ECG"
+        
+    Returns:
+        str: Route path to the training output.
+    """
     result_train_file = os.path.join("output", data, "train")
     result_test_file = os.path.join("output", data, "test")
     if not os.path.exists(result_train_file):
@@ -215,6 +266,25 @@ def execute_training_and_prediction(
     test_set,
     hparam_search,
 ):
+    """
+    Coordinates epoch-level loop handling gradient updates via backward passes, 
+    loss function validation triggers, and invoking test execution.
+    
+    Args:
+        args (Namespace/SimpleNamespace): Hyperparameters.
+        week (int): Evaluation temporal index indicating rolling horizon. 
+        model (FGN): The active FourierGNN model instance. 
+        train_dataloader (DataLoader): Initialized generator over train subsets.
+        forecast_loss (nn.Module): Objective loss criteria (e.g. MSE).
+        my_optim, my_lr_scheduler: Optimizer and scheduler.
+        val_dataloader, test_dataloader: Dataloaders for validation/tests phases.
+        result_train_file (str): Directory storing best states.
+        test_set (Dataset): Evaluation basis index tracker.
+        hparam_search (bool): Check to escape true evaluation to limit computations globally.
+        
+    Returns:
+        float: Minimum achieved validation loss over running epoch iterations.
+    """
     best_val_loss = np.inf
     early_stop_patience = 20
     early_stop_counter = 0
@@ -260,6 +330,17 @@ def execute_training_and_prediction(
 
     return best_val_loss
 def validate(model, vali_loader, forecast_loss):
+    """
+    Performs inference over the validation set without computing backward gradients.
+    
+    Args:
+        model (FGN): The network instance.
+        vali_loader (DataLoader): Sequence loading iterations over validation data.
+        forecast_loss (nn.Module): MSE loss calculator for metric scaling.
+        
+    Returns:
+        float: Total scaled metric loss over loop executions.
+    """
     model.eval()
     cnt = 0
     loss_total = 0
@@ -284,6 +365,16 @@ def validate(model, vali_loader, forecast_loss):
     model.train()
     return loss_total / cnt
 def test(args, week, test_dataloader, test_set):
+    """
+    Examines final forecasting capability out of sample relying upon `evaluate` 
+    helper across MAE/RMSE parameters utilizing inverse standardization mapping logic.
+    
+    Args:
+        args (SimpleNamespace): Shared parameters specifying sequences length variables.
+        week (int): Index reference. Example: 30 
+        test_dataloader (DataLoader): Final out-of-sample data generator.
+        test_set (Dataset): Native representation hosting unscaled scaler references.
+    """
     result_test_file = "output/" + args.data + "/train"
     model = load_model(result_test_file)
     model.eval()

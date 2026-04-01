@@ -1,5 +1,11 @@
 # -*- coding:utf-8 -*-
 """
+This module provides standard utility operations for loss calculations, model saving/loading, and slicing logic.
+
+System Arguments:
+    This module only provides helper functions and expects no system arguments.
+"""
+"""
 
 Author:
     Weichen Shen,weichenswc@163.com
@@ -11,6 +17,13 @@ import torch
 from permetrics import RegressionMetric
 
 def concat_fun(inputs, axis=-1):
+    """
+    Concatenates PyTorch tensors intelligently avoiding unnecessary graph connections if sequences contain singular entries.
+    
+    Args:
+        inputs (list): Tensors arrays ready for mapping. Example: [tensor_1, tensor2]
+        axis (int): Concatenation target logic limit. Example: -1
+    """
     if len(inputs) == 1:
         return inputs[0]
     else:
@@ -68,6 +81,14 @@ def slice_arrays(arrays, start=None, stop=None):
         else:
             return [None]
 def save_model(model, model_dir, epoch=None):
+    """
+    Dumps standard model representations sequentially tagging files leveraging specific epoch marks.
+    
+    Args:
+        model (nn.Module): Trainee mapping model.
+        model_dir (str): Logging target base directory constraint. Example: 'output/ECG'
+        epoch (int): Naming sequence offset index representation. Example: 10
+    """
     if model_dir is None:
         return
     if not os.path.exists(model_dir):
@@ -77,6 +98,16 @@ def save_model(model, model_dir, epoch=None):
     with open(file_name, "wb") as f:
         torch.save(model, f)
 def load_model(model_dir, epoch=None):
+    """
+    Loads saved `.pt` states conditionally logic mapping files matching directory configurations over specific epochs.
+    
+    Args:
+        model_dir (str): Location constraint directory variable. Example: 'output/ECG'
+        epoch (int): Trailing naming offset sequences index locator limit.
+        
+    Returns:
+        nn.Module: Instantiated populated system models.
+    """
     if not model_dir:
         return
     epoch = str(epoch) if epoch else ""
@@ -120,6 +151,13 @@ def MAPE(v, v_, axis=None):
 # def MAPE(true, pred):
 #    return np.mean(np.abs((pred - true) / (true+1e-5)))
 def smape(P, A):
+    """
+    Calculates symmetric mean absolute percentage error limiting values by masking out 0 constraints.
+    
+    Args:
+        P (np.array): Predicted vectors.
+        A (np.array): Absolute Actual true values vectors.
+    """
     nz = np.where(A > 0)
     Pz = P[nz]
     Az = A[nz]
@@ -144,6 +182,13 @@ def MAE(v, v_, axis=None):
     """
     return np.mean(np.abs(v_ - v), axis).astype(np.float64)
 def a20_index(v, v_):
+    """
+    Resolves A20 indicator limits for threshold-driven accuracy verification processes relying upon RegressionMetric targets.
+    
+    Args:
+        v: Authentic target boundaries matching vector.
+        v_: Scaled evaluated outputs mapping limit vector.
+    """
     evaluator = RegressionMetric(v.reshape(v.shape[0], -1), v_.reshape(v_.shape[0], -1))
     a20 = evaluator.a20_index()
     return np.mean(a20)

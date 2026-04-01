@@ -5,7 +5,14 @@ import torch.nn.functional as F
 from config import device
 
 
+"""
+This module defines the FourierGNN neural network architecture for analyzing temporal structures.
+It does not expect system arguments from the command line.
+"""
 class FGN(nn.Module):
+    """
+    The Fourier Graph Network (FGN) applies frequency-domain graph convolutions across series to map structure.
+    """
 
     def __init__(
         self,
@@ -17,6 +24,18 @@ class FGN(nn.Module):
         hidden_size_factor=1,
         sparsity_threshold=0.01,
     ):
+        """
+        Initializes FGN and its trainable scaling factors, embeddings, dimensions and Linear sequential filters.
+
+        Args:
+            pre_length (int): Target projection length. Example: 12
+            embed_size (int): Size per timestamp mapping. Example: 128
+            seq_length (int): Received context length. Example: 12
+            hidden_size (int): Capacity dimension. Example: 256
+            hard_thresholding_fraction (float): Fractional multiplier defining FFT density thresholds. Example: 1.0
+            hidden_size_factor (int): Amplifier applied for frequency representations. Example: 1
+            sparsity_threshold (float): Filter drop rate logic scaling factor. Example: 0.01
+        """
         super().__init__()
         self.embed_size = embed_size
         self.hidden_size = hidden_size
@@ -50,12 +69,34 @@ class FGN(nn.Module):
         self.to(device)
 
     def tokenEmb(self, x):
+        """
+        Multiplies input data spatially against uniform node-embedding characteristics.
+        
+        Args:
+            x (Tensor): Incoming tensor structure pre-mapped sequence representations.
+        
+        Returns:
+            Tensor: Expanded dimensional properties.
+        """
         x = x.unsqueeze(2)
         y = self.embeddings
         return x * y
 
     # FourierGNN
     def fourierGC(self, x, B, N, L):
+        """
+        Calculates complex multiplication sequences substituting matrix Graph manipulations 
+        within isolated frequency boundaries spanning across 3 cascading Linear tiers relying upon Softshrink filters.
+        
+        Args:
+            x (Tensor): FFT-induced frequency domains.
+            B (int): Batch magnitude scalar.
+            N (int): Node quantity references.
+            L (int): Loop/Length variables indicating observation sequences.
+            
+        Returns:
+            Tensor: Translated Inverse complex variable domain outputs.
+        """
         o1_real = torch.zeros(
             [B, (N * L) // 2 + 1, self.frequency_size * self.hidden_size_factor],
             device=x.device,
@@ -111,6 +152,16 @@ class FGN(nn.Module):
         return z
 
     def forward(self, x):
+        """
+        Performs network sequence execution chaining `tokenEmb`, RFFT transformations,
+        `fourierGC` filtration and returning predictions scaled matching `pre_length`.
+        
+        Args:
+            x (Tensor): Node sequence tensor mapped by B * N * L.
+        
+        Returns:
+            Tensor: Predicted continuous representations mapped matching prediction targets.
+        """
         x = x.permute(0, 2, 1).contiguous()
         B, N, L = x.shape
         # B*N*L ==> B*NL

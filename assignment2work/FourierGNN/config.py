@@ -1,3 +1,10 @@
+"""
+This module provides configuration dictionaries and mappings for data path routing.
+It defines device selection (CPU or GPU) and dataset configurations.
+
+System Arguments Expected:
+    This module only provides configuration values and expects NO system arguments.
+"""
 import torch
 
 from data.data_loader import (

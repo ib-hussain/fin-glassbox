@@ -48,11 +48,11 @@ data_information = {
         "type": "1"
     },
     "crypto": {
-        "root_path": f"{os.getenv('datasets_out_tickerCollector_path')}/crypto/daily_20_2190_marked.csv",
+        "root_path": f"{str(os.getenv('datasets_out_tickerCollector_path', 'assignment2work/datasetsOut'))}/crypto/daily_20_2190_marked.csv",
         "type": "1",
     },
     "fx": {
-        "root_path": f"{os.getenv('datasets_out_tickerCollector_path')}/fx/daily_10_5118_marked.csv",
+        "root_path": f"{str(os.getenv('datasets_out_tickerCollector_path', 'assignment2work/datasetsOut'))}/fx/daily_10_5118_marked.csv",
         "type": "1",
     },
 }

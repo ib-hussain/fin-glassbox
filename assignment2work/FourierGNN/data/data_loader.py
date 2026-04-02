@@ -80,8 +80,6 @@ class Dataset_Dhfm(Dataset):
             return len(self.valData) - self.seq_len - self.pre_len
         else:
             return len(self.testData) - self.seq_len - self.pre_len
-
-
 # ECG dataset
 class Dataset_ECG(Dataset):
     """
@@ -153,7 +151,6 @@ class Dataset_ECG(Dataset):
             return len(self.valData) - self.seq_len - self.pre_len
         else:
             return len(self.testData) - self.seq_len - self.pre_len
-
 
 class Dataset_Solar(Dataset):
     """
@@ -233,7 +230,6 @@ class Dataset_Solar(Dataset):
         else:
             return len(self.testData) - self.seq_len - self.pre_len
 
-
 class Dataset_Wiki(Dataset):
     """
     Parser loading multi-variate Wikipedia numerical arrays skipping nan alignments.
@@ -296,7 +292,6 @@ class Dataset_Wiki(Dataset):
             return len(self.valData) - self.seq_len - self.pre_len
         else:
             return len(self.testData) - self.seq_len - self.pre_len
-
 
 class DatasetFinancial(Dataset):
     """

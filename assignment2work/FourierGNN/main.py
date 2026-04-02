@@ -42,6 +42,7 @@ def main():
     Main loop integrating command-line argument parsing and sequential execution
     across advancing weeks. Triggers new hyperparameter searches periodically.
     """
+    print("work has started")
     args = parse_arguments()
 
     hparams = None
@@ -246,8 +247,8 @@ def create_output_directories(data):
     Returns:
         str: Route path to the training output.
     """
-    result_train_file = os.path.join("output", data, "train")
-    result_test_file = os.path.join("output", data, "test")
+    result_train_file = os.path.join(str(os.getenv("datasets_FourierGNN_output_path")), data, "train")
+    result_test_file = os.path.join(str(os.getenv("datasets_FourierGNN_output_path")), data, "test")
     if not os.path.exists(result_train_file):
         os.makedirs(result_train_file)
     if not os.path.exists(result_test_file):
@@ -382,7 +383,7 @@ def test(args, week, test_dataloader, test_set):
         test_dataloader (DataLoader): Final out-of-sample data generator.
         test_set (Dataset): Native representation hosting unscaled scaler references.
     """
-    result_test_file = "output/" + args.data + "/train"
+    result_test_file = os.getenv("datasets_FourierGNN_output_path") + args.data + "/train"
     model = load_model(result_test_file)
     model.eval()
     preds = []
@@ -404,7 +405,7 @@ def test(args, week, test_dataloader, test_set):
     trues = test_set.standard_scaler.inverse_transform(trues)
     score = evaluate(trues, preds)
     print(f"test RAW : MAPE {score[0]:7.9%}; MAE {score[1]:7.9f}; RMSE {score[2]:7.9f}; A20 {score[3]:7.9f}.")
-    np.save(f"output/{args.data}/{week - 1}.npy", preds[-args.pre_length].reshape((1, -1)))
+    np.save(f"{os.getenv('datasets_FourierGNN_output_path')}/{args.data}/{week - 1}.npy", preds[-args.pre_length].reshape((1, -1)))
 
 
 if __name__ == "__main__":

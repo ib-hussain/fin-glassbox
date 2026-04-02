@@ -84,61 +84,81 @@ class TickerBase:
         return self._price_history
 
     def _get_ticker_tz(self, proxy, timeout):
-        proxy = proxy or self.proxy
-        if self._tz is not None:
-            return self._tz
-        c = cache.get_tz_cache()
-        tz = c.lookup(self.ticker)
-
-        if tz and not utils.is_valid_timezone(tz):
-            # Clear from cache and force re-fetch
-            c.store(self.ticker, None)
-            tz = None
-
-        if tz is None:
-            tz = self._fetch_ticker_tz(proxy, timeout)
-
-            if utils.is_valid_timezone(tz):
-                # info fetch is relatively slow so cache timezone
-                c.store(self.ticker, tz)
-            else:
-                tz = None
-
-        self._tz = tz
-        return tz
-
-    @utils.log_indent_decorator
-    def _fetch_ticker_tz(self, proxy, timeout):
-        # Query Yahoo for fast price data just to get returned timezone
-        proxy = proxy or self.proxy
+        """
+        CHANGE: Bypass the problematic timezone fetch that's causing JSON parsing errors.
+        Return a default timezone 'UTC' to allow history fetch to proceed.
+        """
         logger = utils.get_yf_logger()
+        logger.debug(f"Bypassing timezone fetch for {self.ticker}, using UTC")
+        
+        # Set default timezone to UTC
+        self._tz = 'UTC'
+        return self._tz
 
-        params = {"range": "1d", "interval": "1d"}
+    def _fetch_ticker_tz(self, proxy, timeout):
+        """
+        CHANGE: This method was causing the JSON parsing error.
+        Now returns UTC directly without making the request.
+        """
+        logger = utils.get_yf_logger()
+        logger.debug(f"Bypassing _fetch_ticker_tz for {self.ticker}")
+        return 'UTC'
+    # def _get_ticker_tz(self, proxy, timeout):
+    #     proxy = proxy or self.proxy
+    #     if self._tz is not None:
+    #         return self._tz
+    #     c = cache.get_tz_cache()
+    #     tz = c.lookup(self.ticker)
 
-        # Getting data from json
-        url = f"{_BASE_URL_}/v8/finance/chart/{self.ticker}"
+    #     if tz and not utils.is_valid_timezone(tz):
+    #         # Clear from cache and force re-fetch
+    #         c.store(self.ticker, None)
+    #         tz = None
 
-        try:
-            data = self._data.cache_get(url=url, params=params, proxy=proxy, timeout=timeout)
-            data = data.json()
-        except Exception as e:
-            logger.error(f"Failed to get ticker '{self.ticker}' reason: {e}")
-            return None
-        else:
-            error = data.get('chart', {}).get('error', None)
-            if error:
-                # explicit error from yahoo API
-                logger.debug(f"Got error from yahoo api for ticker {self.ticker}, Error: {error}")
-            else:
-                try:
-                    return data["chart"]["result"][0]["meta"]["exchangeTimezoneName"]
-                except Exception as err:
-                    logger.error(f"Could not get exchangeTimezoneName for ticker '{self.ticker}' reason: {err}")
-                    logger.debug("Got response: ")
-                    logger.debug("-------------")
-                    logger.debug(f" {data}")
-                    logger.debug("-------------")
-        return None
+    #     if tz is None:
+    #         tz = self._fetch_ticker_tz(proxy, timeout)
+
+    #         if utils.is_valid_timezone(tz):
+    #             # info fetch is relatively slow so cache timezone
+    #             c.store(self.ticker, tz)
+    #         else:
+    #             tz = None
+
+    #     self._tz = tz
+    #     return tz
+
+    # @utils.log_indent_decorator
+    # def _fetch_ticker_tz(self, proxy, timeout):
+    #     # Query Yahoo for fast price data just to get returned timezone
+    #     proxy = proxy or self.proxy
+    #     logger = utils.get_yf_logger()
+
+    #     params = {"range": "1d", "interval": "1d"}
+
+    #     # Getting data from json
+    #     url = f"{_BASE_URL_}/v8/finance/chart/{self.ticker}"
+
+    #     try:
+    #         data = self._data.cache_get(url=url, params=params, proxy=proxy, timeout=timeout)
+    #         data = data.json()
+    #     except Exception as e:
+    #         logger.error(f"Failed to get ticker '{self.ticker}' reason: {e}")
+    #         return None
+    #     else:
+    #         error = data.get('chart', {}).get('error', None)
+    #         if error:
+    #             # explicit error from yahoo API
+    #             logger.debug(f"Got error from yahoo api for ticker {self.ticker}, Error: {error}")
+    #         else:
+    #             try:
+    #                 return data["chart"]["result"][0]["meta"]["exchangeTimezoneName"]
+    #             except Exception as err:
+    #                 logger.error(f"Could not get exchangeTimezoneName for ticker '{self.ticker}' reason: {err}")
+    #                 logger.debug("Got response: ")
+    #                 logger.debug("-------------")
+    #                 logger.debug(f" {data}")
+    #                 logger.debug("-------------")
+    #     return None
 
     def get_recommendations(self, proxy=None, as_dict=False):
         """

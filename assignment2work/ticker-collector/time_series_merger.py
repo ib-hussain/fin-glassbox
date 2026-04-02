@@ -4,9 +4,9 @@ It aligns multiple asset streams into a unified dataset using either an inner jo
 
 System Arguments Expected:
     1. input_path (str): The base directory holding the subfolder with the time series files.
-                         Example: "datasetsIn/crypto"
+                         Example: "assignment2work/datasetsIn/crypto"
     2. output_path (str): The directory to save the output merged CSV file.
-                          Example: "datasetsOut/crypto"
+                          Example: "assignment2work/datasetsOut/crypto"
     3. frequency (str): The frequency string expected as a suffix to the input folder name.
                         Example: "daily"
     4. num_assets (str): The number of top assets to include, ranked by the count of available dates.
@@ -43,8 +43,8 @@ def main(input_path, output_path, frequency, num_assets, b_fill_days=None):
     Coordinates the loading of multiple single-ticker CSVs, merges them by date, and saves the output.
 
     Args:
-        input_path (str): Base path to the input data directory. Example: "data/crypto"
-        output_path (str): Path to write the output merged CSV. Example: "out/crypto"
+        input_path (str): Base path to the input data directory. Example: "assignment2work/datasetsIn/crypto"
+        output_path (str): Path to write the output merged CSV. Example: "assignment2work/datasetsOut/crypto"
         frequency (str): Suffix defining the subfolder resolution. Example: "daily"
         num_assets (int): Keep only this many tickers with the most data rows. Example: 20
         b_fill_days (int, optional): If provided, applies backfilling for this many recent days; 

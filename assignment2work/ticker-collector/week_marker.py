@@ -18,7 +18,7 @@ def main(input_path):
     
     Args:
         input_path (str): The filename/path of the aggregated time series CSV.
-                          Example: "datasetsOut/crypto/daily_20_2190.csv"
+                          Example: "assignment2work/datasetsOut/crypto/daily_20_2190.csv"
     """
     output_path = f"{input_path.replace('.csv', '')}_marked.csv"
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -44,4 +44,4 @@ def main(input_path):
 
 
 if __name__ == "__main__":
-    main("datasetsOut/crypto/daily_20_2190.csv")
+    main("assignment2work/datasetsOut/crypto/daily_20_2190.csv")

@@ -8,8 +8,8 @@ import requests
 import io
 import json
 
-from yfinance_ib_ib import shared, utils
-from yfinance_ib_ib.const import _BASE_URL_, _PRICE_COLNAMES_
+from yfinance_ib import shared, utils
+from yfinance_ib.const import _BASE_URL_, _PRICE_COLNAMES_
 
 class PriceHistory:
     def __init__(self, data, ticker, tz, session=None, proxy=None):
@@ -25,7 +25,6 @@ class PriceHistory:
 
         # Limit recursion depth when repairing prices
         self._reconstruct_start_interval = None
-        
     @utils.log_indent_decorator
     def history(self, period="1mo", interval="1d",
                 start=None, end=None, prepost=False, actions=True,
@@ -34,10 +33,9 @@ class PriceHistory:
                 raise_errors=False) -> pd.DataFrame:
         """
         CHANGE: Modified to use JSON API endpoint that works reliably.
-        Uses the same endpoint we tested successfully with BTC-USD.
         """
         logger = utils.get_yf_logger()
-        logger.info(f"Using JSON API for {self.ticker}")
+        logger.info(f"=== USING CUSTOM HISTORY METHOD for {self.ticker} ===")
         
         try:
             # Use JSON API method that we know works
@@ -59,7 +57,6 @@ class PriceHistory:
             if raise_errors:
                 raise Exception(error_msg)
             return utils.empty_df()
-    
     def _json_api_download(self, period="max", start=None, end=None, interval="1d", timeout=10):
         """
         CHANGE: New method - uses the JSON API endpoint that worked in our tests.

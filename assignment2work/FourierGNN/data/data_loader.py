@@ -25,7 +25,7 @@ class Dataset_Dhfm(Dataset):
         Initializes sequence boundaries and fetches targeted data.
 
         Args:
-            root_path (str): Relative URI. Example: "data/traffic.npy"
+            root_path (str): Relative URI. Example: "assignment2work/datasetsIn/traffic.npy"
             flag (str): Operation phase limiters ("train", "val", "test"). Example: "train"
             seq_len (int): X input sequence size. Example: 12
             pre_len (int): Y target prediction size. Example: 12
@@ -93,7 +93,7 @@ class Dataset_ECG(Dataset):
         Initializes boundaries and limits data based on ratios.
 
         Args:
-            root_path (str): CSV location path. Example: "data/ECG_data.csv"
+            root_path (str): CSV location path. Example: "assignment2work/datasetsIn/ECG_data.csv"
             flag (str): Phase setting ("train", "val", "test"). Example: "test"
             seq_len (int): Historical trace size. Example: 12
             pre_len (int): Predictive forecast size. Example: 12
@@ -308,7 +308,7 @@ class DatasetFinancial(Dataset):
         Splits pre-marked CSV outputs extracting only rows mapped to limits.
         
         Args:
-            root_path (str): The merged CSV. Example: "../ticker-collector/out/crypto/daily_20_2189_marked.csv"
+            root_path (str): The merged CSV. Example: "assignment2work/datasetsOut/crypto/daily_20_2189_marked.csv"
             week (int): Evaluation temporal index logic parameter. Example: 50
             flag (str): Phase logic parameter. Example: "train"
             seq_len, pre_len, type, train_ratio, val_ratio: Dimension sizing.

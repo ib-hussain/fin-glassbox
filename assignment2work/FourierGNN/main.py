@@ -21,6 +21,7 @@ System Arguments Expected:
 """
 import argparse
 import os
+import dotenv
 import time
 from types import SimpleNamespace
 

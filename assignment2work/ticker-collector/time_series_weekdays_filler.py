@@ -17,7 +17,7 @@ def main(input_file):
     
     Args:
         input_file (str): Path to the single asset or merged CSV file.
-                          Example: "out/fx/daily_10_3000_marked.csv"
+                          Example: "assignment2work/datasetsOut/fx/daily_10_3000_marked.csv"
     """
     df = pd.read_csv(input_file)
 

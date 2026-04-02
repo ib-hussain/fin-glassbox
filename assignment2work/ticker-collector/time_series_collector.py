@@ -7,7 +7,7 @@ It does not expect system arguments from the command line; inputs are instead pa
 import os
 import sys
 import time
-import yfinance as yf
+import yfinance_ib as yf
 from tqdm import tqdm
 from tickers import crypto_tickers
 
@@ -20,7 +20,7 @@ def main(tickers, output_path):
         tickers (list of str): List of ticker symbols to download data for. 
                                Example: ["BTC-USD", "ETH-USD"]
         output_path (str): The directory path where the downloaded CSV files will be saved.
-                           Example: "datasetsIn/crypto-daily"
+                           Example: "assignment2work/datasetsIn/crypto-daily"
     """
     os.makedirs(output_path, exist_ok=True)
     print("Starting download of stock data...")
@@ -51,5 +51,6 @@ def main(tickers, output_path):
     if stocks_not_downloaded:
         print("Stocks not downloaded:")
         print(stocks_not_downloaded)
+
 if __name__ == "__main__":
     main(crypto_tickers, sys.argv[1])

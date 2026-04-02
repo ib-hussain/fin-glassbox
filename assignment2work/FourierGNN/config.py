@@ -6,7 +6,7 @@ System Arguments Expected:
     This module only provides configuration values and expects NO system arguments.
 """
 import torch
-
+import dotenv
 from data.data_loader import (
     Dataset_Dhfm,
     Dataset_ECG,
@@ -19,39 +19,39 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 data_information = {
     "traffic": {
-        "root_path": "data/traffic.npy",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/traffic.npy",
         "type": "0"
     },
     "ECG": {
-        "root_path": "data/ECG_data.csv",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/ECG_data.csv",
         "type": "1"
     },
     "COVID": {
-        "root_path": "data/covid.csv",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/covid.csv",
         "type": "1"
     },
     "electricity": {
-        "root_path": "data/electricity.csv",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/electricity.csv",
         "type": "1"
     },
     "solar": {
-        "root_path": "/data/solar",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/solar",
         "type": "1"
     },
     "metr": {
-        "root_path": "data/metr.csv",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/metr.csv",
         "type": "1"
     },
     "wiki": {
-        "root_path": "data/wiki.csv",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/wiki.csv",
         "type": "1"
     },
     "crypto": {
-        "root_path": "../ticker-collector/out/crypto/daily_20_2189_marked.csv",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/crypto/daily_20_2189_marked.csv",
         "type": "1",
     },
     "fx": {
-        "root_path": "../ticker-collector/out/fx/daily_10_4506_marked.csv",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/fx/daily_10_4506_marked.csv",
         "type": "1",
     },
 }

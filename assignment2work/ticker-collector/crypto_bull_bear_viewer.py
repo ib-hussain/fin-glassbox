@@ -3,52 +3,46 @@ This script generates a visualization showing standardized price movements for s
 (ADA, BTC, ETH, XTZ) over a specified period. It attempts to visually divide the data into "Bull" and "Bear" phases.
 
 System Arguments:
-    This script does not accept any system arguments. It has hardcoded paths, specifically reading from:
-    "assignment2work/datasetsOut/crypto/daily_20_2190_marked.csv"
+    This script does accept system argument. It has hardcoded path, specifically reading from:
+    "assignment2work/datasetsOut/crypto/daily_20_2190_marked.csv" or the sys argument.
 """
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-from sklearn.preprocessing import StandardScaler
+import sys
+if __name__ == "__main__":
+    file_name = str(sys.argv[1]) or "assignment2work/datasetsOut/crypto/daily_20_2190_marked.csv" 
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+    from sklearn.preprocessing import StandardScaler
 
-sns.set_theme(style="darkgrid")
-
-scaler = StandardScaler()
-
-df = pd.read_csv("assignment2work/datasetsOut/crypto/daily_20_2190_marked.csv")[["Date", "ADA-USD", "BTC-USD", "ETH-USD",
-                                                         "XTZ-USD"]].set_index("Date")[-730:]
-df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df.index)
-fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
-
-df.plot(ax=ax)
-plt.ylabel("Standardized Price")
-
-middle_line = len(df) // 2
-plt.axvline(x=middle_line, color="gray", linestyle="--")  # Changed color to dark gray
-
-bull_text_x = middle_line / 2
-bear_text_x = middle_line + (len(df) - middle_line) / 2
-
-plt.text(
-    bull_text_x,
-    ax.get_ylim()[1] * 0.75,
-    "Bull",
-    horizontalalignment="center",
-    color="green",
-    fontsize=18,
-    fontweight="bold",
-)
-plt.text(
-    bear_text_x,
-    ax.get_ylim()[1] * -0.4,
-    "Bear",
-    horizontalalignment="center",
-    color="red",
-    fontsize=18,
-    fontweight="bold",
-)
-
-plt.xticks(rotation=45)
-plt.tight_layout()
-
-plt.savefig("cryptoBullBear.svg")
+    sns.set_theme(style="darkgrid")
+    scaler = StandardScaler()
+    df = pd.read_csv(file_name)[["Date", "ADA-USD", "BTC-USD", "ETH-USD", "XTZ-USD"]].set_index("Date")
+    df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df.index)
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
+    df.plot(ax=ax)
+    plt.ylabel("Standardized Price")
+    middle_line = len(df) // 2
+    plt.axvline(x=middle_line, color="gray", linestyle="--")  # Changed color to dark gray
+    bull_text_x = middle_line / 2
+    bear_text_x = middle_line + (len(df) - middle_line) / 2
+    plt.text(
+        bull_text_x,
+        ax.get_ylim()[1] * 0.75,
+        "Bull",
+        horizontalalignment="center",
+        color="green",
+        fontsize=18,
+        fontweight="bold",
+    )
+    plt.text(
+        bear_text_x,
+        ax.get_ylim()[1] * -0.4,
+        "Bear",
+        horizontalalignment="center",
+        color="red",
+        fontsize=18,
+        fontweight="bold",
+    )
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig("assignment2work/ticker-collector/cryptoBullBear.svg")

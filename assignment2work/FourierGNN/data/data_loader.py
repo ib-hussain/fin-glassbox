@@ -25,7 +25,7 @@ class Dataset_Dhfm(Dataset):
         Initializes sequence boundaries and fetches targeted data.
 
         Args:
-            root_path (str): Relative URI. Example: "assignment2work/datasetsIn/traffic.npy"
+            root_path (str): Relative URI. Example: "assignment2work/ForuierGNN/data/traffic.npy"
             flag (str): Operation phase limiters ("train", "val", "test"). Example: "train"
             seq_len (int): X input sequence size. Example: 12
             pre_len (int): Y target prediction size. Example: 12
@@ -93,7 +93,7 @@ class Dataset_ECG(Dataset):
         Initializes boundaries and limits data based on ratios.
 
         Args:
-            root_path (str): CSV location path. Example: "assignment2work/datasetsIn/ECG_data.csv"
+            root_path (str): CSV location path. Example: "assignment2work/ForuierGNN/data/ECG_data.csv"
             flag (str): Phase setting ("train", "val", "test"). Example: "test"
             seq_len (int): Historical trace size. Example: 12
             pre_len (int): Predictive forecast size. Example: 12

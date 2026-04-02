@@ -19,39 +19,39 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 data_information = {
     "traffic": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/traffic.npy",
+        "root_path": f"data/traffic.npy",
         "type": "0"
     },
     "ECG": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/ECG_data.csv",
+        "root_path": f"data/ECG_data.csv",
         "type": "1"
     },
     "COVID": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/covid.csv",
+        "root_path": f"data/covid.csv",
         "type": "1"
     },
     "electricity": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/electricity.csv",
+        "root_path": f"data/electricity.csv",
         "type": "1"
     },
     "solar": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/solar",
+        "root_path": f"data/solar",
         "type": "1"
     },
     "metr": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/metr.csv",
+        "root_path": f"data/metr.csv",
         "type": "1"
     },
     "wiki": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/wiki.csv",
+        "root_path": f"data/wiki.csv",
         "type": "1"
     },
     "crypto": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/crypto/daily_20_2190_marked.csv",
+        "root_path": f"data/crypto/daily_20_2190_marked.csv",
         "type": "1",
     },
     "fx": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/fx/daily_10_4506_marked.csv",
+        "root_path": f"data/fx/daily_10_4506_marked.csv",
         "type": "1",
     },
 }

@@ -94,7 +94,7 @@ ipython_config.py
 **/output/
 **/prediction/
 **/old_simulations/
-models*/
+# models*/
 runs*/
 figs*/
 

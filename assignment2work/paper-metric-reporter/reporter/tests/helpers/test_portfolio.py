@@ -1,3 +1,5 @@
+"""Unit tests for ``Portfolio`` simulation helpers."""
+
 from unittest import TestCase
 
 import numpy as np
@@ -8,6 +10,7 @@ from helpers import Portfolio
 class TestPortfolio(TestCase):
 
     def test__calculate_portfolio_values(self):
+        print("[Debug_Output]: test__calculate_portfolio_values start")
         values = Portfolio._calculate_portfolio_values(
             asset_indices=np.asarray([[0, 1], [1, 2], [0, 2]]),
             actual_prices=np.asarray([[10, 20, 30], [5, 15, 25], [1, 30, 100]]),
@@ -20,6 +23,7 @@ class TestPortfolio(TestCase):
         np.testing.assert_array_equal(values.prediction, expected_predicted_portfolio_values)
 
     def test__get_asset_selection_accuracy(self):
+        print("[Debug_Output]: test__get_asset_selection_accuracy start")
         y_true = np.asarray([[0, 1, 3], [4, 2, 5], [3, 6, 6], [6, 6, 6], [6, 6, 2]])
         y_pred = np.asarray([[3, 1, 6], [2, 4, 5], [4, 2, 1], [6, 6, 2], [6, 6, 6]])
         accuracy = Portfolio._get_asset_selection_accuracy(y_true, y_pred)

@@ -1,3 +1,17 @@
+"""
+Portfolio and reporting pipeline: load actual prices and model predictions, build long/short
+portfolios, and print/plot evaluation metrics described in the financial GNN paper.
+
+System arguments (CLI):
+    One positional argument is required when running as ``python main.py <dataset>`` from the
+    ``reporter`` package directory (see README for PYTHONPATH / working directory).
+
+    argv[1] — dataset (str):
+        Purpose: Selects which path bundle and risk-free rate assumption to use.
+        Allowed values: ``fx`` (G10/FX experiment results) or ``crypto`` (crypto results).
+        Example: ``python main.py crypto``
+"""
+
 import random
 import sys
 
@@ -15,6 +29,14 @@ pd.set_option("display.width", 1000)
 
 
 def main(dataset):
+    """
+    Run the full reporting workflow for one asset universe.
+
+    Args:
+        dataset (str): Must be ``fx`` or ``crypto`` (same as ``sys.argv[1]``).
+            Example: ``fx``.
+    """
+    print(f"[Debug_Output]: reporter.main entered | dataset={dataset!r} | argv={sys.argv}")
     if dataset == "fx":
         paths = config.FXPaths
         risk_free_rate_13_week = 3.31694291  # average Treasury Bill rate during simulation period from 10/2021-10/2023
@@ -82,4 +104,5 @@ def main(dataset):
 
 
 if __name__ == "__main__":
+    print(f"[Debug_Output]: reporter.__main__ | argv={sys.argv}")
     main(sys.argv[1])

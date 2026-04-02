@@ -1,3 +1,13 @@
+"""
+Multivariate LSTM baseline for weekly financial return forecasting (aligned with graph-based
+experiments in the repo). Run as a script via ``python main.py`` from a working directory where
+relative model/figure paths resolve correctly.
+
+System arguments:
+    None. This entry point does not use ``sys.argv`` or ``argparse``; behavior is controlled only
+    by the ``Config`` and ``Constants`` classes below.
+"""
+
 import datetime
 import os
 
@@ -14,16 +24,56 @@ from tqdm import tqdm
 
 # noinspection PyPep8Naming
 def format_time_as_YYYYMMddHHmm(time):
+    """
+    Format a datetime as a compact string used in output folder names (no separators).
+
+    Args:
+        time (datetime.datetime): Timestamp to format, e.g. ``datetime.datetime(2024, 3, 15, 14, 30)``.
+
+    Returns:
+        str: Digits only, e.g. ``202403151430``.
+    """
+    print(f"[Debug_Output]: format_time_as_YYYYMMddHHmm called | time={time!r}")
     return (time.isoformat(sep="/", timespec="minutes").replace("-", "").replace(":", "").replace("/", ""))
 
 
 class Constants:
+    """
+    Run-wide values derived once at import time.
+
+    Attributes:
+        PREDICTION_TIME (str): Folder suffix for this run; see ``format_time_as_YYYYMMddHHmm``.
+            Example: ``202604031215``.
+        DEVICE (str): ``"cuda"`` if a GPU is available, else ``"cpu"``.
+    """
+
     PREDICTION_TIME = format_time_as_YYYYMMddHHmm(datetime.datetime.now())
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 # noinspection DuplicatedCode
 class Config:
+    """
+    Training, data, and HPO defaults (edit attributes here; no CLI).
+
+    Key attributes:
+        num_epochs_to_run (int): Max training epochs per HPO trial or final fit. Example: ``500``.
+        early_stopping_patience (int): Stop if validation loss does not improve for this many
+            validation checks. Example: ``100``.
+        horizon (int): Return horizon in days/weeks used in ``read_return_ratios`` / labels.
+            Example: ``7``.
+        hpo_max_evals (int): Hyperopt ``fmin`` evaluations per ``get_best_hparams``. Example: ``100``.
+        hpo_space (dict): Hyperopt search distributions (lr, dropout, hidden_size, etc.).
+        training_ratio (float): Fraction of rows used for training window split. Example: ``0.6``.
+        validation_ratio (float): Fraction for validation (after training). Example: ``0.2``.
+        log_active (bool): If True, ``log()`` prints even when ``log_anyway`` is False.
+        prices_path (str): CSV with ``Date``, ``split_point``, and price columns.
+            Example: ``../ticker-collector/out/crypto/daily_20_2190_marked.csv``.
+        predictions_base_path (str): Root directory for ``np.save`` prediction dumps.
+        num_weeks_to_train (int): Weeks in the outer tqdm loop. Example: ``104``.
+        total_weeks (int): Passed to ``read_return_ratios`` for truncation. Example: ``104``.
+    """
+
     num_epochs_to_run = 500
     early_stopping_patience = 100
     horizon = 7
@@ -67,11 +117,29 @@ class Config:
 
 
 def log(week, message, log_anyway=False):
+    """
+    Conditional logger for week-indexed training messages.
+
+    Args:
+        week (int): Rolling week index. Example: ``0``.
+        message (str): Text to print. Example: ``Best: {...}``.
+        log_anyway (bool): If True, print regardless of ``Config.log_active``. Example: ``True``.
+    """
+    print(f"[Debug_Output]: log | week={week} | log_anyway={log_anyway} | message_preview={message[:80]!r}")
     if log_anyway or Config.log_active:
         print(f"Week: {week} | {message}")
 
 
 def to_torch(np_array):
+    """
+    Convert a NumPy array to a tensor on ``Constants.DEVICE``.
+
+    Args:
+        np_array (numpy.ndarray): Input batch or window, e.g. shape ``(N, seq_len, n_assets)``.
+
+    Returns:
+        torch.Tensor: Same dtype as ``np_array``, on CPU or CUDA.
+    """
     return torch.from_numpy(np_array).to(Constants.DEVICE)
 
 
@@ -84,11 +152,31 @@ def read_return_ratios(
     fill_zero_for_the_first_horizon_samples=False,
 ):
     """
-    :return: Log returns, the last line is the last split point in the data when week == num_weeks.
-             If week == num_weeks -1, the last line is the second last split point in the data, and so on.
-             If fill_zero_for_the_first_horizon_samples is False, then the first output np array will have `horizon`
-             fewer rows.
+    Load marked price CSV, truncate to a rolling evaluation window, then compute simple returns.
+
+    Args:
+        data_path (str): CSV path with ``Date``, ``split_point``, and numeric price columns.
+            Example: ``../ticker-collector/out/crypto/daily_20_2190_marked.csv``.
+        week (int): How far back from the latest ``split_point`` to slice; ``0`` uses the full
+            history up to the last split. Example: ``0``.
+        num_weeks (int): Total number of split markers used in truncation math. Example: ``104``.
+        training_ratio (float): Unused directly here; kept for API symmetry with other scripts.
+            Example: ``0.6``.
+        fill_zero_for_the_first_horizon_samples (bool): If True, pad the first ``Config.horizon``
+            return rows with ``0.01``. Example: ``False``.
+
+    Returns:
+        numpy.ndarray: Shape ``(T, n_assets)`` simple return ratio series (not log), with length
+            depending on ``week`` and ``horizon`` as described in the legacy docstring below.
+
+    Note:
+        Despite the legacy description mentioning log returns, ``_convert_to_simple_returns`` uses
+        price ratios (simple returns).
     """
+    print(
+        f"[Debug_Output]: read_return_ratios | path={data_path!r} | week={week} | num_weeks={num_weeks} | "
+        f"training_ratio={training_ratio} | fill_zero={fill_zero_for_the_first_horizon_samples}"
+    )
     assert (0 <= week <= num_weeks), f"week must be between 0 and num_weeks (inclusive): 0 <= {week} <= {num_weeks}"
     assert num_weeks >= 0, f"num_weeks must be >= 0, got {num_weeks}"
 
@@ -115,6 +203,20 @@ def read_return_ratios(
 
 # noinspection DuplicatedCode
 def _convert_to_simple_returns(df, fill_zero_for_the_first_horizon_samples):
+    """
+    Turn price levels into simple returns using ``Config.horizon``-step ratios.
+
+    Args:
+        df (pandas.DataFrame): Includes a ``Date`` column plus price columns.
+        fill_zero_for_the_first_horizon_samples (bool): Pad initial rows if True. Example: ``False``.
+
+    Returns:
+        pandas.DataFrame: Simple returns with shape reduced by ``horizon`` unless padded.
+    """
+    print(
+        f"[Debug_Output]: _convert_to_simple_returns | df_shape={df.shape} | "
+        f"fill_zero_for_the_first_horizon_samples={fill_zero_for_the_first_horizon_samples}"
+    )
     np_form = df.drop(["Date"], axis=1).to_numpy()
     simple_returns = np_form[Config.horizon:] / np_form[:-Config.horizon]
     if fill_zero_for_the_first_horizon_samples:
@@ -124,8 +226,21 @@ def _convert_to_simple_returns(df, fill_zero_for_the_first_horizon_samples):
 
 # noinspection DuplicatedCode
 class LSTMModel(nn.Module):
+    """
+    One-layer-output LSTM: last time step goes through a linear head predicting all assets.
+
+    Args (constructor):
+        input_size (int): Number of features / assets per timestep. Example: ``20``.
+        hidden_size (int): LSTM hidden units. Example: ``64``.
+        num_layers (int): Stacked LSTM depth. Example: ``3``.
+        dropout (float): Dropout between LSTM layers (not after last). Example: ``0.2``.
+    """
 
     def __init__(self, input_size, hidden_size, num_layers, dropout):
+        print(
+            f"[Debug_Output]: LSTMModel.__init__ | input_size={input_size} | hidden_size={hidden_size} | "
+            f"num_layers={num_layers} | dropout={dropout}"
+        )
         super(LSTMModel, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -139,6 +254,13 @@ class LSTMModel(nn.Module):
         self.fc = nn.Linear(hidden_size, input_size)
 
     def forward(self, x):
+        """
+        Args:
+            x (torch.Tensor): Shape ``(batch, seq_len, input_size)``.
+
+        Returns:
+            torch.Tensor: Predicted next-step vector, shape ``(batch, input_size)``.
+        """
         batch_size = x.size(0)
         h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
         c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
@@ -149,8 +271,22 @@ class LSTMModel(nn.Module):
 
 # noinspection DuplicatedCode
 class WindowedSplitDataLoader:
+    """
+    Build sliding windows over multivariate return series with train/val/test index splits.
+
+    Args (constructor):
+        data_np (numpy.ndarray): Shape ``(T, n_assets)`` simple returns.
+        seq_len (int): History length for each sample. Example: ``21``.
+        horizon (int): Offset between last input timestep and prediction target. Example: ``7``.
+        training_ratio (float): Fraction of ``T`` for training indices. Example: ``0.6``.
+        validation_ratio (float): Next fraction for validation. Example: ``0.2``.
+    """
 
     def __init__(self, data_np, seq_len, horizon, training_ratio, validation_ratio):
+        print(
+            f"[Debug_Output]: WindowedSplitDataLoader.__init__ | data_shape={data_np.shape} | seq_len={seq_len} | "
+            f"horizon={horizon} | training_ratio={training_ratio} | validation_ratio={validation_ratio}"
+        )
         self._seq_length = seq_len
         self._horizon = horizon
         self._dat = data_np
@@ -182,6 +318,17 @@ class WindowedSplitDataLoader:
         return self._last_day
 
     def _split(self, train_end_index, valid_end_index):
+        """
+        Compute index ranges and populate ``_training``, ``_validation``, ``_test`` batches.
+
+        Args:
+            train_end_index (int): Exclusive end row for training targets. Example: ``600``.
+            valid_end_index (int): Exclusive end row for validation. Example: ``800``.
+        """
+        print(
+            f"[Debug_Output]: WindowedSplitDataLoader._split | train_end_index={train_end_index} | "
+            f"valid_end_index={valid_end_index} | num_rows={self._num_rows}"
+        )
         training_set_indices = range(self._seq_length + self._horizon - 1, train_end_index)
         validation_set_indices = range(train_end_index, valid_end_index)
         test_set = range(valid_end_index, self._num_rows)
@@ -195,6 +342,16 @@ class WindowedSplitDataLoader:
 
     # noinspection PyPep8Naming
     def _batchify(self, idx_set):
+        """
+        Materialize ``X`` windows and ``y`` targets for a list of end indices.
+
+        Args:
+            idx_set (range or iterable): Row indices in ``data_np`` used as prediction time.
+
+        Returns:
+            dict: Keys ``X`` (float32, shape ``(n, seq_len, n_assets)``) and ``y`` (``(n, n_assets)``).
+        """
+        print(f"[Debug_Output]: WindowedSplitDataLoader._batchify | n_indices={len(idx_set)}")
         n = len(idx_set)
         X = np.zeros((n, self._seq_length, self._num_cols))
         y = np.zeros((n, self._num_cols))
@@ -207,21 +364,46 @@ class WindowedSplitDataLoader:
 
 
 class Runner:
+    """
+    Hyperparameter search and training/prediction for one rolling ``week`` index.
+
+    Args (constructor):
+        week (int): Passed to ``read_return_ratios`` for data truncation. Example: ``5``.
+    """
 
     def __init__(self, week):
+        print(f"[Debug_Output]: Runner.__init__ | week={week}")
         self._week = week
         self.space = Config.hpo_space
 
     def get_best_hparams(self):
         """
-        Trains the model multiple times, finds the best hparams and returns.
+        Run Hyperopt TPE for ``Config.hpo_max_evals`` trials; return best hyperparameter dict.
+
+        Returns:
+            dict: Keys include ``lr``, ``dropout``, ``hidden_size``, ``num_layers``, ``batch_size``, ``seq_len``.
         """
+        print(f"[Debug_Output]: Runner.get_best_hparams | week={self._week} | max_evals={Config.hpo_max_evals}")
         best = fmin(self.objective, self.space, algo=tpe.suggest, max_evals=Config.hpo_max_evals)
         best_hparams = space_eval(self.space, best)
         log(self._week, f"Best: {best}, with hparams: {best_hparams}")
         return best_hparams
 
     def predict_with_best_hparams(self, hparams, train_new_model):
+        """
+        Train (optional) and produce next-step predictions using fixed ``hparams``.
+
+        Args:
+            hparams (dict): Best hyperparameters from ``get_best_hparams``.
+            train_new_model (bool): If True, fit weights; if False, reload ``model.pt`` only.
+
+        Returns:
+            numpy.ndarray: ``last_day_outputs`` shape ``(1, n_assets)`` on CPU.
+        """
+        print(
+            f"[Debug_Output]: Runner.predict_with_best_hparams | week={self._week} | train_new_model={train_new_model} | "
+            f"hparams_keys={list(hparams.keys())}"
+        )
         log(
             self._week,
             f"Training {'on' if train_new_model else 'off'}. Predicting with hyperparams: {hparams}",
@@ -333,8 +515,15 @@ class Runner:
 
     def objective(self, hparams):
         """
-        :return: Validation loss
+        Single Hyperopt trial: train LSTM with ``hparams`` and return validation MSE.
+
+        Args:
+            hparams (dict): Sampled hyperparameters (lr, batch_size, seq_len, etc.).
+
+        Returns:
+            float: Validation loss (MSE) after early stopping / best checkpoint.
         """
+        print(f"[Debug_Output]: Runner.objective | week={self._week} | hparams={hparams}")
         log(self._week, f"Trying hyperparams: {hparams}")
 
         hparams_str = self._create_hparams_str(hparams)
@@ -460,25 +649,44 @@ class Runner:
 
     @staticmethod
     def rmse(predictions, targets):
+        """Root mean squared error between tensors."""
         return torch.sqrt(torch.mean((predictions - targets)**2))
 
     def create_figs_directory(self, hparams_str):
+        """Create TensorBoard figure folder for this week/trial."""
+        print(f"[Debug_Output]: Runner.create_figs_directory | hparams_str={hparams_str!r}")
         os.makedirs(f"figs/experiment_{Constants.PREDICTION_TIME}_week{self._week}/{hparams_str}")
 
     def _create_summary_writer(self, hparams_str):
+        print(f"[Debug_Output]: Runner._create_summary_writer | hparams_str={hparams_str!r}")
         return SummaryWriter(log_dir=f"runs/experiment_{Constants.PREDICTION_TIME}_week{self._week}/{hparams_str}")
 
     @staticmethod
     def _create_hparams_str(hparams):
-        return f"bs{hparams['batch_size']}-dr{hparams['dropout']}-hid{hparams['hidden_size']}-lr{hparams['lr']}-numl{hparams['num_layers']}-seql{hparams['seq_len']}"
+        """Filesystem-safe string summarizing hyperparameters."""
+        s = (
+            f"bs{hparams['batch_size']}-dr{hparams['dropout']}-hid{hparams['hidden_size']}-lr{hparams['lr']}-"
+            f"numl{hparams['num_layers']}-seql{hparams['seq_len']}"
+        )
+        print(f"[Debug_Output]: Runner._create_hparams_str -> {s!r}")
+        return s
 
     def save_predictions(self, predictions):
+        """Persist ``predictions`` as ``{week+1}.npy`` under the run's weeks folder."""
+        print(f"[Debug_Output]: Runner.save_predictions | week_index={self._week} | array_shape={predictions.shape}")
         dir_path = f"{Config.predictions_base_path}/{Constants.PREDICTION_TIME}/weeks"
         os.makedirs(dir_path, exist_ok=True)
         np.save(f"{dir_path}/{self._week + 1}", predictions)
 
 
 def main_quick():
+    """
+    End-to-end demo: HPO on week 0, then roll 104 weeks saving predictions (retrain every 5 weeks).
+
+    System arguments:
+        None.
+    """
+    print("[Debug_Output]: main_quick started | num_weeks_to_train=%s" % (Config.num_weeks_to_train,))
     if os.path.exists("figs"):
         os.system("rm -rf figs")
     if os.path.exists("runs"):
@@ -498,4 +706,5 @@ def main_quick():
 
 
 if __name__ == "__main__":
+    print("[Debug_Output]: __main__ invoking main_quick() | no sys.argv parsing in this module")
     main_quick()

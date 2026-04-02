@@ -1,4 +1,8 @@
+#this will tell you the ubunutu version, Version 22.04 or 24.04 are preferable
+lsb_release -a
+
 sudo apt update
+sudo apt install - y python3 python3-venv
 sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev
 
 # Install pyenv
@@ -15,9 +19,9 @@ source ~/.bashrc
 # Install Python 3.12.7
 pyenv install 3.12.7
 
-lsb_release -a
-
-cd /mnt/d/Downloads/University/DeepLearning/fin-glassbox
+#running the command below is totally upto you, if you are in the fin-glassbox directory then no problem otherwise navigate to that directory and replace the addrss below with you address
+cd /path_to/fin-glassbox
+#the command below will take time
 pyenv local 3.12.7
 
 # Create virtual environment
@@ -27,13 +31,6 @@ source venv3.12.7/bin/activate
 # Verify
 python --version  # Shows 3.12.3
 pip --version
-
-sudo apt install python3-venv
-sudo apt install python3.12.7
-
-python3 -m venv venv3.12.7
-
-source venv3.12.7/bin/activate
 
 # for getting list
 pip freeze > requirements.txt
@@ -50,4 +47,5 @@ pip uninstall <package_name> -y
 #for uninstalling multiple packages
 pip uninstall -y -r requirements.txt 
 
+# to turn off the virtual environment
 deactivate

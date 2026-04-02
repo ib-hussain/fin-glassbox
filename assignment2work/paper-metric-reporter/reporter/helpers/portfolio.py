@@ -1,3 +1,10 @@
+"""
+Equal-weight long/short portfolio simulation using predicted vs actual returns (transaction costs, cash asset).
+
+System arguments:
+    None.
+"""
+
 import random
 from collections import Counter
 
@@ -13,6 +20,22 @@ class Portfolio:
 
     @classmethod
     def get_equally_weighted_portfolio_results(cls, actual_prices, predicted_returns, long_assets, short_assets):
+        """
+        Build long leg and short leg portfolios, sum capital paths, attach selection accuracy.
+
+        Args:
+            actual_prices (Data): Observed prices (possibly sliced).
+            predicted_returns (Data): Model return factors for ranking assets.
+            long_assets (int): Count of assets to hold long each week.
+            short_assets (int): Count to short.
+
+        Returns:
+            PortfolioResult: Combined path under ``label=predicted_returns.label``.
+        """
+        print(
+            f"[Debug_Output]: Portfolio.get_equally_weighted | label={predicted_returns.label!r} | "
+            f"long={long_assets} short={short_assets}"
+        )
 
         def get_results(is_long):
             assets = long_assets if is_long else short_assets
@@ -40,10 +63,13 @@ class Portfolio:
 
     @classmethod
     def get_all_results(cls, actual_prices):
+        """Fully invested equal basket; realized capital only (no prediction path)."""
+        print("[Debug_Output]: Portfolio.get_all_results")
         return cls._get_all_results(actual_prices.data, cls._initial_capital)
 
     @classmethod
     def get_random_results(cls, actual_prices, long_assets, short_assets):
+        """Random asset picks each week; returns path and selection accuracy vs oracle."""
 
         def get_results(is_long):
             assets = long_assets if is_long else short_assets
@@ -54,6 +80,7 @@ class Portfolio:
                 assets,
             )
 
+        print(f"[Debug_Output]: Portfolio.get_random_results | long={long_assets} short={short_assets}")
         long_results, long_selection_accuracy = get_results(True)
         short_results, short_selection_accuracy = get_results(False)
 
@@ -65,10 +92,15 @@ class Portfolio:
 
     @classmethod
     def get_initial_capital(cls):
+        """Configured starting capital from ``config.initial_capital``."""
         return cls._initial_capital
 
     @classmethod
     def _get_results(cls, actual_prices, num_assets, predicted_returns, is_long, initial_budget):
+        print(
+            f"[Debug_Output]: Portfolio._get_results | num_assets={num_assets} is_long={is_long} "
+            f"budget={initial_budget}"
+        )
         portfolio_asset_indices = np.apply_along_axis(
             Portfolio._find_assets_to_buy(num_assets, is_long),
             axis=1,
@@ -96,6 +128,7 @@ class Portfolio:
 
     @classmethod
     def _get_all_results(cls, actual_prices, initial_capital):
+        print(f"[Debug_Output]: Portfolio._get_all_results | prices_shape={actual_prices.shape}")
         portfolio_asset_indices = np.apply_along_axis(cls._all_assets(), axis=1, arr=actual_prices)
         return cls._calculate_portfolio_values(
             portfolio_asset_indices,
@@ -107,6 +140,7 @@ class Portfolio:
 
     @classmethod
     def _get_random_results(cls, actual_prices, initial_budget, is_long, num_assets):
+        print(f"[Debug_Output]: Portfolio._get_random_results is_long={is_long} num_assets={num_assets}")
         portfolio_asset_indices = np.apply_along_axis(cls._random_assets(num_assets), axis=1, arr=actual_prices)
         actual_returns = ReportTransformer.get_returns(actual_prices, normalize=False, append_ones=True)
         best_asset_indices = np.apply_along_axis(
@@ -122,6 +156,7 @@ class Portfolio:
 
     @classmethod
     def _calculate_initial_budget(cls, long_assets, short_assets, is_long):
+        """Split ``_initial_capital`` between long and short sleeves."""
         if is_long:
             return cls._initial_capital * long_assets / (long_assets + short_assets)
         else:
@@ -129,6 +164,7 @@ class Portfolio:
 
     @staticmethod
     def _find_assets_to_buy(n_assets, is_long=True):
+        """Return row-wise function picking top ``n_assets`` by (possibly negated) predicted return."""
 
         def find(row):
             n = min(n_assets, row.shape[0])
@@ -144,6 +180,7 @@ class Portfolio:
 
     @staticmethod
     def _random_assets(n_assets):
+        """Uniform random subset of asset indices per row."""
 
         def find(row):
             n = min(n_assets, row.shape[0])
@@ -153,6 +190,7 @@ class Portfolio:
 
     @staticmethod
     def _all_assets():
+        """Placeholder indices representing all assets + cash slot."""
 
         def find(row):
             return np.asarray(range(row.shape[0] + 1))
@@ -168,6 +206,16 @@ class Portfolio:
         predicted_prices=None,
         no_transaction=False,
     ):
+        """
+        Simulate discrete rebalancing: split budget across picked assets, apply returns, pay costs.
+
+        Returns:
+            PortfolioValues: Realized path and optional predicted path.
+        """
+        print(
+            f"[Debug_Output]: Portfolio._calculate_portfolio_values | indices_shape={asset_indices.shape} | "
+            f"no_transaction={no_transaction} has_predicted={predicted_prices is not None}"
+        )
         portfolio_values = [initial_budget]
         predicted_portfolio_values = (None if predicted_prices is None else [initial_budget])
         if asset_indices.shape[1] == 0:
@@ -215,6 +263,7 @@ class Portfolio:
 
     @staticmethod
     def _get_asset_selection_accuracy(y_true, y_pred):
+        """Fraction of overlapping picks between oracle and model per week, averaged."""
         num_assets = y_true.shape[1]
 
         def count_common_assets(row):

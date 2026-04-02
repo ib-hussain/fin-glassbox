@@ -12,11 +12,14 @@ Author:
 
 """
 import os
+import dotenv
+dotenv.load_dotenv()  # Load environment variables from .env file
 import numpy as np
 import torch
 from permetrics import RegressionMetric
 
 def concat_fun(inputs, axis=-1):
+    print(f"[Debug_Output]: Function 'concat_fun' called with inputs type={type(inputs)}, axis={axis}")
     """
     Concatenates PyTorch tensors intelligently avoiding unnecessary graph connections if sequences contain singular entries.
     
@@ -29,6 +32,7 @@ def concat_fun(inputs, axis=-1):
     else:
         return torch.cat(inputs, dim=axis)
 def slice_arrays(arrays, start=None, stop=None):
+    print(f"[Debug_Output]: Function 'slice_arrays' called with arrays type={type(arrays)}, start={start}, stop={stop}")
     """Slice an array or list of arrays.
 
     This takes an array-like, or a list of
@@ -81,6 +85,7 @@ def slice_arrays(arrays, start=None, stop=None):
         else:
             return [None]
 def save_model(model, model_dir, epoch=None):
+    print(f"[Debug_Output]: Function 'save_model' called with model_dir={model_dir}, epoch={epoch}")
     """
     Dumps standard model representations sequentially tagging files leveraging specific epoch marks.
     
@@ -98,6 +103,7 @@ def save_model(model, model_dir, epoch=None):
     with open(file_name, "wb") as f:
         torch.save(model, f)
 def load_model(model_dir, epoch=None):
+    print(f"[Debug_Output]: Function 'load_model' called with model_dir={model_dir}, epoch={epoch}")
     """
     Loads saved `.pt` states conditionally logic mapping files matching directory configurations over specific epochs.
     
@@ -120,6 +126,7 @@ def load_model(model_dir, epoch=None):
         model = torch.load(f)
     return model
 def masked_MAPE(v, v_, axis=None):
+    print(f"[Debug_Output]: Function 'masked_MAPE' called with axis={axis}")
     """
     Mean absolute percentage error.
     :param v: np.ndarray or int, ground truth.
@@ -138,6 +145,7 @@ def masked_MAPE(v, v_, axis=None):
             return result
     return np.mean(percentage, axis).astype(np.float64)
 def MAPE(v, v_, axis=None):
+    print(f"[Debug_Output]: Function 'MAPE' called with axis={axis}")
     """
     Mean absolute percentage error.
     :param v: np.ndarray or int, ground truth.
@@ -151,6 +159,7 @@ def MAPE(v, v_, axis=None):
 # def MAPE(true, pred):
 #    return np.mean(np.abs((pred - true) / (true+1e-5)))
 def smape(P, A):
+    print(f"[Debug_Output]: Function 'smape' called")
     """
     Calculates symmetric mean absolute percentage error limiting values by masking out 0 constraints.
     
@@ -164,6 +173,7 @@ def smape(P, A):
 
     return np.mean(2 * np.abs(Az - Pz) / (np.abs(Az) + np.abs(Pz)))
 def RMSE(v, v_, axis=None):
+    print(f"[Debug_Output]: Function 'RMSE' called with axis={axis}")
     """
     Mean squared error.
     :param v: np.ndarray or int, ground truth.
@@ -173,6 +183,7 @@ def RMSE(v, v_, axis=None):
     """
     return np.sqrt(np.mean((v_ - v)**2, axis)).astype(np.float64)
 def MAE(v, v_, axis=None):
+    print(f"[Debug_Output]: Function 'MAE' called with axis={axis}")
     """
     Mean absolute error.
     :param v: np.ndarray or int, ground truth.
@@ -182,6 +193,7 @@ def MAE(v, v_, axis=None):
     """
     return np.mean(np.abs(v_ - v), axis).astype(np.float64)
 def a20_index(v, v_):
+    print(f"[Debug_Output]: Function 'a20_index' called")
     """
     Resolves A20 indicator limits for threshold-driven accuracy verification processes relying upon RegressionMetric targets.
     
@@ -193,6 +205,7 @@ def a20_index(v, v_):
     a20 = evaluator.a20_index()
     return np.mean(a20)
 def evaluate(y, y_hat, by_step=False, by_node=False):
+    print(f"[Debug_Output]: Function 'evaluate' called with by_step={by_step}, by_node={by_node}")
     """
     :param y: array in shape of [count, time_step, node].
     :param y_hat: in same shape with y.

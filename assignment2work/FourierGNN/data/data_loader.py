@@ -7,6 +7,8 @@ System Arguments:
 """
 import datetime
 import os
+import dotenv
+dotenv.load_dotenv()  # Load environment variables from .env file
 
 import numpy as np
 import pandas as pd
@@ -21,6 +23,7 @@ class Dataset_Dhfm(Dataset):
     """
 
     def __init__(self, root_path, flag, seq_len, pre_len, type, train_ratio, val_ratio):
+        print(f"[Debug_Output]: Function 'Dataset_Dhfm.__init__' called with root_path={root_path}, flag={flag}, seq_len={seq_len}, pre_len={pre_len}, type={type}, train_ratio={train_ratio}, val_ratio={val_ratio}")
         """
         Initializes sequence boundaries and fetches targeted data.
 
@@ -59,6 +62,7 @@ class Dataset_Dhfm(Dataset):
             self.testData = data[begin:end]
 
     def __getitem__(self, index):
+        print(f"[Debug_Output]: Function 'Dataset_Dhfm.__getitem__' called with index={index}")
         begin = index
         end = index + self.seq_len
         next_end = end + self.pre_len
@@ -74,6 +78,7 @@ class Dataset_Dhfm(Dataset):
         return data, next_data
 
     def __len__(self):
+        print(f"[Debug_Output]: Function 'Dataset_Dhfm.__len__' called")
         if self.flag == "train":
             return len(self.trainData) - self.seq_len - self.pre_len
         elif self.flag == "val":
@@ -87,6 +92,7 @@ class Dataset_ECG(Dataset):
     """
 
     def __init__(self, root_path, flag, seq_len, pre_len, type, train_ratio, val_ratio):
+        print(f"[Debug_Output]: Function 'Dataset_ECG.__init__' called with root_path={root_path}, flag={flag}, seq_len={seq_len}, pre_len={pre_len}, type={type}, train_ratio={train_ratio}, val_ratio={val_ratio}")
         """
         Initializes boundaries and limits data based on ratios.
 
@@ -128,6 +134,7 @@ class Dataset_ECG(Dataset):
             self.testData = data[begin:end]
 
     def __getitem__(self, index):
+        print(f"[Debug_Output]: Function 'Dataset_ECG.__getitem__' called with index={index}")
         begin = index
         end = index + self.seq_len
         next_begin = end
@@ -144,6 +151,7 @@ class Dataset_ECG(Dataset):
         return data, next_data
 
     def __len__(self):
+        print(f"[Debug_Output]: Function 'Dataset_ECG.__len__' called")
         # minus the label length
         if self.flag == "train":
             return len(self.trainData) - self.seq_len - self.pre_len
@@ -158,6 +166,7 @@ class Dataset_Solar(Dataset):
     """
 
     def __init__(self, root_path, flag, seq_len, pre_len, type, train_ratio, val_ratio):
+        print(f"[Debug_Output]: Function 'Dataset_Solar.__init__' called with root_path={root_path}, flag={flag}, seq_len={seq_len}, pre_len={pre_len}, type={type}, train_ratio={train_ratio}, val_ratio={val_ratio}")
         assert flag in ["train", "test", "val"]
         self.path = root_path
         self.flag = flag
@@ -208,6 +217,7 @@ class Dataset_Solar(Dataset):
             self.test_nextData = self.data[begin:end]
 
     def __getitem__(self, index):
+        print(f"[Debug_Output]: Function 'Dataset_Solar.__getitem__' called with index={index}")
         begin = index
         end = index + self.seq_len
         next_end = end + self.pre_len
@@ -223,6 +233,7 @@ class Dataset_Solar(Dataset):
         return data, next_data
 
     def __len__(self):
+        print(f"[Debug_Output]: Function 'Dataset_Solar.__len__' called")
         if self.flag == "train":
             return len(self.trainData) - self.seq_len - self.pre_len
         elif self.flag == "val":
@@ -236,6 +247,7 @@ class Dataset_Wiki(Dataset):
     """
 
     def __init__(self, root_path, flag, seq_len, pre_len, type, train_ratio, val_ratio):
+        print(f"[Debug_Output]: Function 'Dataset_Wiki.__init__' called with root_path={root_path}, flag={flag}, seq_len={seq_len}, pre_len={pre_len}, type={type}, train_ratio={train_ratio}, val_ratio={val_ratio}")
         assert flag in ["train", "test", "val"]
         self.path = root_path
         self.flag = flag
@@ -268,6 +280,7 @@ class Dataset_Wiki(Dataset):
             self.test_nextData = self.data[begin:end]
 
     def __getitem__(self, index):
+        print(f"[Debug_Output]: Function 'Dataset_Wiki.__getitem__' called with index={index}")
         # data timestamp
         begin = index
         end = index + self.seq_len
@@ -285,6 +298,7 @@ class Dataset_Wiki(Dataset):
         return data, next_data
 
     def __len__(self):
+        print(f"[Debug_Output]: Function 'Dataset_Wiki.__len__' called")
         # minus the label length
         if self.flag == "train":
             return len(self.trainData) - self.seq_len - self.pre_len
@@ -293,12 +307,142 @@ class Dataset_Wiki(Dataset):
         else:
             return len(self.testData) - self.seq_len - self.pre_len
 
+# class DatasetFinancial(Dataset):
+#     """
+#     Specific implementation mapping trailing temporal financial records backward matching target evaluation thresholds.
+#     """
+
+#     def __init__(self, root_path, week, flag, seq_len, pre_len, type, train_ratio, val_ratio):
+#         print(f"[Debug_Output]: Function 'DatasetFinancial.__init__' called with root_path={root_path}, week={week}, flag={flag}, seq_len={seq_len}, pre_len={pre_len}, type={type}, train_ratio={train_ratio}, val_ratio={val_ratio}")
+#         """
+#         Splits pre-marked CSV outputs extracting only rows mapped to limits.
+        
+#         Args:
+#             root_path (str): The merged CSV. Example: "assignment2work/datasetsOut/crypto/daily_20_2190_marked.csv"
+#             week (int): Evaluation temporal index logic parameter. Example: 50
+#             flag (str): Phase logic parameter. Example: "train"
+#             seq_len, pre_len, type, train_ratio, val_ratio: Dimension sizing.
+#         """
+#         assert flag in ["train", "test", "val"]
+#         self.flag = flag
+#         self.seq_len = seq_len
+#         self.pre_len = pre_len
+#         self.train_ratio = train_ratio
+#         self.val_ratio = val_ratio
+#         self.standard_scaler = StandardScaler()
+#         data = self.read_price_returns(root_path, int(week), 104, self.pre_len)
+
+#         if type == "1":
+#             training_end = int(len(data) * self.train_ratio)
+#             print(f"[Debug_Output]: DatasetFinancial.__init__ processing step => len(data)={len(data)}, training_end={training_end}")
+#             self.standard_scaler.fit(data[:training_end])
+#             data = self.standard_scaler.transform(data)
+#         data = np.array(data)
+#         if self.flag == "train":
+#             begin = 0
+#             end = int(len(data) * self.train_ratio)
+#             self.trainData = data[begin:end]
+#         if self.flag == "val":
+#             begin = int(len(data) * self.train_ratio)
+#             end = int(len(data) * (self.val_ratio + self.train_ratio))
+#             self.valData = data[begin:end]
+#         if self.flag == "test":
+#             begin = int(len(data) * (self.val_ratio + self.train_ratio))
+#             end = len(data)
+#             self.testData = data[begin:end]
+
+#     def __getitem__(self, index):
+#         print(f"[Debug_Output]: Function 'DatasetFinancial.__getitem__' called with index={index}")
+#         begin = index
+#         end = index + self.seq_len
+#         next_begin = end
+#         next_end = next_begin + self.pre_len
+#         if self.flag == "train":
+#             data = self.trainData[begin:end]
+#             next_data = self.trainData[next_begin:next_end]
+#         elif self.flag == "val":
+#             data = self.valData[begin:end]
+#             next_data = self.valData[next_begin:next_end]
+#         else:
+#             data = self.testData[begin:end]
+#             next_data = self.testData[next_begin:next_end]
+#         return data, next_data
+
+#     def __len__(self):
+#         print(f"[Debug_Output]: Function 'DatasetFinancial.__len__' called")
+#         # minus the label length
+#         if self.flag == "train":
+#             return len(self.trainData) - self.seq_len - self.pre_len
+#         elif self.flag == "val":
+#             return len(self.valData) - self.seq_len - self.pre_len
+#         else:
+#             return len(self.testData) - self.seq_len - self.pre_len
+
+#     @classmethod
+#     def read_price_returns(cls, path, week, num_weeks, horizon):
+#         print(f"[Debug_Output]: Function 'read_price_returns' called with path={path}, week={week}, num_weeks={num_weeks}, horizon={horizon}")
+#         """
+#         Coordinates price sequence gathering executing conversion logic explicitly over specified horizon variables.
+        
+#         Args:
+#             path (str): File boundary path limit.
+#             week (int): Stopping mark for index tracking. Example: 104
+#             num_weeks (int): Length logic maximum. Example: 156
+#             horizon (int): Division scale mapping offset limit. Example: 14
+#         """
+#         prices_np = cls._read_raw_data(path=path, week=week, num_weeks=num_weeks)
+#         simple_returns_np = cls._convert_to_simple_returns(prices_np, horizon)
+#         return simple_returns_np
+
+#     @staticmethod
+#     def _read_raw_data(path, week, num_weeks):
+#         print(f"[Debug_Output]: Function '_read_raw_data' called with path={path}, week={week}, num_weeks={num_weeks}")
+#         fin = open(path)
+#         raw_data = pd.read_csv(fin)
+
+#         truncate_index = len(raw_data)
+#         stopping_point = -1
+#         truncation_mark = num_weeks - week
+
+#         # ── DIAGNOSTIC: inspect the split_point column before the loop ──────────
+#         sp_col = raw_data["split_point"]
+#         print(
+#             f"[Debug_Output]: _read_raw_data DIAGNOSTIC | split_point dtype={sp_col.dtype} | "
+#             f"unique_values={sp_col.unique().tolist()} | "
+#             f"value_counts={sp_col.value_counts().to_dict()} | "
+#             f"sum_truthy={sp_col.astype(bool).sum()} | "
+#             f"first_5={sp_col.head().tolist()} | last_5={sp_col.tail().tolist()}"
+#         )
+#         # ────────────────────────────────────────────────────────────────────────
+
+#         for point in reversed(raw_data["split_point"]):
+#             if stopping_point == truncation_mark:
+#                 break
+
+#             if point:
+#                 stopping_point += 1
+
+#             truncate_index -= 1
+
+#         out = raw_data.loc[:truncate_index].drop(["split_point"], axis=1).drop(columns=["Date"]).to_numpy()
+#         print(
+#             f"[Debug_Output]: _read_raw_data done | n_rows_full={len(raw_data)} | truncate_index={truncate_index} | "
+#             f"out_shape={out.shape} | week={week} truncation_mark={truncation_mark}"
+#         )
+#         return out
+
+#     @staticmethod
+#     def _convert_to_simple_returns(prices_np, horizon):
+#         print(f"[Debug_Output]: Function '_convert_to_simple_returns' called with horizon={horizon}")
+#         simple_returns = prices_np[horizon:] / prices_np[:-horizon]
+#         return simple_returns
 class DatasetFinancial(Dataset):
     """
     Specific implementation mapping trailing temporal financial records backward matching target evaluation thresholds.
     """
 
     def __init__(self, root_path, week, flag, seq_len, pre_len, type, train_ratio, val_ratio):
+        print(f"[Debug_Output]: Function 'DatasetFinancial.__init__' called with root_path={root_path}, week={week}, flag={flag}, seq_len={seq_len}, pre_len={pre_len}, type={type}, train_ratio={train_ratio}, val_ratio={val_ratio}")
         """
         Splits pre-marked CSV outputs extracting only rows mapped to limits.
         
@@ -317,29 +461,51 @@ class DatasetFinancial(Dataset):
         self.standard_scaler = StandardScaler()
         data = self.read_price_returns(root_path, int(week), 104, self.pre_len)
 
-        if type == "1":
-            training_end = int(len(data) * self.train_ratio)
+        # FIX: Handle empty data case
+        if len(data) == 0:
+            print(f"[Warning]: No data loaded from {root_path} for week={week}")
+            # Create empty arrays to avoid errors
+            self.trainData = np.array([])
+            self.valData = np.array([])
+            self.testData = np.array([])
+            return
+
+        if type == "1" and len(data) > 0:
+            training_end = max(1, int(len(data) * self.train_ratio))  # Ensure at least 1 sample
+            print(f"[Debug_Output]: DatasetFinancial.__init__ processing step => len(data)={len(data)}, training_end={training_end}")
             self.standard_scaler.fit(data[:training_end])
             data = self.standard_scaler.transform(data)
         data = np.array(data)
+        
         if self.flag == "train":
             begin = 0
             end = int(len(data) * self.train_ratio)
+            if end <= begin:
+                end = min(begin + 1, len(data))  # Ensure at least 1 sample
             self.trainData = data[begin:end]
         if self.flag == "val":
             begin = int(len(data) * self.train_ratio)
             end = int(len(data) * (self.val_ratio + self.train_ratio))
+            if end <= begin:
+                end = min(begin + 1, len(data))
             self.valData = data[begin:end]
         if self.flag == "test":
             begin = int(len(data) * (self.val_ratio + self.train_ratio))
             end = len(data)
+            if end <= begin:
+                begin = max(0, end - 1)
             self.testData = data[begin:end]
+        
+        # Debug print to verify data sizes
+        print(f"[Debug]: {flag} data shape: {getattr(self, f'{flag}Data').shape if len(getattr(self, f'{flag}Data')) > 0 else 'empty'}")
 
     def __getitem__(self, index):
+        print(f"[Debug_Output]: Function 'DatasetFinancial.__getitem__' called with index={index}")
         begin = index
         end = index + self.seq_len
         next_begin = end
         next_end = next_begin + self.pre_len
+        
         if self.flag == "train":
             data = self.trainData[begin:end]
             next_data = self.trainData[next_begin:next_end]
@@ -352,16 +518,18 @@ class DatasetFinancial(Dataset):
         return data, next_data
 
     def __len__(self):
+        print(f"[Debug_Output]: Function 'DatasetFinancial.__len__' called")
         # minus the label length
         if self.flag == "train":
-            return len(self.trainData) - self.seq_len - self.pre_len
+            return max(0, len(self.trainData) - self.seq_len - self.pre_len)
         elif self.flag == "val":
-            return len(self.valData) - self.seq_len - self.pre_len
+            return max(0, len(self.valData) - self.seq_len - self.pre_len)
         else:
-            return len(self.testData) - self.seq_len - self.pre_len
+            return max(0, len(self.testData) - self.seq_len - self.pre_len)
 
     @classmethod
     def read_price_returns(cls, path, week, num_weeks, horizon):
+        print(f"[Debug_Output]: Function 'read_price_returns' called with path={path}, week={week}, num_weeks={num_weeks}, horizon={horizon}")
         """
         Coordinates price sequence gathering executing conversion logic explicitly over specified horizon variables.
         
@@ -372,18 +540,49 @@ class DatasetFinancial(Dataset):
             horizon (int): Division scale mapping offset limit. Example: 14
         """
         prices_np = cls._read_raw_data(path=path, week=week, num_weeks=num_weeks)
+        if len(prices_np) == 0:
+            print(f"[Warning]: No prices data loaded from {path}")
+            return np.array([])
         simple_returns_np = cls._convert_to_simple_returns(prices_np, horizon)
         return simple_returns_np
 
     @staticmethod
     def _read_raw_data(path, week, num_weeks):
+        print(f"[Debug_Output]: Function '_read_raw_data' called with path={path}, week={week}, num_weeks={num_weeks}")
         fin = open(path)
         raw_data = pd.read_csv(fin)
+
+        # FIX: Check if split_point column exists and has True values
+        if "split_point" not in raw_data.columns:
+            print(f"[Warning]: No 'split_point' column found in {path}. Using all data.")
+            # If no split_point column, return all data
+            out = raw_data.drop(columns=["Date"], errors='ignore').to_numpy()
+            print(f"[Debug]: Returning all {len(raw_data)} rows")
+            return out
 
         truncate_index = len(raw_data)
         stopping_point = -1
         truncation_mark = num_weeks - week
 
+        # FIX: If no split points exist, don't truncate
+        sp_col = raw_data["split_point"]
+        has_split_points = sp_col.any()
+        
+        print(
+            f"[Debug_Output]: _read_raw_data DIAGNOSTIC | split_point dtype={sp_col.dtype} | "
+            f"unique_values={sp_col.unique().tolist()} | "
+            f"sum_truthy={sp_col.astype(bool).sum()} | "
+            f"has_split_points={has_split_points}"
+        )
+
+        if not has_split_points:
+            print(f"[Info]: No split points found in {path}. Using all data without truncation.")
+            # Return all data, no truncation
+            out = raw_data.drop(["split_point"], axis=1).drop(columns=["Date"], errors='ignore').to_numpy()
+            print(f"[Debug]: Returning all {len(raw_data)} rows, out_shape={out.shape}")
+            return out
+
+        # Only truncate if we have split points
         for point in reversed(raw_data["split_point"]):
             if stopping_point == truncation_mark:
                 break
@@ -393,9 +592,18 @@ class DatasetFinancial(Dataset):
 
             truncate_index -= 1
 
-        return (raw_data.loc[:truncate_index].drop(["split_point"], axis=1).drop(columns=["Date"]).to_numpy())
+        out = raw_data.loc[:truncate_index].drop(["split_point"], axis=1).drop(columns=["Date"], errors='ignore').to_numpy()
+        print(
+            f"[Debug_Output]: _read_raw_data done | n_rows_full={len(raw_data)} | truncate_index={truncate_index} | "
+            f"out_shape={out.shape} | week={week} truncation_mark={truncation_mark}"
+        )
+        return out
 
     @staticmethod
     def _convert_to_simple_returns(prices_np, horizon):
+        print(f"[Debug_Output]: Function '_convert_to_simple_returns' called with prices_np.shape={prices_np.shape}, horizon={horizon}")
+        if len(prices_np) <= horizon:
+            print(f"[Warning]: Not enough data for conversion. prices_np length={len(prices_np)}, horizon={horizon}")
+            return np.array([])
         simple_returns = prices_np[horizon:] / prices_np[:-horizon]
         return simple_returns

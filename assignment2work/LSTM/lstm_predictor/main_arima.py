@@ -1,3 +1,10 @@
+"""
+Per-asset ARIMA baseline with optional Hyperopt order search (multivariate FX/crypto style data).
+
+System arguments:
+    None. Run via ``python main_arima.py``; uses ``Config`` only.
+"""
+
 import datetime
 import os
 
@@ -16,15 +23,34 @@ from tqdm import tqdm, trange
 
 # noinspection PyPep8Naming
 def format_time_as_YYYYMMddHHmm(time):
+    """Compact timestamp string for output directories."""
+    print(f"[Debug_Output]: main_arima.format_time_as_YYYYMMddHHmm | {time!r}")
     return (time.isoformat(sep="/", timespec="minutes").replace("-", "").replace(":", "").replace("/", ""))
 
 
 class Constants:
+    """Run id timestamp for ARIMA artifact paths."""
+
     PREDICTION_TIME = format_time_as_YYYYMMddHHmm(datetime.datetime.now())
 
 
 # noinspection DuplicatedCode
 class Config:
+    """
+    ARIMA + Hyperopt settings.
+
+    Attributes:
+        early_stopping_patience (int): Unused here. Example: ``100``.
+        horizon (int): Forecast horizon in steps. Example: ``5``.
+        hpo_max_evals (int): Trials per asset or per objective. Example: ``30``.
+        hpo_space (dict): Hyperopt choices for ``(p,d,q)`` and ``seq_len``.
+        training_ratio, validation_ratio (float): Splits for loaders. Example: ``0.6``, ``0.2``.
+        log_active (bool): Verbose logging flag.
+        prices_path (str): Example: ``../ticker-collector/out/fx/daily_10_4506_marked.csv``.
+        predictions_base_path (str): Saved ``.npy`` root.
+        num_weeks_to_train, total_weeks (int): Rolling experiment length. Example: ``104``.
+    """
+
     early_stopping_patience = 100
     horizon = 5
 
@@ -56,6 +82,7 @@ class Config:
 
 
 def log(week, message, log_anyway=False):
+    print(f"[Debug_Output]: main_arima.log week={week} log_anyway={log_anyway}")
     if log_anyway or Config.log_active:
         print(f"Week: {week} | {message}")
 
@@ -69,11 +96,9 @@ def read_return_ratios(
     fill_zero_for_the_first_horizon_samples=False,
 ):
     """
-    :return: Log returns, the last line is the last split point in the data when week == num_weeks.
-             If week == num_weeks -1, the last line is the second last split point in the data, and so on.
-             If fill_zero_for_the_first_horizon_samples is False, then the first output np array will have `horizon`
-             fewer rows.
+    Load marked CSV and return simple returns (see LSTM ``read_return_ratios`` for parameter semantics).
     """
+    print(f"[Debug_Output]: main_arima.read_return_ratios path={data_path!r} week={week}")
     assert (0 <= week <= num_weeks), f"week must be between 0 and num_weeks (inclusive): 0 <= {week} <= {num_weeks}"
     assert num_weeks >= 0, f"num_weeks must be >= 0, got {num_weeks}"
 
@@ -100,6 +125,7 @@ def read_return_ratios(
 
 # noinspection DuplicatedCode
 def _convert_to_simple_returns(df, fill_zero_for_the_first_horizon_samples):
+    print(f"[Debug_Output]: main_arima._convert_to_simple_returns df.shape={df.shape}")
     np_form = df.drop(["Date"], axis=1).to_numpy()
     simple_returns = np_form[Config.horizon:] / np_form[:-Config.horizon]
     if fill_zero_for_the_first_horizon_samples:
@@ -109,8 +135,10 @@ def _convert_to_simple_returns(df, fill_zero_for_the_first_horizon_samples):
 
 # noinspection DuplicatedCode
 class WindowedSplitDataLoader:
+    """Same windowing as VAR/LSTM; exposes ``all`` for full-series ARIMA."""
 
     def __init__(self, data_np, seq_len, horizon, training_ratio, validation_ratio):
+        print(f"[Debug_Output]: main_arima.WindowedSplitDataLoader.__init__ shape={data_np.shape}")
         self._seq_length = seq_len
         self._horizon = horizon
         self._dat = data_np
@@ -146,6 +174,7 @@ class WindowedSplitDataLoader:
         return self._last_day
 
     def _split(self, train_end_index, valid_end_index):
+        print(f"[Debug_Output]: main_arima._split train_end={train_end_index} valid_end={valid_end_index}")
         training_set_indices = range(self._seq_length + self._horizon - 1, train_end_index)
         validation_set_indices = range(train_end_index, valid_end_index)
         test_set = range(valid_end_index, self._num_rows)
@@ -163,6 +192,7 @@ class WindowedSplitDataLoader:
 
     # noinspection PyPep8Naming
     def _batchify(self, idx_set):
+        print(f"[Debug_Output]: main_arima._batchify n={len(idx_set)}")
         n = len(idx_set)
         X = np.zeros((n, self._seq_length, self._num_cols))
         y = np.zeros((n, self._num_cols))
@@ -175,15 +205,21 @@ class WindowedSplitDataLoader:
 
 
 class Runner:
+    """Per-asset ARIMA order search and rolling evaluation."""
 
     def __init__(self, week):
+        print(f"[Debug_Output]: main_arima.Runner.__init__ week={week}")
         self._week = week
         self.space = Config.hpo_space
 
     def get_best_hparams(self):
         """
-        Trains the model multiple times, finds the best hparams and returns.
+        For each price column (asset), run Hyperopt on ``asset_objective``.
+
+        Returns:
+            list[dict]: One best ``(p,d,q), seq_len, ...`` dict per asset.
         """
+        print(f"[Debug_Output]: main_arima.get_best_hparams week={self._week}")
         best_hparams_for_assets = []
         num_assets = len(pd.read_csv(Config.prices_path).columns) - 2
         for asset_index in tqdm(range(num_assets), desc="get_best_hparams"):
@@ -199,11 +235,18 @@ class Runner:
         return best_hparams_for_assets
 
     def asset_objective(self, asset_index):
+        """
+        Build Hyperopt objective for a fixed ``asset_index`` column.
+
+        Args:
+            asset_index (int): Column index in return matrix. Example: ``0``.
+
+        Returns:
+            callable: ``objective(hparams)`` returning AIC or large penalty if not converged.
+        """
+        print(f"[Debug_Output]: main_arima.asset_objective building for asset_index={asset_index}")
 
         def objective(hparams):
-            """
-            :return: Validation loss
-            """
             log(self._week, f"Trying hyperparams: {hparams}")
 
             data_np = read_return_ratios(
@@ -257,11 +300,16 @@ class Runner:
         return objective
 
     def individual_asset_objective(self, asset_index, row_index):
+        """
+        Hyperopt objective using series ``dl.all['y'][:row_index, asset_index]``.
+
+        Args:
+            asset_index (int): Asset column.
+            row_index (int): Expanding window end (exclusive). Example: ``500``.
+        """
+        print(f"[Debug_Output]: main_arima.individual_asset_objective asset={asset_index} row_index={row_index}")
 
         def objective(hparams):
-            """
-            :return: Validation loss
-            """
             log(self._week, f"Trying hyperparams: {hparams}")
 
             data_np = read_return_ratios(
@@ -299,6 +347,8 @@ class Runner:
         return np.sqrt(np.mean((predictions - targets)**2))
 
     def evaluate_the_best_model(self):
+        """Walk-forward test forecasts with per-asset order re-search on failures."""
+        print(f"[Debug_Output]: main_arima.evaluate_the_best_model week={self._week}")
         data_np = read_return_ratios(Config.prices_path, self._week, Config.total_weeks, Config.training_ratio)
         dl = WindowedSplitDataLoader(
             data_np,
@@ -352,6 +402,7 @@ class Runner:
         actuals = dl.test["y"]
 
         def a20_index(v, v_):
+            """Mean A20 from permetrics."""
             evaluator = RegressionMetric(v.reshape(v.shape[0], -1), v_.reshape(v_.shape[0], -1))
             a20 = evaluator.a20_index()
             return np.mean(a20)
@@ -363,6 +414,13 @@ class Runner:
         print(f"Best Model Evaluation: MAPE/MAE/RMSE/A20: {mape:4.5f}/{mae:4.5f}/{rmse:4.5f}/{a20:4.5f}")
 
     def make_predictions(self, best_hparams_for_assets):
+        """
+        One row of forecasts using fixed orders per asset.
+
+        Args:
+            best_hparams_for_assets (list[dict]): Output of ``get_best_hparams``.
+        """
+        print(f"[Debug_Output]: main_arima.make_predictions week={self._week} n_assets={len(best_hparams_for_assets)}")
         data_np = read_return_ratios(Config.prices_path, self._week, Config.total_weeks, Config.training_ratio)
         dl = WindowedSplitDataLoader(
             data_np,
@@ -382,12 +440,15 @@ class Runner:
         return forecasts
 
     def save_predictions(self, predictions):
+        print(f"[Debug_Output]: main_arima.save_predictions week={self._week} shape={getattr(predictions, 'shape', None)}")
         dir_path = f"{Config.predictions_base_path}/{Constants.PREDICTION_TIME}/weeks"
         os.makedirs(dir_path, exist_ok=True)
         np.save(f"{dir_path}/{self._week + 1}", predictions)
 
 
 def main_quick():
+    """Main loop with retry on exceptions; week 0 runs ``evaluate_the_best_model``."""
+    print("[Debug_Output]: main_arima.main_quick start")
     if os.path.exists("figs"):
         os.system("rm -rf figs")
     if os.path.exists("runs"):
@@ -414,4 +475,5 @@ def main_quick():
 
 
 if __name__ == "__main__":
+    print("[Debug_Output]: main_arima __main__ | no argparse")
     main_quick()

@@ -8,6 +8,7 @@ System Arguments Expected:
 import torch
 import os
 import dotenv
+dotenv.load_dotenv()  # Load environment variables from .env file
 from data.data_loader import (
     Dataset_Dhfm,
     Dataset_ECG,
@@ -20,31 +21,31 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 data_information = {
     "traffic": {
-        "root_path": f"data/traffic.npy",
+        "root_path": f"{str(os.getenv('datasets_FourierGNN_path', 'assignment2work/FourierGNN/data'))}/traffic.npy",
         "type": "0"
     },
     "ECG": {
-        "root_path": f"data/ECG_data.csv",
+        "root_path": f"{str(os.getenv('datasets_FourierGNN_path', 'assignment2work/FourierGNN/data'))}/ECG_data.csv",
         "type": "1"
     },
     "COVID": {
-        "root_path": f"{os.getenv('datasets_FourierGNN_path')}/covid.csv",
+        "root_path": f"{str(os.getenv('datasets_FourierGNN_path', 'assignment2work/FourierGNN/data'))}/covid.csv",
         "type": "1"
     },
     "electricity": {
-        "root_path": f"{os.getenv('datasets_FourierGNN_path')}/electricity.csv",
+        "root_path": f"{str(os.getenv('datasets_FourierGNN_path', 'assignment2work/FourierGNN/data'))}/electricity.csv",
         "type": "1"
     },
     "solar": {
-        "root_path": f"{os.getenv('datasets_FourierGNN_path')}/solar",
+        "root_path": f"{str(os.getenv('datasets_FourierGNN_path', 'assignment2work/FourierGNN/data'))}/solar",
         "type": "1"
     },
     "metr": {
-        "root_path": f"{os.getenv('datasets_FourierGNN_path')}/metr.csv",
+        "root_path": f"{str(os.getenv('datasets_FourierGNN_path', 'assignment2work/FourierGNN/data'))}/metr.csv",
         "type": "1"
     },
     "wiki": {
-        "root_path": f"{os.getenv('datasets_FourierGNN_path')}/wiki.csv",
+        "root_path": f"{str(os.getenv('datasets_FourierGNN_path', 'assignment2work/FourierGNN/data'))}/wiki.csv",
         "type": "1"
     },
     "crypto": {

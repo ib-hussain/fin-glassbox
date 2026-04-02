@@ -1,3 +1,5 @@
+"""Unit tests for ``ReportTransformer`` (trading decisions and returns)."""
+
 from unittest import TestCase
 
 import numpy as np
@@ -9,6 +11,7 @@ from helpers import ReportTransformer
 class TestReportTransformer(TestCase):
 
     def test_make_trading_decisions(self):
+        print("[Debug_Output]: test_make_trading_decisions start")
         actual = np.asarray([[1, 2], [3, 4], [15, 6], [7, 5.9999]])
         prediction = np.asarray([[7, 3], [4, 7], [2, 7], [1, 12]])
 
@@ -25,6 +28,7 @@ class TestReportTransformer(TestCase):
         )
 
     def test_get_returns(self):
+        print("[Debug_Output]: test_get_returns start")
         actual = np.asarray([[1, 2], [3, 4], [15, 6], [7.5, 8]])
         expected = np.asarray([[3, 2], [5, 1.5], [0.5, 8 / 6]])
 

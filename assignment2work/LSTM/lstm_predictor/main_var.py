@@ -1,3 +1,10 @@
+"""
+Vector autoregression (VAR) baseline for multivariate financial returns.
+
+System arguments:
+    None. Run via ``python main_var.py``; configuration is via ``Config`` only.
+"""
+
 import datetime
 import os
 
@@ -16,15 +23,34 @@ from tqdm import tqdm, trange
 
 # noinspection PyPep8Naming
 def format_time_as_YYYYMMddHHmm(time):
+    """Same as LSTM ``format_time_as_YYYYMMddHHmm`` — compact timestamp for output paths."""
+    print(f"[Debug_Output]: main_var.format_time_as_YYYYMMddHHmm | time={time!r}")
     return (time.isoformat(sep="/", timespec="minutes").replace("-", "").replace(":", "").replace("/", ""))
 
 
 class Constants:
+    """Run timestamp string and shared constants for VAR outputs."""
+
     PREDICTION_TIME = format_time_as_YYYYMMddHHmm(datetime.datetime.now())
 
 
 # noinspection DuplicatedCode
 class Config:
+    """
+    VAR experiment settings (no CLI).
+
+    Attributes:
+        early_stopping_patience (int): Unused in VAR path; reserved. Example: ``100``.
+        horizon (int): Forecast steps / return horizon. Example: ``7``.
+        training_ratio (float): Train split for ``WindowedSplitDataLoader``. Example: ``0.6``.
+        validation_ratio (float): Validation split. Example: ``0.2``.
+        log_active (bool): Enable verbose ``log`` output.
+        prices_path (str): Marked CSV of prices. Example: ``../ticker-collector/out/crypto/daily_20_2190_marked.csv``.
+        predictions_base_path (str): Root for ``.npy`` predictions.
+        num_weeks_to_train (int): Outer rolling weeks. Example: ``104``.
+        total_weeks (int): Truncation parameter for ``read_return_ratios``. Example: ``104``.
+    """
+
     early_stopping_patience = 100
     horizon = 7
 
@@ -48,6 +74,8 @@ class Config:
 
 
 def log(week, message, log_anyway=False):
+    """Week-tagged logger; see LSTM ``log``."""
+    print(f"[Debug_Output]: main_var.log | week={week} | log_anyway={log_anyway}")
     if log_anyway or Config.log_active:
         print(f"Week: {week} | {message}")
 
@@ -61,11 +89,22 @@ def read_return_ratios(
     fill_zero_for_the_first_horizon_samples=False,
 ):
     """
-    :return: Log returns, the last line is the last split point in the data when week == num_weeks.
-             If week == num_weeks -1, the last line is the second last split point in the data, and so on.
-             If fill_zero_for_the_first_horizon_samples is False, then the first output np array will have `horizon`
-             fewer rows.
+    Load marked CSV and compute simple returns for rolling week ``week`` (see LSTM module for arg details).
+
+    Args:
+        data_path (str): Example: ``../ticker-collector/out/crypto/daily_20_2190_marked.csv``.
+        week (int): Example: ``0``.
+        num_weeks (int): Example: ``104``.
+        training_ratio (float): Passed for API parity; see LSTM. Example: ``0.6``.
+        fill_zero_for_the_first_horizon_samples (bool): Example: ``False``.
+
+    Returns:
+        numpy.ndarray: Simple returns, shape ``(T, n_assets)``.
     """
+    print(
+        f"[Debug_Output]: main_var.read_return_ratios | path={data_path!r} week={week} num_weeks={num_weeks} "
+        f"fill_zero={fill_zero_for_the_first_horizon_samples}"
+    )
     assert (0 <= week <= num_weeks), f"week must be between 0 and num_weeks (inclusive): 0 <= {week} <= {num_weeks}"
     assert num_weeks >= 0, f"num_weeks must be >= 0, got {num_weeks}"
 
@@ -92,6 +131,8 @@ def read_return_ratios(
 
 # noinspection DuplicatedCode
 def _convert_to_simple_returns(df, fill_zero_for_the_first_horizon_samples):
+    """Convert price columns to horizon-step simple returns (see LSTM)."""
+    print(f"[Debug_Output]: main_var._convert_to_simple_returns | df.shape={df.shape}")
     np_form = df.drop(["Date"], axis=1).to_numpy()
     simple_returns = np_form[Config.horizon:] / np_form[:-Config.horizon]
     if fill_zero_for_the_first_horizon_samples:
@@ -101,8 +142,13 @@ def _convert_to_simple_returns(df, fill_zero_for_the_first_horizon_samples):
 
 # noinspection DuplicatedCode
 class WindowedSplitDataLoader:
+    """Sliding windows over returns; includes ``all`` aggregate for VAR fitting."""
 
     def __init__(self, data_np, seq_len, horizon, training_ratio, validation_ratio):
+        print(
+            f"[Debug_Output]: main_var.WindowedSplitDataLoader.__init__ | shape={data_np.shape} seq_len={seq_len} "
+            f"horizon={horizon}"
+        )
         self._seq_length = seq_len
         self._horizon = horizon
         self._dat = data_np
@@ -138,6 +184,10 @@ class WindowedSplitDataLoader:
         return self._last_day
 
     def _split(self, train_end_index, valid_end_index):
+        print(
+            f"[Debug_Output]: main_var.WindowedSplitDataLoader._split | train_end={train_end_index} "
+            f"valid_end={valid_end_index}"
+        )
         training_set_indices = range(self._seq_length + self._horizon - 1, train_end_index)
         validation_set_indices = range(train_end_index, valid_end_index)
         test_set = range(valid_end_index, self._num_rows)
@@ -155,6 +205,7 @@ class WindowedSplitDataLoader:
 
     # noinspection PyPep8Naming
     def _batchify(self, idx_set):
+        print(f"[Debug_Output]: main_var.WindowedSplitDataLoader._batchify | n={len(idx_set)}")
         n = len(idx_set)
         X = np.zeros((n, self._seq_length, self._num_cols))
         y = np.zeros((n, self._num_cols))
@@ -167,15 +218,20 @@ class WindowedSplitDataLoader:
 
 
 class Runner:
+    """Fit VAR, walk-forward forecast test horizon, and save weekly point predictions."""
 
     def __init__(self, week):
+        print(f"[Debug_Output]: main_var.Runner.__init__ week={week}")
         self._week = week
 
     @staticmethod
     def rmse(predictions, targets):
+        """NumPy RMSE."""
         return np.sqrt(np.mean((predictions - targets)**2))
 
     def evaluate(self):
+        """One-shot evaluation metrics on test window using expanding VAR forecasts."""
+        print(f"[Debug_Output]: main_var.Runner.evaluate week={self._week}")
         data_np = read_return_ratios(Config.prices_path, self._week, Config.total_weeks, Config.training_ratio)
         dl = WindowedSplitDataLoader(
             data_np,
@@ -204,6 +260,7 @@ class Runner:
         actuals = dl.test["y"]
 
         def a20_index(v, v_):
+            """Mean A20 index from permetrics over flattened horizons."""
             evaluator = RegressionMetric(v.reshape(v.shape[0], -1), v_.reshape(v_.shape[0], -1))
             a20 = evaluator.a20_index()
             return np.mean(a20)
@@ -215,6 +272,8 @@ class Runner:
         print(f"VAR Model Evaluation: MAPE/MAE/RMSE/A20: {mape:4.5f}/{mae:4.5f}/{rmse:4.5f}/{a20:4.5f}")
 
     def make_predictions(self):
+        """Fit VAR on all data through current split and return one-step horizon forecast row."""
+        print(f"[Debug_Output]: main_var.Runner.make_predictions week={self._week}")
         data_np = read_return_ratios(Config.prices_path, self._week, Config.total_weeks, Config.training_ratio)
         dl = WindowedSplitDataLoader(
             data_np,
@@ -232,12 +291,16 @@ class Runner:
         return forecast
 
     def save_predictions(self, predictions):
+        """Save ``predictions`` as ``{week+1}.npy``."""
+        print(f"[Debug_Output]: main_var.Runner.save_predictions week={self._week} shape={predictions.shape}")
         dir_path = f"{Config.predictions_base_path}/{Constants.PREDICTION_TIME}/weeks"
         os.makedirs(dir_path, exist_ok=True)
         np.save(f"{dir_path}/{self._week + 1}", predictions)
 
 
 def main_quick():
+    """Roll over ``Config.num_weeks_to_train`` weeks; week 0 runs ``evaluate``."""
+    print("[Debug_Output]: main_var.main_quick start")
     if os.path.exists("figs"):
         os.system("rm -rf figs")
     if os.path.exists("runs"):
@@ -260,4 +323,5 @@ def main_quick():
 
 
 if __name__ == "__main__":
+    print("[Debug_Output]: main_var __main__ | no argparse")
     main_quick()

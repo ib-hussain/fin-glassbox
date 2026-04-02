@@ -12,6 +12,7 @@ Thumbs.db
 
 # ── Python byte-compiled / optimised ────────────────────
 __pycache__/
+None/
 *.py[codz]
 *$py.class
 *.so

@@ -1,3 +1,13 @@
+"""
+Standalone script: bar charts of hard-coded mean/std metrics from the paper (FX and crypto).
+
+System arguments:
+    None. Run with ``python table_to_variability_figure.py``; writes PNGs in the current directory.
+
+Outputs:
+    ``fxPredictionMetrics.png``, ``cryptoPredictionMetrics.png`` — paths are relative to CWD.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -43,6 +53,14 @@ crypto_metrics = {
 
 
 def plot_compact(metrics_dict, title):
+    """
+    Render a 2x2 grid of bar charts (one per metric key) and save to ``{title}.png``.
+
+    Args:
+        metrics_dict (dict): Maps metric name -> (list of means, list of stds).
+        title (str): Output filename stem. Example: ``\"fxPredictionMetrics\"``.
+    """
+    print(f"[Debug_Output]: plot_compact | title={title!r} | metrics={list(metrics_dict.keys())}")
     fig, axs = plt.subplots(2, 2, figsize=(12, 8))
     metric_names = list(metrics_dict.keys())
 
@@ -72,5 +90,6 @@ def plot_compact(metrics_dict, title):
 
 
 # Plot
+print("[Debug_Output]: table_to_variability_figure generating figures")
 plot_compact(forex_metrics, "fxPredictionMetrics")
 plot_compact(crypto_metrics, "cryptoPredictionMetrics")

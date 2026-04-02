@@ -1,4 +1,13 @@
-# TODO Integrate this file into main.py later.
+"""
+Offline statistical tests on hard-coded repeated experiment errors (LSTM, MTGNN, etc.).
+
+System arguments:
+    None. Run as ``python independent_t_testing_for_error_measures.py`` from ``reporter/``;
+    script executes paired comparisons at import time.
+
+See also:
+    TODO: Integrate this module into ``main.py`` later.
+"""
 
 import itertools
 
@@ -7,6 +16,7 @@ from scipy.stats import levene, permutation_test, ttest_ind
 
 
 def statistic(x, y, axis):
+    """Difference of means along ``axis`` (used as ``permutation_test`` statistic)."""
     return np.mean(x, axis=axis) - np.mean(y, axis=axis)
 
 
@@ -504,6 +514,17 @@ var_scores = {
 
 
 def apply_tests(dataset, combinations, significance_test_fn):
+    """
+    Print significance tables for every metric and model pair.
+
+    Args:
+        dataset (str): Top-level key in score dicts. Example: ``Cryptocurrency``.
+        combinations (iterable): Pairs of score dicts to compare.
+        significance_test_fn (callable): e.g. ``ttest_ind`` wrapper taking two sample tuples.
+
+    """
+    combinations = list(combinations)
+    print(f"[Debug_Output]: apply_tests | dataset={dataset!r} | n_pairs={len(combinations)}")
     print(f"# {dataset} Results")
     print()
     for metric in ["MAPE", "MAE", "RMSE", "A20"]:
@@ -518,6 +539,8 @@ def apply_tests(dataset, combinations, significance_test_fn):
 
 
 def check_variances(data):
+    """Run Levene test on two samples; print whether variances differ."""
+    print(f"[Debug_Output]: check_variances | lens={len(data[0])} {len(data[1])}")
     stat, p_value = levene(data[0], data[1])
     print(f"Levene's test: statistic={stat}, p-value={p_value}")
     if p_value < 0.05:
@@ -527,7 +550,8 @@ def check_variances(data):
 
 
 def permutation_test_algorithm(data):
-    print(data[0], "vs", data[1])
+    """Wrapper around ``scipy.stats.permutation_test`` with vectorized mean-diff statistic."""
+    print(f"[Debug_Output]: permutation_test_algorithm | {data[0]} vs {data[1]}")
     return permutation_test(
         data,
         statistic,
@@ -539,6 +563,8 @@ def permutation_test_algorithm(data):
 
 
 def t_test_ind_algorithm(data):
+    """Independent two-sided t-test on two 1D samples."""
+    print(f"[Debug_Output]: t_test_ind_algorithm | n0={len(data[0])} n1={len(data[1])}")
     return ttest_ind(data[0], data[1], alternative="two-sided")
 
 

@@ -1,3 +1,10 @@
+"""
+Printing and plotting facade for portfolio metrics, correlations, and classification-style trade stats.
+
+System arguments:
+    None.
+"""
+
 import itertools
 
 import numpy as np
@@ -14,9 +21,12 @@ from .stats import Stats
 
 
 class Reporter:
+    """Notebook-oriented console/plot outputs; uses IPython ``display`` when available."""
 
     @staticmethod
     def plot_standardized_prices(actual_prices, predicted_prices):
+        """Cross-sectionally standardized price trajectories for visual comparison."""
+        print(f"[Debug_Output]: Reporter.plot_standardized_prices | n_predicted={len(predicted_prices)}")
         if config.OutputFlags.plot_standardized_prices:
             standardized_actual_prices = Data(Stats.std_mean(actual_prices.data), actual_prices.label)
             standardized_predicted_prices = [Data(Stats.std_mean(pp.data), pp.label) for pp in predicted_prices]
@@ -37,6 +47,8 @@ class Reporter:
 
     @classmethod
     def print_stats_between_all_predicted_and_actual_prices(cls, actual_prices, predicted_prices):
+        """Tabulate MAPE/MBD/CFE on reconstructed price levels per model."""
+        print(f"[Debug_Output]: Reporter.print_stats…prices | n_models={len(predicted_prices)}")
         df = pd.DataFrame()
         df["Model"] = [pp.label for pp in predicted_prices]
         df["MAPEs Between Weekly Predicted and Actual Prices"] = [
@@ -49,6 +61,8 @@ class Reporter:
 
     @classmethod
     def print_stats_between_all_predicted_and_actual_returns(cls, actual_prices, predicted_returns):
+        """Tabulate metrics on simple returns (actual vs predicted)."""
+        print(f"[Debug_Output]: Reporter.print_stats…returns | n_models={len(predicted_returns)}")
         actual_returns = actual_prices.data[1:] / actual_prices.data[:-1]
         df = pd.DataFrame()
         df["Model"] = [pp.label for pp in predicted_returns]
@@ -62,6 +76,10 @@ class Reporter:
 
     @staticmethod
     def plot_portfolio_values_of_random_all_and_deep_learning_models(portfolio_values_df, ):
+        """Line plot of capital curves for baselines and best models."""
+        print(
+            f"[Debug_Output]: Reporter.plot_portfolio_values | columns={list(portfolio_values_df.columns)}"
+        )
         fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
         portfolio_values_df.plot(ax=ax)
         ax.set_xlabel("Weeks")
@@ -71,6 +89,8 @@ class Reporter:
 
     @classmethod
     def print_resulting_portfolio_values_for_each_model(cls, portfolio_values_df):
+        """Final vs initial capital snapshot."""
+        print("[Debug_Output]: Reporter.print_resulting_portfolio_values_for_each_model")
         df = portfolio_values_df.tail(1).T
         df.columns = ["Final Capital ($)"]
         df["Initial Capital ($)"] = float(Portfolio.get_initial_capital())
@@ -80,6 +100,8 @@ class Reporter:
 
     @staticmethod
     def print_statistical_significance_metrics(values_df, kind):
+        """Paired t-tests between every column pair in ``values_df`` (capital or returns)."""
+        print(f"[Debug_Output]: Reporter.print_statistical_significance_metrics | kind={kind!r}")
         print(f"Statistical significance analysis for weekly {kind}:")
 
         results = []
@@ -99,14 +121,17 @@ class Reporter:
 
     @classmethod
     def plot_correlation_matrix_of_actual_prices(cls, actual_prices):
+        print("[Debug_Output]: Reporter.plot_correlation_matrix_of_actual_prices")
         cls.plot_correlation_matrix(pd.DataFrame(actual_prices.data), "Correlation Matrix of Actual Prices")
 
     @classmethod
     def plot_correlation_matrix_of_returns(cls, returns_df):
+        print("[Debug_Output]: Reporter.plot_correlation_matrix_of_returns")
         cls.plot_correlation_matrix(returns_df, "Correlation Matrix of Returns")
 
     @staticmethod
     def plot_correlation_matrix(returns_df, title):
+        print(f"[Debug_Output]: Reporter.plot_correlation_matrix | title={title!r}")
         fig, ax = plt.subplots(figsize=(15, 10))
         sns.heatmap(returns_df.corr(), annot=True, linewidths=0.5, ax=ax)
         ax.set_title(title)
@@ -114,12 +139,14 @@ class Reporter:
 
     @classmethod
     def plot_pairwise_returns(cls, returns_df):
+        print("[Debug_Output]: Reporter.plot_pairwise_returns")
         if config.OutputFlags.plot_pairwise_returns:
             for comp in itertools.combinations(returns_df.columns, 2):
                 cls.plot_returns(returns_df[[*comp]])
 
     @staticmethod
     def plot_returns(returns_df):
+        print(f"[Debug_Output]: Reporter.plot_returns | n_series={returns_df.shape[1]}")
         fig, ax = plt.subplots(figsize=(15, 10))
         returns_df.plot(ax=ax)
         ax.set_xlabel("Weeks")
@@ -129,6 +156,19 @@ class Reporter:
 
     @classmethod
     def print_portfolio_metrics(cls, portfolio_values_df, risk_free_rate_13_week, bull_bear_split_needed):
+        """
+        Annualized return/vol/Sharpe/drawdown per model; optional bull/bear half split (crypto).
+
+        Args:
+            portfolio_values_df (pandas.DataFrame): Weekly capital columns.
+            risk_free_rate_13_week (float): Thirteen-week T-bill style rate input for Sharpe.
+                Example: ``3.31694291`` (FX) or ``0.625856574`` (crypto) as in ``main.py``.
+            bull_bear_split_needed (bool): If True, split series at midpoint for regime stats.
+        """
+        print(
+            f"[Debug_Output]: Reporter.print_portfolio_metrics | bull_bear={bull_bear_split_needed} | "
+            f"rf_13w={risk_free_rate_13_week}"
+        )
 
         def get_portfolio_metrics(df):
             model_name = df.columns[0]
@@ -194,6 +234,7 @@ class Reporter:
 
     @classmethod
     def print_portfolio_asset_selection_accuracies(cls, model_results):
+        print(f"[Debug_Output]: Reporter.print_portfolio_asset_selection_accuracies | n={len(model_results)}")
         df = pd.DataFrame()
         df["Model"] = [m.label for m in model_results]
         df["Asset Selection Accuracy"] = [m.asset_selection_accuracy for m in model_results]
@@ -203,6 +244,8 @@ class Reporter:
 
     @classmethod
     def print_direction_based_metrics(cls, actual_prices, predicted_prices, best_model_names):
+        """Buy/Hold/Sell accuracy vs perfect foresight decisions for best models."""
+        print(f"[Debug_Output]: Reporter.print_direction_based_metrics | best_model_names={best_model_names}")
         y_true = ReportTransformer.get_trading_decisions(actual_prices.data, actual_prices.data).ravel()
 
         overall = {}
@@ -219,6 +262,7 @@ class Reporter:
 
     @staticmethod
     def plot_predicted_and_actual_portfolio_values(best_model_results):
+        print(f"[Debug_Output]: Reporter.plot_predicted_and_actual_portfolio_values | n={len(best_model_results)}")
         if config.OutputFlags.plot_predicted_and_actual_portfolio_values:
 
             def plot(model):
@@ -233,6 +277,7 @@ class Reporter:
 
     @classmethod
     def print_mapes_between_actual_and_predicted_model_portfolios(cls, best_model_results):
+        print(f"[Debug_Output]: Reporter.print_mapes_between…portfolios | n={len(best_model_results)}")
         df = pd.DataFrame([{
             "Model":
             m.label,
@@ -243,6 +288,8 @@ class Reporter:
 
     @classmethod
     def print_test_mapes(cls):
+        """Static table from external Colab logs (not recomputed)."""
+        print("[Debug_Output]: Reporter.print_test_mapes")
         models = ["Connecting the Dots", "DeepGLO", "LSTM"]
         mapes = [e * 100 for e in [0.0603, 0.10028966475567343, 0.09663211554288864]
                  ]  # They are copied from Colab logs, no calculation here
@@ -253,6 +300,8 @@ class Reporter:
 
     @staticmethod
     def _calculate_overall_results(y_pred, y_true):
+        """Weighted sklearn classification metrics (arguments follow internal call order)."""
+        print("[Debug_Output]: Reporter._calculate_overall_results")
         accuracy = accuracy_score(y_true, y_pred)
         precision_weighted = precision_score(y_true, y_pred, average="weighted")
         recall_weighted = recall_score(y_true, y_pred, average="weighted")
@@ -266,6 +315,7 @@ class Reporter:
 
     @classmethod
     def _calculate_results_per_class(cls, y_pred, y_true):
+        print("[Debug_Output]: Reporter._calculate_results_per_class")
         classes = ["Buy", "Hold", "Sell"]
 
         def class_metric_names(metric):
@@ -283,6 +333,7 @@ class Reporter:
 
     @staticmethod
     def _calculate_class_based_metrics(ground_truth_decisions, predicted_decisions_of_model, classes):
+        print("[Debug_Output]: Reporter._calculate_class_based_metrics")
         precision_classes = precision_score(
             ground_truth_decisions,
             predicted_decisions_of_model,
@@ -305,6 +356,8 @@ class Reporter:
 
     @staticmethod
     def display(df):
+        """Prefer IPython ``display``; fall back to ``print`` in plain Python."""
+        print(f"[Debug_Output]: Reporter.display | df_shape={getattr(df, 'shape', None)}")
         try:
             display(df)
         except NameError:

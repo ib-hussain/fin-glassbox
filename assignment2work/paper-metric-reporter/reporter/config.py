@@ -26,7 +26,7 @@ class FXPaths:
 
 
 class CryptoPaths:
-    actual = DataPath("../ticker-collector/out/crypto/daily_20_2189_marked.csv", "Actual")
+    actual = DataPath("../ticker-collector/out/crypto/daily_20_2190_marked.csv", "Actual")
     raw_prediction_paths = [
         DataPath(f"../experiment-results/crypto/stemgnn-results/202312090602", "StemGNN"),
         DataPath(f"../experiment-results/crypto/mtgnn-results/7", "MTGNN:7"),

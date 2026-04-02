@@ -308,7 +308,7 @@ class DatasetFinancial(Dataset):
         Splits pre-marked CSV outputs extracting only rows mapped to limits.
         
         Args:
-            root_path (str): The merged CSV. Example: "assignment2work/datasetsOut/crypto/daily_20_2189_marked.csv"
+            root_path (str): The merged CSV. Example: "assignment2work/datasetsOut/crypto/daily_20_2190_marked.csv"
             week (int): Evaluation temporal index logic parameter. Example: 50
             flag (str): Phase logic parameter. Example: "train"
             seq_len, pre_len, type, train_ratio, val_ratio: Dimension sizing.

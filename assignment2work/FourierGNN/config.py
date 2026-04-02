@@ -47,7 +47,7 @@ data_information = {
         "type": "1"
     },
     "crypto": {
-        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/crypto/daily_20_2189_marked.csv",
+        "root_path": f"{dotenv.get_key('.env', 'datasets_in_path')}/crypto/daily_20_2190_marked.csv",
         "type": "1",
     },
     "fx": {

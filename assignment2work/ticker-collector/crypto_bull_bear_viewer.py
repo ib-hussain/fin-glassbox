@@ -4,7 +4,7 @@ This script generates a visualization showing standardized price movements for s
 
 System Arguments:
     This script does not accept any system arguments. It has hardcoded paths, specifically reading from:
-    "assignment2work/datasetsOut/crypto/daily_20_2189_marked.csv"
+    "assignment2work/datasetsOut/crypto/daily_20_2190_marked.csv"
 """
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -15,7 +15,7 @@ sns.set_theme(style="darkgrid")
 
 scaler = StandardScaler()
 
-df = pd.read_csv("assignment2work/datasetsOut/crypto/daily_20_2189_marked.csv")[["Date", "ADA-USD", "BTC-USD", "ETH-USD",
+df = pd.read_csv("assignment2work/datasetsOut/crypto/daily_20_2190_marked.csv")[["Date", "ADA-USD", "BTC-USD", "ETH-USD",
                                                          "XTZ-USD"]].set_index("Date")[-730:]
 df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df.index)
 fig, ax = plt.subplots(figsize=(8, 5), dpi=300)

@@ -32,7 +32,7 @@ class Config:
     validation_ratio = 0.2
 
     log_active = False
-    prices_path = "../ticker-collector/out/crypto/daily_20_2189_marked.csv"
+    prices_path = "../ticker-collector/out/crypto/daily_20_2190_marked.csv"
     predictions_base_path = "var_prediction-crypto"
     num_weeks_to_train = 104
     total_weeks = 104

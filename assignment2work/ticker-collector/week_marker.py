@@ -41,6 +41,7 @@ def main(input_path):
     df_with_split_points = df.merge(last_one_years_weeks_df, how="left", on="Date").fillna(False)
 
     df_with_split_points.set_index(["Date"]).to_csv(output_path)
+    print(f"Work completed successfullly. \nMarked CSV saved to: {output_path}")
 
 
 if __name__ == "__main__":

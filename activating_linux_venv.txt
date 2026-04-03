@@ -36,7 +36,7 @@ pip --version
 pip freeze > requirements.txt
 
 # for installing list
-pip install -r requirements.txt
+pip install -r requirements_linux_venv.txt
 
 # for installing package
 pip install <package_name>

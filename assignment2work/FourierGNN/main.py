@@ -19,11 +19,14 @@ System Arguments Expected:
     --train_ratio (float): Ratio of dataset slice used for training. Example: 0.7
     --val_ratio (float): Ratio of dataset slice used for validation. Example: 0.2
 """
-import argparse
 import os
 import dotenv
 dotenv.load_dotenv()  # Load environment variables from .env file
+debugOption = bool(int(os.getenv("DEBUG_MODE", "0")))  # Default to "0"(False) if DEBUG is not set
+import inspect  # ADD THIS IMPORT
+
 import time
+import argparse
 from types import SimpleNamespace
 
 import numpy as np
@@ -39,7 +42,7 @@ from utils.utils import evaluate, load_model, save_model
 
 
 def main():
-    print(f"[Debug_Output]: Function 'main' called in main.py")
+    if debugOption:print(f"[Debug_Output]: Function 'main' called in main.py")
     """
     Main loop integrating command-line argument parsing and sequential execution
     across advancing weeks. Triggers new hyperparameter searches periodically.
@@ -65,7 +68,7 @@ def main():
 
 
 def search_hyperparameters(data, pre_length, train_epochs, batch_size, train_ratio, val_ratio, week):
-    print(f"[Debug_Output]: Function 'search_hyperparameters' called with data={data}, pre_length={pre_length}, train_epochs={train_epochs}, batch_size={batch_size}, train_ratio={train_ratio}, val_ratio={val_ratio}, week={week}")
+    if debugOption:print(f"[Debug_Output]: Function 'search_hyperparameters' called with data={data}, pre_length={pre_length}, train_epochs={train_epochs}, batch_size={batch_size}, train_ratio={train_ratio}, val_ratio={val_ratio}, week={week}")
     """
     Uses hyperopt to automate hyperparameter tuning over predefined boundaries.
     
@@ -111,8 +114,101 @@ def search_hyperparameters(data, pre_length, train_epochs, batch_size, train_rat
     return best_hparams
 
 
+# def run(args, week, hparam_search=False):
+#     if debugOption:print(f"[Debug_Output]: Function 'run' called with args={args}, week={week}, hparam_search={hparam_search}")
+#     """
+#     Executes a single workflow iteration including data loading, model instantiation, 
+#     compilation, and triggering training or evaluation execution for the given week limit.
+    
+#     Args:
+#         args (SimpleNamespace): Hyperparameters and parameters bundled into attributes.
+#         week (int): Current week for data truncation. Example: 15
+#         hparam_search (bool): Flag whether this execution is part of HPO (true) or normal (false).
+#     """
+#     result_train_file = create_output_directories(args.data)
+#     data_info = data_information[args.data]
+
+#     Data = data_dict[args.data]
+
+#     train_set = Data(
+#         root_path=data_info["root_path"],
+#         week=week,
+#         flag="train",
+#         seq_len=args.seq_length,
+#         pre_len=args.pre_length,
+#         type=data_info["type"],
+#         train_ratio=args.train_ratio,
+#         val_ratio=args.val_ratio,
+#     )
+#     val_set = Data(
+#         root_path=data_info["root_path"],
+#         week=week,
+#         flag="val",
+#         seq_len=args.seq_length,
+#         pre_len=args.pre_length,
+#         type=data_info["type"],
+#         train_ratio=args.train_ratio,
+#         val_ratio=args.val_ratio,
+#     )
+#     test_set = Data(
+#         root_path=data_info["root_path"],
+#         week=week,
+#         flag="test",
+#         seq_len=args.seq_length,
+#         pre_len=args.pre_length,
+#         type=data_info["type"],
+#         train_ratio=args.train_ratio,
+#         val_ratio=args.val_ratio,
+#     )
+
+#     train_dataloader = DataLoader(
+#         train_set,
+#         batch_size=args.batch_size,
+#         shuffle=True,
+#         num_workers=0,
+#         drop_last=False,
+#     )
+#     val_dataloader = DataLoader(
+#         val_set,
+#         batch_size=args.batch_size,
+#         shuffle=True,
+#         num_workers=0,
+#         drop_last=False,
+#     )
+#     test_dataloader = DataLoader(
+#         test_set,
+#         batch_size=args.batch_size,
+#         shuffle=False,
+#         num_workers=0,
+#         drop_last=False,
+#     )
+
+#     model = FGN(
+#         pre_length=args.pre_length,
+#         embed_size=args.embed_size,
+#         seq_length=args.seq_length,
+#         hidden_size=args.hidden_size,
+#     ).to(device)
+#     my_optim = torch.optim.RMSprop(params=model.parameters(), lr=args.learning_rate, eps=1e-08)
+#     my_lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=my_optim, gamma=args.decay_rate)
+#     forecast_loss = nn.MSELoss(reduction="mean").to(device)
+
+#     return execute_training_and_prediction(
+#         args,
+#         week,
+#         model,
+#         train_dataloader,
+#         forecast_loss,
+#         my_optim,
+#         my_lr_scheduler,
+#         val_dataloader,
+#         result_train_file,
+#         test_dataloader,
+#         test_set,
+#         hparam_search,
+#     )
 def run(args, week, hparam_search=False):
-    print(f"[Debug_Output]: Function 'run' called with args={args}, week={week}, hparam_search={hparam_search}")
+    if debugOption:print(f"[Debug_Output]: Function 'run' called with args={args}, week={week}, hparam_search={hparam_search}")
     """
     Executes a single workflow iteration including data loading, model instantiation, 
     compilation, and triggering training or evaluation execution for the given week limit.
@@ -126,37 +222,72 @@ def run(args, week, hparam_search=False):
     data_info = data_information[args.data]
 
     Data = data_dict[args.data]
-
-    train_set = Data(
-        root_path=data_info["root_path"],
-        week=week,
-        flag="train",
-        seq_len=args.seq_length,
-        pre_len=args.pre_length,
-        type=data_info["type"],
-        train_ratio=args.train_ratio,
-        val_ratio=args.val_ratio,
-    )
-    val_set = Data(
-        root_path=data_info["root_path"],
-        week=week,
-        flag="val",
-        seq_len=args.seq_length,
-        pre_len=args.pre_length,
-        type=data_info["type"],
-        train_ratio=args.train_ratio,
-        val_ratio=args.val_ratio,
-    )
-    test_set = Data(
-        root_path=data_info["root_path"],
-        week=week,
-        flag="test",
-        seq_len=args.seq_length,
-        pre_len=args.pre_length,
-        type=data_info["type"],
-        train_ratio=args.train_ratio,
-        val_ratio=args.val_ratio,
-    )
+    
+    # FIX: Check if the dataset class expects a 'week' parameter
+    # DatasetFinancial expects week, others don't
+    import inspect
+    sig = inspect.signature(Data.__init__)
+    expects_week = 'week' in sig.parameters
+    
+    if expects_week:
+        train_set = Data(
+            root_path=data_info["root_path"],
+            week=week,
+            flag="train",
+            seq_len=args.seq_length,
+            pre_len=args.pre_length,
+            type=data_info["type"],
+            train_ratio=args.train_ratio,
+            val_ratio=args.val_ratio,
+        )
+        val_set = Data(
+            root_path=data_info["root_path"],
+            week=week,
+            flag="val",
+            seq_len=args.seq_length,
+            pre_len=args.pre_length,
+            type=data_info["type"],
+            train_ratio=args.train_ratio,
+            val_ratio=args.val_ratio,
+        )
+        test_set = Data(
+            root_path=data_info["root_path"],
+            week=week,
+            flag="test",
+            seq_len=args.seq_length,
+            pre_len=args.pre_length,
+            type=data_info["type"],
+            train_ratio=args.train_ratio,
+            val_ratio=args.val_ratio,
+        )
+    else:
+        train_set = Data(
+            root_path=data_info["root_path"],
+            flag="train",
+            seq_len=args.seq_length,
+            pre_len=args.pre_length,
+            type=data_info["type"],
+            train_ratio=args.train_ratio,
+            val_ratio=args.val_ratio,
+        )
+        val_set = Data(
+            root_path=data_info["root_path"],
+            flag="val",
+            seq_len=args.seq_length,
+            pre_len=args.pre_length,
+            type=data_info["type"],
+            train_ratio=args.train_ratio,
+            val_ratio=args.val_ratio,
+        )
+        test_set = Data(
+            root_path=data_info["root_path"],
+            flag="test",
+            seq_len=args.seq_length,
+            pre_len=args.pre_length,
+            type=data_info["type"],
+            train_ratio=args.train_ratio,
+            val_ratio=args.val_ratio,
+        )
 
     train_dataloader = DataLoader(
         train_set,
@@ -205,9 +336,8 @@ def run(args, week, hparam_search=False):
         hparam_search,
     )
 
-
 def parse_arguments():
-    print(f"[Debug_Output]: Function 'parse_arguments' called")
+    if debugOption:print(f"[Debug_Output]: Function 'parse_arguments' called")
     """
     Parses command-line system arguments to extract training requirements dynamically.
     See module docstrings for parameter specifics.
@@ -243,7 +373,7 @@ def parse_arguments():
 
 
 def create_output_directories(data):
-    print(f"[Debug_Output]: Function 'create_output_directories' called with data={data}")
+    if debugOption:print(f"[Debug_Output]: Function 'create_output_directories' called with data={data}")
     """
     Generates required train and test log directories securely.
     
@@ -276,7 +406,7 @@ def execute_training_and_prediction(
     test_set,
     hparam_search,
 ):
-    print(f"[Debug_Output]: Function 'execute_training_and_prediction' called with args={args}, week={week}, hparam_search={hparam_search}")
+    if debugOption:print(f"[Debug_Output]: Function 'execute_training_and_prediction' called with args={args}, week={week}, hparam_search={hparam_search}")
     """
     Coordinates epoch-level loop handling gradient updates via backward passes, 
     loss function validation triggers, and invoking test execution.
@@ -343,7 +473,7 @@ def execute_training_and_prediction(
 
 
 def validate(model, vali_loader, forecast_loss):
-    print(f"[Debug_Output]: Function 'validate' called with model={model}, vali_loader={vali_loader}, forecast_loss={forecast_loss}")
+    if debugOption:print(f"[Debug_Output]: Function 'validate' called with model={model}, vali_loader={vali_loader}, forecast_loss={forecast_loss}")
     """
     Performs inference over the validation set without computing backward gradients.
     
@@ -381,7 +511,7 @@ def validate(model, vali_loader, forecast_loss):
 
 
 def test(args, week, test_dataloader, test_set):
-    print(f"[Debug_Output]: Function 'test' called with args={args}, week={week}, test_dataloader={test_dataloader}, test_set={test_set}")
+    if debugOption:print(f"[Debug_Output]: Function 'test' called with args={args}, week={week}, test_dataloader={test_dataloader}, test_set={test_set}")
     """
     Examines final forecasting capability out of sample relying upon `evaluate` 
     helper across MAE/RMSE parameters utilizing inverse standardization mapping logic.
@@ -392,7 +522,7 @@ def test(args, week, test_dataloader, test_set):
         test_dataloader (DataLoader): Final out-of-sample data generator.
         test_set (Dataset): Native representation hosting unscaled scaler references.
     """
-    result_test_file = str(os.getenv("datasets_FourierGNN_output_path","assignment2work/FourierGNN/output" )) + args.data + "/train"
+    result_test_file = str(os.getenv("datasets_FourierGNN_output_path","assignment2work/FourierGNN/output" ))+ "/"+ args.data + "/train"
     model = load_model(result_test_file)
     model.eval()
     preds = []

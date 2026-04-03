@@ -3,8 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from config import device
+import os
 import dotenv
 dotenv.load_dotenv()  # Load environment variables from .env file
+debugOption = bool(int(os.getenv("DEBUG_MODE", "0")))
 
 
 """
@@ -26,7 +28,7 @@ class FGN(nn.Module):
         hidden_size_factor=1,
         sparsity_threshold=0.01,
     ):
-        print(f"[Debug_Output]: Function 'FGN.__init__' called with pre_length={pre_length}, embed_size={embed_size}, seq_length={seq_length}, hidden_size={hidden_size}, hard_thresholding_fraction={hard_thresholding_fraction}, hidden_size_factor={hidden_size_factor}, sparsity_threshold={sparsity_threshold}")
+        if debugOption: print(f"[Debug_Output]: Function 'FGN.__init__' called with pre_length={pre_length}, embed_size={embed_size}, seq_length={seq_length}, hidden_size={hidden_size}, hard_thresholding_fraction={hard_thresholding_fraction}, hidden_size_factor={hidden_size_factor}, sparsity_threshold={sparsity_threshold}")
         """
         Initializes FGN and its trainable scaling factors, embeddings, dimensions and Linear sequential filters.
 
@@ -72,7 +74,7 @@ class FGN(nn.Module):
         self.to(device)
 
     def tokenEmb(self, x):
-        print(f"[Debug_Output]: Function 'tokenEmb' called with x.shape={x.shape}")
+        if debugOption: print(f"[Debug_Output]: Function 'tokenEmb' called with x.shape={x.shape}")
         """
         Multiplies input data spatially against uniform node-embedding characteristics.
         
@@ -88,7 +90,7 @@ class FGN(nn.Module):
 
     # FourierGNN
     def fourierGC(self, x, B, N, L):
-        print(f"[Debug_Output]: Function 'fourierGC' called with B={B}, N={N}, L={L}")
+        if debugOption: print(f"[Debug_Output]: Function 'fourierGC' called with B={B}, N={N}, L={L}")
         """
         Calculates complex multiplication sequences substituting matrix Graph manipulations 
         within isolated frequency boundaries spanning across 3 cascading Linear tiers relying upon Softshrink filters.
@@ -157,7 +159,7 @@ class FGN(nn.Module):
         return z
 
     def forward(self, x):
-        print(f"[Debug_Output]: Function 'forward' called with x.shape={x.shape}")
+        if debugOption: print(f"[Debug_Output]: Function 'forward' called with x.shape={x.shape}")
         """
         Performs network sequence execution chaining `tokenEmb`, RFFT transformations,
         `fourierGC` filtration and returning predictions scaled matching `pre_length`.

@@ -20,7 +20,8 @@ class Config:
     (Added by AI Agent)
     """
     conv_channels = 4
-    epoch = 2000
+    epoch = 200
+    # ib-hussain changed num of epochs from 2000 to 200
     layers = 3
     lr = 0.00014215115225721316
     num_of_weeks_in_window = 2

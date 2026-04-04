@@ -51,7 +51,8 @@ def main():
     args = parse_arguments()
 
     hparams = None
-    for week in tqdm(range(args.starting_week, args.ending_week+1), desc="week"):
+    # for week in tqdm(range(args.starting_week, args.ending_week+1), desc="week"):
+    for week in tqdm(range(args.starting_week, int(os.getenv("ENDING_WEEK", "21"))), desc="week"):
         print(f"Running week: {week}")
         if week % args.hparam_search_freq == 0 or not hparams:
             hparams = search_hyperparameters(
@@ -355,12 +356,12 @@ def parse_arguments():
     )
     parser.add_argument("--data", type=str, default="crypto", help="data set")
     parser.add_argument("--starting_week", type=int, default=2, help="starting week")
-    parser.add_argument("--ending_week", type=int, default=104, help="ending week")
+    # parser.add_argument("--ending_week", type=int, default=21, help="ending week")
     parser.add_argument("--seq_length", type=int, default=12, help="sequence length")
     parser.add_argument("--pre_length", type=int, default=12, help="predict length")
     parser.add_argument("--embed_size", type=int, default=128, help="hidden dimensions")
     parser.add_argument("--hidden_size", type=int, default=256, help="hidden dimensions")
-    parser.add_argument("--train_epochs", type=int, default=100, help="train epochs")
+    parser.add_argument("--train_epochs", type=int, default=50, help="train epochs")
     parser.add_argument("--batch_size", type=int, default=32, help="input data batch size")
     parser.add_argument("--learning_rate", type=float, default=0.00001, help="optimizer learning rate")
     parser.add_argument("--exponential_decay_step", type=int, default=5)
@@ -552,6 +553,6 @@ def test(args, week, test_dataloader, test_set):
 if __name__ == "__main__":
     main()
 # For crypto:
-# python assignment2work/FourierGNN/main.py --data crypto --starting_week 2 --ending_week 21 --train_epochs 50> assignment2work/FourierGNN/main_crypto_ibresults.txt
+# python assignment2work/FourierGNN/main.py --data crypto --starting_week 2  --train_epochs 50> assignment2work/FourierGNN/main_crypto_ibresults.txt
 # For fx:
-# python assignment2work/FourierGNN/main.py --data fx --starting_week 2 --ending_week 21 --train_epochs 50> assignment2work/FourierGNN/main_fx_ibresults.txt
+# python assignment2work/FourierGNN/main.py --data fx --starting_week 2  --train_epochs 50> assignment2work/FourierGNN/main_fx_ibresults.txt

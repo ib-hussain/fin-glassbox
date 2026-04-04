@@ -1,5 +1,9 @@
 '''
 ib-hussain: This is utils file and contains no path so it should be fine, I have not made any changes to it.
+
+(Added by AI Agent)
+Module: trainer.py
+Houses wrapper components driving the optimization, model updates, and iteration steps.
 '''
 import torch.optim as optim
 import math
@@ -8,6 +12,11 @@ import util
 
 
 class Trainer:
+    """
+    Handles step-by-step logic applying clipping, masked errors, curriculum learning shifts 
+    and gradients updating for training sequences.
+    (Added by AI Agent)
+    """
     def __init__(
         self,
         model,
@@ -65,6 +74,11 @@ class Trainer:
         rmse = util.masked_rmse(predict, real, 0.0).item()
         return loss.item(), mape, rmse
 class Optim(object):
+    """
+    A unified interface enabling smooth optimization switching natively managing clips 
+    and parameter distributions during training rounds.
+    (Added by AI Agent)
+    """
     def _makeOptimizer(self):
         if self.method == "sgd":self.optimizer = optim.SGD(self.params, lr=self.lr, weight_decay=self.lr_decay)
         elif self.method == "adagrad":self.optimizer = optim.Adagrad(self.params, lr=self.lr, weight_decay=self.lr_decay)

@@ -1,9 +1,17 @@
 '''
-ib-hussain: This is utils file and contains no path so it should be fine, I have not made any changes to it.
+ib-hussain: This is utils file and the paths have been configured.
+
+(Added by AI Agent)
+Module: train_single_step.py
+Encompasses the `SingleStep` controller class wrapping MTGNN configuration, layout,
+training setup, and output handling into structured modules targeting univariate output steps.
 '''
 import math
 import time
 from dataclasses import dataclass
+import os
+import dotenv
+dotenv.load_dotenv()
 
 import matplotlib.pyplot as plt
 import torch.nn as nn
@@ -19,6 +27,11 @@ from util import *
 
 @dataclass
 class SingleStep:
+    """
+    Configuration manager processing dataset loads, training sessions, performance evaluations, 
+    and output graphing routines for standard single-step modeling.
+    (Added by AI Agent)
+    """
     data_path: str
     week: int
     num_weeks: int
@@ -58,14 +71,16 @@ class SingleStep:
     step_size = 100
     def __post_init__(self):
         file_name = self.data_path.replace(".csv", "")
-        if "out/" in file_name:
-            file_name = file_name.split("out/")[1]
+        # ib-hussain: this is how it was:
+        # if "out/" in file_name: file_name = file_name.split("out/")[1] 
+        # ib-hussain: this is how i have changed it to be to avoid a problem with long and uselessly nested file paths that i was getting because of the way the file name is cut out in that line.
+        if "/data" in file_name:file_name = file_name.split("/")[-1] 
         model_calculation = (0 if self.week < 25 else (25 if 25 <= self.week < 50 else
                                                        (50 if 50 <= self.week < 75 else
                                                         (75 if 75 <= self.week < 90 else 90))))
-        self.model_path = self.init_path(f"model/{self.seq_in_len}/{file_name}/weeks", str(model_calculation), ".pt")
+        self.model_path = self.init_path(f"{str(os.getenv("MTGNN_baseline_path", "assignment2work/MTGNN"))}/model/{self.seq_in_len}/{file_name}/weeks", str(model_calculation), ".pt")
         self.figs_path = self.create_path(
-            f"figs/{Constants.PREDICTION_TIME}/{self.seq_in_len}/{file_name}/week_{self.week}")
+            f"{str(os.getenv("MTGNN_baseline_path", "assignment2work/MTGNN"))}/figs/{Constants.PREDICTION_TIME}/{self.seq_in_len}/{file_name}/week_{self.week}")
         self.prediction_path = self.init_prediction_path(file_name)
         self.data = DataLoaderS(
             self.data_path,
@@ -79,22 +94,33 @@ class SingleStep:
             self.normalize,
             self.run_for_prediction,
         )
-        self.criterion = (nn.L1Loss(size_average=False).to(self.device) if self.L1Loss else nn.MSELoss(
-            size_average=False).to(self.device))
-        self.evaluateL1 = nn.L1Loss(size_average=False).to(self.device)
-        self.evaluateL2 = nn.MSELoss(size_average=False).to(self.device)
+        # ib-hussain: How it was: 
+        # self.criterion = (nn.L1Loss(size_average=False).to(self.device) if self.L1Loss else nn.MSELoss(size_average=False).to(self.device))
+        # self.evaluateL1 = nn.L1Loss(size_average=False).to(self.device)
+        # self.evaluateL2 = nn.MSELoss(size_average=False).to(self.device)
+        # ib-hussain: How i have changed it to be to dogde this error:
+        '''
+        venv3.12.7/lib/python3.12/site-packages/torch/nn/_reduction.py:42: 
+        UserWarning: size_average and reduce args will be deprecated, please use reduction='sum' instead.
+
+        Basically the authors of the paper had written the code with an older version of pytorch and the size_average argument is now deprecated and replaced with reduction='sum' to achieve the same effect of not averaging and just returning the total sum. I have changed it to use reduction='sum' to dogde the warning and make it compatible with newer versions of pytorch.
+         return _Reduction.get_enum(reduction)
+        '''
+        # For size_average=False → reduction='sum' (no averaging, returns total sum)
+        self.criterion = (nn.L1Loss(reduction='sum').to(self.device) if self.L1Loss else nn.MSELoss(reduction='sum').to(self.device))
+        self.evaluateL1 = nn.L1Loss(reduction='sum').to(self.device)
+        self.evaluateL2 = nn.MSELoss(reduction='sum').to(self.device)
         self.summary_writer = self.create_summary_writer(file_name)
         self.model = self.create_model()
         self.optimizer = self.create_optimizer()
         self.print_num_of_model_parameters()
     def __del__(self):
         # noinspection PyBroadException
-        try:
-            self.summary_writer.close()
+        try:self.summary_writer.close()
         except Exception as e:
             print("Failed to close summary writer.", e)
     def init_prediction_path(self, file_name):
-        return self.init_path(f"prediction/{self.seq_in_len}", f"{file_name}/weeks/{self.week + 1}")
+        return self.init_path(f"{str(os.getenv('MTGNN_baseline_path', 'assignment2work/MTGNN'))}/prediction/{self.seq_in_len}", f"{file_name}/weeks/{self.week + 1}")
     @staticmethod
     def init_path(base_path, file_name, file_extension=""):
         os.makedirs(f"{base_path}/{os.path.dirname(file_name)}", exist_ok=True)
@@ -104,7 +130,7 @@ class SingleStep:
         os.makedirs(path, exist_ok=True)
         return path
     def create_summary_writer(self, file_name):
-        path = self.create_path(f"runs/{Constants.PREDICTION_TIME}/{self.seq_in_len}/{file_name}/weeks/{self.week}")
+        path = self.create_path(f"{str(os.getenv('MTGNN_baseline_path', 'assignment2work/MTGNN'))}/runs/{Constants.PREDICTION_TIME}/{self.seq_in_len}/{file_name}/weeks/{self.week}")
         return SummaryWriter(log_dir=path)
     def create_model(self):
         return gtnet(
@@ -282,9 +308,7 @@ class SingleStep:
                 total_loss += loss.item()
                 n_samples += output.size(0) * self.data.num_cols
                 self.optimizer.step()
-
-            if iter % 100 == 0:
-                print("iter:{:3d} | loss: {:.3f}".format(iter, loss.item() / (output.size(0) * self.data.num_cols)))
+            if iter % 100 == 0:print("iter:{:3d} | loss: {:.3f}".format(iter, loss.item() / (output.size(0) * self.data.num_cols)))
             iter += 1
         return total_loss / n_samples
     def evaluate_the_best_model(self):
@@ -329,34 +353,43 @@ class SingleStep:
         )
     def predict_with_the_best_model(self):
         model = self.load_model()
-
         model.eval()
         prediction = None
-
         for X in self.data.get_inputs(self.data.all[0], self.batch_size):
             X = torch.unsqueeze(X, dim=1).transpose(2, 3)
             with torch.no_grad():
                 output = model(X)
             output = torch.squeeze(output)
-            if len(output.shape) == 1:
-                output = output.unsqueeze(dim=0)
-            if prediction is None:
-                prediction = output
-            else:
-                prediction = torch.cat((prediction, output))
+            if len(output.shape) == 1:output = output.unsqueeze(dim=0)
+            if prediction is None:prediction = output
+            else:prediction = torch.cat((prediction, output))
 
         prediction = self.denormalize(prediction).cpu().numpy()
         all_denormalized = self.denormalize(self.data.all[1]).cpu().numpy()
-
-        for j in range(prediction.shape[1]):
-            df = pd.DataFrame()
-            df["actual"] = all_denormalized[:, j]
-            df["predicted"] = prediction[:, j]
-            plt.figure(figsize=(80, 40))
-            df.plot()
-            plt.savefig(f"{self.figs_path}/prediction_of_asset_{j}.png", dpi=300)
-            plt.close()
-
+        # ib-hussain: How it was:
+        # for j in range(0,prediction.shape[1]):
+        #     df = pd.DataFrame()
+        #     df["actual"] = all_denormalized[:, j]
+        #     df["predicted"] = prediction[:, j]
+        #     plt.figure(figsize=(80, 40))
+        #     df.plot()
+        #     plt.savefig(f"{self.figs_path}/prediction_of_asset_{j}.png", dpi=300)
+        #     plt.close()
+        # ib-hussain: The below given code is what i changed it to to dogde this error:
+        '''
+        /mnt/d/Downloads/University/DeepLearning/fin-glassbox/venv3.12.7/lib/python3.12/site-packages/pandas/plotting/_matplotlib/core.py:580: 
+        RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+        fig = self.plt.figure(figsize=self.figsize)
+        ''' 
+        for j in range(0,prediction.shape[1]):
+            if j==0 or prediction.shape[1]-1 ==j:
+                df = pd.DataFrame()
+                df["actual"] = all_denormalized[:, j]
+                df["predicted"] = prediction[:, j]
+                plt.figure(figsize=(80, 40))
+                df.plot()
+                plt.savefig(f"{self.figs_path}/prediction_of_asset_{j}.png", dpi=300)
+                plt.close()
         print(f"Saving prediction results: {self.prediction_path}")
         np.save(self.prediction_path, prediction)
     def load_model(self):
@@ -368,6 +401,10 @@ class SingleStep:
         data = data.to(self.device) * self.data.scale
         return data
 def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size):
+    """
+    Stand-alone evaluator validating inputs against MTGNN constraints checking accuracy indexes (a20, mape).
+    (Added by AI Agent)
+    """
     model.eval()
     total_loss = 0
     total_loss_l1 = 0
@@ -417,6 +454,10 @@ def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size):
     correlation = (correlation[index]).mean()
     return rse, rae, correlation, mape, mae, rmse, a20_idx
 def print_results(runs, acc, corr, mape, rae, vacc, vcorr, vmape, vrae):
+    """
+    Formats the console outputs for accumulated metrics.
+    (Added by AI Agent)
+    """
     print("\n\n")
     print(f"{runs} runs average")
     print("\n\n")

@@ -1,5 +1,10 @@
 '''
 ib-hussain: This file needs to be run from the CLI and it has paths. The CLI args need to be figured out.
+
+(Added by AI Agent)
+Module: predict_weeks.py
+This script iteratively predicts weekly outcomes using a trained MTGNN model over a specified
+range of weeks. It sets up fixed hyperparameters for configuration.
 '''
 import sys
 
@@ -10,6 +15,10 @@ from train_single_step import SingleStep
 
 
 class Config:
+    """
+    Configuration settings for weekly prediction.
+    (Added by AI Agent)
+    """
     conv_channels = 4
     epoch = 2000
     layers = 3
@@ -17,11 +26,37 @@ class Config:
     num_of_weeks_in_window = 2
     weight_decay = 3.485648994073535e-05
 def main(device, data_path, horizon, starting_week, num_weeks):
+    """
+    Main loop to predict sequentially across weeks.
+    (Added by AI Agent)
+
+    Args:
+        device (str): Computing device ('cpu', 'cuda').
+        data_path (str): File path for data.
+        horizon (int): Forecasting steps.
+        starting_week (int): The week index to begin predictions.
+        num_weeks (int): Total number of weeks up to which predictions run.
+    """
     num_assets = len(pd.read_csv(data_path).columns) - 2
     for week in tqdm(range(starting_week, num_weeks), desc="predict_weeks.py > week"):
         print(f"Predicting week: {week}")
         get_predictor(data_path, horizon, num_assets, week, num_weeks, device).predict_with_the_best_model()
 def get_trainer(data_path, horizon, num_assets, week, num_weeks, device):
+    """
+    Retrieve an initialized SingleStep class instance configured for training.
+    (Added by AI Agent)
+
+    Args:
+        data_path (str): Data file path.
+        horizon (int): Forecast horizon.
+        num_assets (int): Total asset nodes based on the dataset.
+        week (int): Current week index.
+        num_weeks (int): End week target for iteration.
+        device (str): Device to run training on.
+
+    Returns:
+        SingleStep: Instantiated class object configured with predefined metrics.
+    """
     return SingleStep(
         data_path=data_path,
         week=week,
@@ -44,6 +79,21 @@ def get_trainer(data_path, horizon, num_assets, week, num_weeks, device):
         validation_split=0.24,
     )
 def get_predictor(data_path, horizon, num_assets, week, num_weeks, device):
+    """
+    Retrieve an initialized SingleStep class instance configured for prediction.
+    (Added by AI Agent)
+
+    Args:
+        data_path (str): Data file path.
+        horizon (int): Forecast horizon.
+        num_assets (int): Total asset nodes based on the dataset.
+        week (int): Current week index.
+        num_weeks (int): Total weeks bounds.
+        device (str): Devices processing the tensor network.
+
+    Returns:
+        SingleStep: Instantiated class object with `run_for_prediction=True`.
+    """
     return SingleStep(
         data_path=data_path,
         week=week,

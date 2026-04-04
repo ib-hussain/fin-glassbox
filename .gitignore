@@ -12,6 +12,9 @@ Thumbs.db
 
 # ── Python byte-compiled / optimised ────────────────────
 __pycache__/
+*.whl
+*.egg-info/
+*.egg
 None/
 *.py[codz]
 *$py.class
@@ -93,16 +96,15 @@ ipython_config.py
 **/*_week_*.csv
 **/*_week_*.npy
 **/output/
-**/prediction/
+# **/prediction/
 **/old_simulations/
+multivariate-time-series-data/
 # models*/
 runs*/
-figs*/
+# figs*/
+
 
 # ── Project-specific: data files ─────────────────────────
-assignment2work/ticker-collector/data/
-assignment2work/ticker-collector/out/
-assignment2work/ticker-collector/config.ini
 data/Huge Stock Market Dataset/
 data/data_FRED/
 data/TradingAgents/

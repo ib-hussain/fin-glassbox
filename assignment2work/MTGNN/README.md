@@ -1,84 +1,53 @@
-This is forked and adapted for our studies from [MTGNN](https://github.com/nnzhan/MTGNN.git).
-
 # MTGNN
-This is a PyTorch implementation of the paper: [Connecting the Dots: Multivariate Time Series Forecasting with Graph Neural Networks](https://arxiv.org/abs/2005.11650), published in KDD-2020.
+This is forked and adapted for our studies from [temporal_gnn/MTGNN](https://github.com/seferlab/temporal_gnn/tree/master/MTGNN).
+The researchers before us forked and adapted it for there studies from [MTGNN](https://github.com/nnzhan/MTGNN.git).
 
-## Requirements
-The model is implemented using Python3 with dependencies specified in requirements.txt
-## Data Preparation
-### Multivariate time series datasets
+## Data 
+The data is already prepared and stored in the data folder, in the [test.csv](data/test/test.csv). This is used for running the [train_fast_single_step_for_speed.py](train_fast_single_step_for_speed.py) and [predict_fast_single_step_for_speed.py](predict_fast_single_step_for_speed.py) scripts. The data is in the same format as the original datasets used and provided by the researchers of the temporal_gnn/MTGNN repository.
 
-Download Solar-Energy, Traffic, Electricity, Exchange-rate datasets from [https://github.com/laiguokun/multivariate-time-series-data](https://github.com/laiguokun/multivariate-time-series-data). Uncompress them and move them to the data folder.
 
-### Traffic datasets
-Download the METR-LA and PEMS-BAY dataset from [Google Drive](https://drive.google.com/open?id=10FOTa6HXPqX8Pf5WRoRwcFnW9BrNZEIX) or [Baidu Yun](https://pan.baidu.com/s/14Yy9isAIZYdU__OYEQGa_g) provided by [Li et al.](https://github.com/liyaguang/DCRNN.git) . Move them into the data folder. 
+## Additional Files Introduced by the temporal_gnn/MTGNN Researchers
+- [hyperparameter_finder.py](hyperparameter_finder.py)
+- [predict_fast_single_step_for_speed.py](predict_fast_single_step_for_speed.py)
+- [train_and_predict_weeks.py](train_and_predict_weeks.py)
+- [train_and_predict_weeks_fast.py](train_and_predict_weeks_fast.py)
+- [train_fast_single_step_for_speed.py](train_fast_single_step_for_speed.py)
+- [predict_weeks.py](predict_weeks.py)
+- [run.py](run.py)
+- train_weeks.py (This file was not provided but referenced in the [run.py](run.py) file, so we created it with the same code structure as [predict_weeks.py](predict_weeks.py) but without the prediction part and using a similar function available to us from the main class)
+- [train_weeks_ibVersion.py](train_weeks_ibVersion.py) (File added by [ib-hussain](https://github.com/ib-hussain) to make the [run.py](run.py) file work for the data provided, for further info refer to the python files named here for details in comments and docstrings)
 
-```
+## System Information & Agent Enhancements (Added by AI Agent)
+Through automated documentation efforts, comprehensive docstrings and comments have been added to the codebase within `assignment2work/MTGNN/`. Documentation elements inserted across these scripts feature explicit markings `(Added by AI Agent)`. 
 
-# Create data directories
-mkdir -p data/{METR-LA,PEMS-BAY}
+### Affected Files
+* **[constants.py](constants.py)**: Module variables like prediction timeframe variables setting fixed baselines.
+* **[hyperparameter_finder.py](hyperparameter_finder.py)**: An objective optimizer utilizing Hyperopt specifically running parameters searches optimizing `epoch`, `learning rate`, and structural `channels`.
+* **[net.py](net.py)**: Fully encapsulated model logic defining the primary multivariate MTGNN architecture processing spatio-temporal graphs.
+* **[predict_fast_single_step_for_speed_testing.py](predict_fast_single_step_for_speed_testing.py)**: Benchmarks output generation running singular prediction evaluation intervals ensuring runtime bounds.
+* **[predict_weeks.py](predict_weeks.py)**: Handles long-running prediction segments over defined target weeks sequentially.
+* **[run.py](run.py)**: Consolidates runtime sequencing by bridging training updates directly alongside predictive passes logically.
+* **[train_and_predict_weeks.py](train_and_predict_weeks.py)**: Unifies dataset iterations for both training structures and concurrent inference pipelines.
+* **[train_and_predict_weeks_fast.py](train_and_predict_weeks_fast.py)**: Same iteration objective as above, optimizing skip-patterns enabling significantly sped evaluation cycles.
+* **[train_fast_single_step_for_speed_testing.py](train_fast_single_step_for_speed_testing.py)**: Confirms fast operational baseline timings by running basic steps targeting limited horizons minimal impact testing environments.
+* **[train_multi_step.py](train_multi_step.py)**: Expands core processing enabling graph optimizations modeling outputs across varied forecast windows natively.
+* **[train_single_step.py](train_single_step.py)**: Core layout containing `SingleStep` controller managing graph loading, scaling parameters, modeling evaluation scopes natively.
+* **[train_weeks_ibVersion.py](train_weeks_ibVersion.py)**: Configurable weekly handler implementing looping logic bridging data offsets seamlessly over extended datasets natively.
+* **[trainer.py](trainer.py)**: Standard logic wrapper managing parameter scaling algorithms alongside standard masked operations dictating `Optim` configurations natively.
+* **[util.py](util.py)**: Encompasses fundamental metric derivations (`Dataloader`, `rmse`, `mape`, normalization, standardizations and laplacian routines).
+* **[generate_training_data.py](generate_training_data.py)**: Parses original inputs returning validated numpy splits supporting sequence modeling datasets natively.
 
-# METR-LA
-python generate_training_data.py --output_dir=data/METR-LA --traffic_df_filename=data/metr-la.h5
-
-# PEMS-BAY
-python generate_training_data.py --output_dir=data/PEMS-BAY --traffic_df_filename=data/pems-bay.h5
-
-```
-
-## Model Training
-
-### Single-step
-
-* Solar-Energy
-
-```
-python train_single_step.py --save ./model-solar-3.pt --data ./data/solar_AL.txt --num_nodes 137 --batch_size 4 --epochs 30 --horizon 3
-#sampling
-python train_single_step.py --num_split 3 --save ./model-solar-sampling-3.pt --data ./data/solar_AL.txt --num_nodes 137 --batch_size 16 --epochs 30 --horizon 3
-```
-* Traffic 
-
-```
-python train_single_step.py --save ./model-traffic3.pt --data ./data/traffic.txt --num_nodes 862 --batch_size 16 --epochs 30 --horizon 3
-#sampling
-python train_single_step.py --num_split 3 --save ./model-traffic-sampling-3.pt --data ./data/traffic --num_nodes 321 --batch_size 16 --epochs 30 --horizon 3
-```
-
-* Electricity
-
-```
-python train_single_step.py --save ./model-electricity-3.pt --data ./data/electricity.txt --num_nodes 321 --batch_size 4 --epochs 30 --horizon 3
-#sampling 
-python train_single_step.py --num_split 3 --save ./model-electricity-sampling-3.pt --data ./data/electricity.txt --num_nodes 321 --batch_size 16 --epochs 30 --horizon 3
-```
-
-* Exchange-Rate
-
-```
-python train_single_step.py --save ./model/model-exchange-3.pt --data ./data/exchange_rate.txt --num_nodes 8 --subgraph_size 8  --batch_size 4 --epochs 30 --horizon 3
-#sampling
-python train_single_step.py --num_split 3 --save ./model-exchange-3.pt --data ./data/exchange_rate.txt --num_nodes 8 --subgraph_size 2  --batch_size 16 --epochs 30 --horizon 3
-```
-### Multi-step
-* METR-LA
-
-```
-python train_multi_step.py --adj_data ./data/sensor_graph/adj_mx.pkl --data ./data/METR-LA --num_nodes 207
-```
-* PEMS-BAY
-
-```
-python train_multi_step.py --adj_data ./data/sensor_graph/adj_mx_bay.pkl --data ./data/PEMS-BAY/ --num_nodes 325
-```
-
-## Citation
-
-```
-@inproceedings{wu2020connecting,
-  title={Connecting the Dots: Multivariate Time Series Forecasting with Graph Neural Networks},
-  author={Wu, Zonghan and Pan, Shirui and Long, Guodong and Jiang, Jing and Chang, Xiaojun and Zhang, Chengqi},
-  booktitle={Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining},
-  year={2020}
-}
-```
+## side notes
+1. If you are getting any error related to the code below, you can comment it out and the code will run absolutely fine, it is just for optimizing the performance of the code and suppressing some warnings that are occuring on my machine.
+    ```
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppresses INFO and WARNING messages
+    os.environ['TF_ENABLE_ONEDNN_OPTS'] = '1'  # Enable oneDNN optimizations for CPU
+    # Enable XLA compilation for faster CPU execution
+    tf.config.optimizer.set_experimental_options({"auto_mixed_precision": True})
+    # Set CPU affinity for better performance
+    try:
+        tf.config.threading.set_intra_op_parallelism_threads(os.cpu_count() - 1)  # Leave 1 core for system
+        tf.config.threading.set_inter_op_parallelism_threads(2)  # For parallel ops
+    except:
+        pass
+    ```

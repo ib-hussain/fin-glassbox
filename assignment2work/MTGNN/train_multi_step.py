@@ -1,5 +1,10 @@
 '''
 ib-hussain: This file needs to be run from the CLI and it has default args so they are configured and the paths are also configured.
+
+(Added by AI Agent)
+Module: train_multi_step.py
+Configures and runs training for the MTGNN over multi-step forecasts.
+Defines parameters for graph convolution layers and tracks metrics across target datasets.
 '''
 import torch
 import numpy as np
@@ -13,6 +18,10 @@ import dotenv
 dotenv.load_dotenv()
 
 def str_to_bool(value):
+    """
+    Parses a string entry into its boolean equivalent.
+    (Added by AI Agent)
+    """
     if isinstance(value, bool):
         return value
     if value.lower() in {"false", "f", "0", "no", "n"}:
@@ -76,6 +85,17 @@ parser.add_argument("--runs", type=int, default=10, help="number of runs")
 args = parser.parse_args()
 torch.set_num_threads(3)
 def main(runid):
+    """
+    Main sequence spanning data loading, model configuration, and batch optimization loop.
+    Yields output metrics over training, validation, and test datasets.
+    (Added by AI Agent)
+
+    Args:
+        runid (int): Identifier tag for particular execution sequence.
+        
+    Returns:
+        tuple containing testing verification metrics across batches (vmae, vmape, vrmse, mae, mape, rmse).
+    """
     # torch.manual_seed(args.seed)
     # torch.backends.cudnn.deterministic = True
     # torch.backends.cudnn.benchmark = False

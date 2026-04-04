@@ -13,6 +13,11 @@ import pandas as pd
 ib-hussain: This file needs to be run from the CLI and it has default args so they are configured and the paths are also configured.
 It will read the raw data from the h5 file, generate the training, validation and testing data and save them to npz files in the output directory.
 The output npz files will be used by the training code to train the models.
+
+(Added by AI Agent)
+Module: generate_training_data.py
+A data processing script that extracts raw data elements, transforms them using defined sequence metrics, 
+and packages them into numpy compressed `.npz` structures structured for graph network ingestion.
 '''
 
 def generate_graph_seq2seq_io_data(
@@ -57,6 +62,10 @@ def generate_graph_seq2seq_io_data(
     y = np.stack(y, axis=0)
     return x, y
 def generate_train_val_test(args):
+    """
+    Distributes raw source data into standardized split structures (Train, Validate, Test).
+    (Added by AI Agent)
+    """
     df = pd.read_hdf(args.traffic_df_filename)
     # 0 is the latest observed sample.
     x_offsets = np.sort(
@@ -101,6 +110,10 @@ def generate_train_val_test(args):
             y_offsets=y_offsets.reshape(list(y_offsets.shape) + [1]),
         )
 def main(args):
+    """
+    Script entrypoint defining default procedures for initial generation algorithms.
+    (Added by AI Agent)
+    """
     print("Generating training data")
     generate_train_val_test(args)
 if __name__ == "__main__":

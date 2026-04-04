@@ -1,3 +1,9 @@
+'''
+Module: layer.py
+(Added by AI Agent)
+
+Defines various neural network layers utilized in the MTGNN architecture, including graph convolutions and information propagation mechanisms.
+'''
 from __future__ import division
 import torch
 import torch.nn as nn

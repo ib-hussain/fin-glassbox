@@ -1,5 +1,10 @@
 '''
 ib-hussain: This file needs to be run from the CLI and it has paths. The CLI args need to be figured out.
+
+(Added by AI Agent)
+Module: train_and_predict_weeks_fast.py
+Optimized weekly training block that skips redundant epochs, advancing by intervals.
+Useful for fast prototyping or quick iterations over large datasets.
 '''
 import sys
 
@@ -10,6 +15,10 @@ from train_single_step import SingleStep
 
 
 class Config:
+    """
+    Settings specifically calibrated for fast testing iteration of the weekly model.
+    (Added by AI Agent)
+    """
     conv_channels = 4
     epoch = 2000
     layers = 3
@@ -17,6 +26,16 @@ class Config:
     num_of_weeks_in_window = 3
     weight_decay = 2.029637392692641e-05
 def main(device, data_path, horizon, num_weeks):
+    """
+    Executes a sparse iteration over target weeks, running training periodically and predicting across intervals.
+    (Added by AI Agent)
+
+    Args:
+        device (str): Execution framework device.
+        data_path (str): CSV metric inputs.
+        horizon (int): Predictive step scale.
+        num_weeks (int): Upper bound total available training weeks.
+    """
     num_assets = len(pd.read_csv(data_path).columns) - 2
     end_indexes = [25, 50, 75, 90, num_weeks]
     i = 0
@@ -29,6 +48,10 @@ def main(device, data_path, horizon, num_weeks):
                           device).predict_with_the_best_model()
         i += 1
 def get_trainer(data_path, horizon, num_assets, week, num_weeks, device):
+    """
+    Builds the trainer step for periodic training runs.
+    (Added by AI Agent)
+    """
     return SingleStep(
         data_path=data_path,
         week=week,
@@ -51,6 +74,10 @@ def get_trainer(data_path, horizon, num_assets, week, num_weeks, device):
         validation_split=0.24,
     )
 def get_predictor(data_path, horizon, num_assets, week, num_weeks, device):
+    """
+    Builds the predictor configuration running post-training across gap intervals.
+    (Added by AI Agent)
+    """
     return SingleStep(
         data_path=data_path,
         week=week,

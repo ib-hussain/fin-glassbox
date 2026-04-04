@@ -1,10 +1,21 @@
 '''
-This file contains 
+Module: net.py
+(Added by AI Agent)
+
+This file contains the definition of the actual MTGNN (Multivariate Time Series Graph Neural Network) model.
+It relies on layers defined in layer.py (e.g., graph_constructor, mixprop, dilated_inception, LayerNorm).
 '''
 from layer import *
 
 
 class gtnet(nn.Module):
+    """
+    MTGNN (Multivariate Time Series Graph Neural Network) backbone class.
+    (Added by AI Agent)
+
+    This class stitches together temporal convolution modules, graph construction, 
+    and spatial graph convolution modules to learn localized spatial-temporal correlations.
+    """
     def __init__(
         self,
         gcn_true,
@@ -30,6 +41,35 @@ class gtnet(nn.Module):
         tanhalpha=3,
         layer_norm_affline=True,
     ):
+        """
+        Initialize the MTGNN model.
+        (Added by AI Agent)
+        
+        Args:
+            gcn_true (bool): Whether to use the graph convolution module.
+            buildA_true (bool): Whether to construct the dependency graph dynamically.
+            gcn_depth (int): Max diffusion steps for the mixprop layer.
+            num_nodes (int): Total number of time series nodes.
+            device (torch.device or str): Computing device.
+            predefined_A (tensor, optional): Pre-computed adjacency matrix if not building dynamically.
+            static_feat (tensor, optional): Static node attributes.
+            dropout (float): Dropout probability.
+            subgraph_size (int): Number of nodes to sample for the kNN graph construction.
+            node_dim (int): Dimensionality of the node embeddings for graph learning.
+            dilation_exponential (int): Dilation factor growth exponent.
+            conv_channels (int): Intermediate channels for convolution layers.
+            residual_channels (int): Channels for residual connections.
+            skip_channels (int): Channels for skip connections.
+            end_channels (int): Channels prior to output projection.
+            seq_length (int): Length of historical window.
+            in_dim (int): Number of input features per node.
+            out_dim (int): Forecasting horizon steps.
+            layers (int): Number of stacked blocks (layers) in MTGNN.
+            propalpha (float): Retention parameter in Information Propagation over graphs.
+            tanhalpha (float): Scaling factor for the graph constructor tanh activation.
+            layer_norm_affline (bool): If True, use affine transformations in layer normalization.
+        """
+
         super(gtnet, self).__init__()
         self.gcn_true = gcn_true
         self.buildA_true = buildA_true
@@ -169,6 +209,17 @@ class gtnet(nn.Module):
             )
         self.idx = torch.arange(self.num_nodes).to(device)
     def forward(self, input, idx=None):
+        """
+        Forward pass for computing graph and spatio-temporal features.
+        (Added by AI Agent)
+
+        Args:
+            input (tensor): Shape (batch_size, in_dim, num_nodes, seq_length).
+            idx (tensor, optional): Node indices to process, used in graph construction.
+
+        Returns:
+            x (tensor): Forecasts of shape (batch, out_dim, num_nodes, 1) or similar depending on the end_conv_2 mapping.
+        """
         seq_len = input.size(3)
         assert (seq_len == self.seq_length), "input sequence length not equal to preset sequence length"
         if self.seq_length < self.receptive_field:input = nn.functional.pad(input, (self.receptive_field - self.seq_length, 0, 0, 0))

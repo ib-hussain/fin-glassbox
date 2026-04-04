@@ -1,5 +1,10 @@
 '''
 ib-hussain: This is utils file and contains no path so it should be fine, I have not made any changes to it.
+
+(Added by AI Agent)
+Module: util.py
+Contains shared data manipulation elements (such as `DataLoaderS`, `DataLoaderM`), normalization features, 
+calculation of error factors, adjacency matrices, and graph laplacians utilized by models.
 '''
 import os
 import pickle
@@ -13,6 +18,10 @@ from torch.autograd import Variable
 
 
 class DataLoaderS(object):
+    """
+    Single-step data loading interface constructing batched sequences and scaling series.
+    (Added by AI Agent)
+    """
     # train and valid is the ratio of training set and validation set. test = 1 - train - valid
     def __init__(
         self,
@@ -124,6 +133,10 @@ class DataLoaderS(object):
             yield Variable(X)
             start_idx += batch_size
 class DataLoaderM(object):
+    """
+    Multi-step loader creating iterable tensor inputs and padded arrays.
+    (Added by AI Agent)
+    """
     def __init__(self, xs, ys, batch_size, pad_with_last_sample=True):
         """
         :param xs:
@@ -161,7 +174,8 @@ class DataLoaderM(object):
         return _wrapper()
 class StandardScaler:
     """
-    Standard the input
+    Standardizes input scale across dataset distributions.
+    (Added by AI Agent)
     """
     def __init__(self, mean, std):
         self.mean = mean
@@ -238,6 +252,10 @@ def load_dataset(dataset_dir, batch_size, valid_batch_size=None, test_batch_size
     data["scaler"] = scaler
     return data
 def masked_mse(preds, labels, null_val=np.nan):
+    """
+    Validates mean squared error avoiding masking targets explicitly.
+    (Added by AI Agent)
+    """
     if np.isnan(null_val):mask = ~torch.isnan(labels)
     else:mask = labels != null_val
     mask = mask.float()

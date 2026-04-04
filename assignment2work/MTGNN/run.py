@@ -25,6 +25,9 @@ import predict_weeks
 import train_weeks_ibVersion as train_weeks
 # import train_weeks # idk i cant really find the file for this or even the function anywhere so idk what's the purpose of this even but i will implement something for this
 # Note: the order of these two calls matters, as the second one relies on the first one to have trained the models and saved them to disk.
-train_weeks.main(device = f"{str(os.getenv('PROCESSOR', 'cpu'))}", data_path=f"{str(os.getenv('datasets_out_tickerCollector_path', 'assignment2work/datasetsOut'))}/crypto/daily_20_2190_marked.csv", starting_week=2, num_weeks=104, horizon=5)
-predict_weeks.main(device = f"{str(os.getenv('PROCESSOR', 'cpu'))}", data_path=f"{str(os.getenv('datasets_out_tickerCollector_path', 'assignment2work/datasetsOut'))}/crypto/daily_20_2190_marked.csv", starting_week=2, num_weeks=104, horizon=7)
+train_weeks.main(device = f"{str(os.getenv('PROCESSOR', 'cpu'))}", data_path=f"{str(os.getenv('datasets_out_tickerCollector_path', 'assignment2work/datasetsOut'))}/crypto/daily_20_2190_marked.csv", starting_week=2, num_weeks=21, horizon=5)
+predict_weeks.main(device = f"{str(os.getenv('PROCESSOR', 'cpu'))}", data_path=f"{str(os.getenv('datasets_out_tickerCollector_path', 'assignment2work/datasetsOut'))}/crypto/daily_20_2190_marked.csv", starting_week=2, num_weeks=21, horizon=7)
+
+# Lubabah, run this command:
+# python assignment2work/MTGNN/run.py > assignment2work/MTGNN/run_results.txt
     

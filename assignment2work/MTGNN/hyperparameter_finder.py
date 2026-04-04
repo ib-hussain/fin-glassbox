@@ -1,3 +1,7 @@
+'''
+ib-hussain: This file needs to be run from the CLI and it has no paths. The CLI args need to be figured out.
+It will run a hyperparameter optimization loop for the weekly model and print the best hyperparameters found.
+'''
 import sys
 
 import numpy as np
@@ -17,16 +21,12 @@ def main(device, data_path, horizon):
         "layers": hp.choice("layers", [2, 3, 5]),
         "conv_channels": hp.choice("conv_channels", [4, 8, 16]),
     }
-
     def objective(hparams):
         print(f"Trying hyperparameters: {hparams}")
         return get_trainer(data_path, horizon, 1, 104, device, **hparams).run_train_only()
-
     best = fmin(objective, hpo_space, algo=tpe.suggest, max_evals=hpo_max_evals)
     best_hparams = space_eval(hpo_space, best)
     print(f"Best hparams: {best_hparams}")
-
-
 def get_trainer(
     data_path,
     horizon,
@@ -62,8 +62,6 @@ def get_trainer(
         training_split=0.6,
         validation_split=0.2,
     )
-
-
 if __name__ == "__main__":
     device, data_path, horizon = sys.argv[1:]
     main(device, data_path, int(horizon))

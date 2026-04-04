@@ -1,3 +1,6 @@
+'''
+ib-hussain: This file needs to be run from the CLI and it has default args so they are configured and the paths are also configured.
+'''
 import torch
 import numpy as np
 import argparse
@@ -5,7 +8,9 @@ import time
 from util import *
 from trainer import Trainer
 from net import gtnet
-
+import os
+import dotenv
+dotenv.load_dotenv()
 
 def str_to_bool(value):
     if isinstance(value, bool):
@@ -16,13 +21,10 @@ def str_to_bool(value):
         return True
     raise ValueError(f"{value} is not a valid boolean value")
 
-
 parser = argparse.ArgumentParser()
-
-parser.add_argument("--device", type=str, default="cuda", help="")
-parser.add_argument("--data", type=str, default="data/METR-LA", help="data path")
-
-parser.add_argument("--adj_data", type=str, default="data/sensor_graph/adj_mx.pkl", help="adj data path")
+parser.add_argument("--device", type=str, default=f"{os.getenv('PROCESSOR', 'cpu')}", help="")
+parser.add_argument("--data", type=str, default=f"{os.getenv('datasets_MTGNN_path', 'assignment2work/MTGNN/data')}/METR-LA", help="data path")
+parser.add_argument("--adj_data", type=str, default=f"{os.getenv('datasets_MTGNN_path', 'assignment2work/MTGNN/data')}/sensor_graph/adj_mx.pkl", help="adj data path")
 parser.add_argument(
     "--gcn_true",
     type=str_to_bool,
@@ -42,23 +44,19 @@ parser.add_argument(
     help="whether to load static feature",
 )
 parser.add_argument("--cl", type=str_to_bool, default=True, help="whether to do curriculum learning")
-
 parser.add_argument("--gcn_depth", type=int, default=2, help="graph convolution depth")
 parser.add_argument("--num_nodes", type=int, default=207, help="number of nodes/variables")
 parser.add_argument("--dropout", type=float, default=0.3, help="dropout rate")
 parser.add_argument("--subgraph_size", type=int, default=20, help="k")
 parser.add_argument("--node_dim", type=int, default=40, help="dim of nodes")
 parser.add_argument("--dilation_exponential", type=int, default=1, help="dilation exponential")
-
 parser.add_argument("--conv_channels", type=int, default=32, help="convolution channels")
 parser.add_argument("--residual_channels", type=int, default=32, help="residual channels")
 parser.add_argument("--skip_channels", type=int, default=64, help="skip channels")
 parser.add_argument("--end_channels", type=int, default=128, help="end channels")
-
 parser.add_argument("--in_dim", type=int, default=2, help="inputs dimension")
 parser.add_argument("--seq_in_len", type=int, default=12, help="input sequence length")
 parser.add_argument("--seq_out_len", type=int, default=12, help="output sequence length")
-
 parser.add_argument("--layers", type=int, default=3, help="number of layers")
 parser.add_argument("--batch_size", type=int, default=64, help="batch size")
 parser.add_argument("--learning_rate", type=float, default=0.001, help="learning rate")
@@ -66,24 +64,17 @@ parser.add_argument("--weight_decay", type=float, default=0.0001, help="weight d
 parser.add_argument("--clip", type=int, default=5, help="clip")
 parser.add_argument("--step_size1", type=int, default=2500, help="step_size")
 parser.add_argument("--step_size2", type=int, default=100, help="step_size")
-
 parser.add_argument("--epochs", type=int, default=100, help="")
 parser.add_argument("--print_every", type=int, default=50, help="")
 parser.add_argument("--seed", type=int, default=101, help="random seed")
-parser.add_argument("--save", type=str, default="./save/", help="save path")
+parser.add_argument("--save", type=str, default=f"{os.getenv('save_MTGNN_path', 'assignment2work/MTGNN/save')}/", help="save path")
 parser.add_argument("--expid", type=int, default=1, help="experiment id")
-
 parser.add_argument("--propalpha", type=float, default=0.05, help="prop alpha")
 parser.add_argument("--tanhalpha", type=float, default=3, help="adj alpha")
-
 parser.add_argument("--num_split", type=int, default=1, help="number of splits for graphs")
-
 parser.add_argument("--runs", type=int, default=10, help="number of runs")
-
 args = parser.parse_args()
 torch.set_num_threads(3)
-
-
 def main(runid):
     # torch.manual_seed(args.seed)
     # torch.backends.cudnn.deterministic = True
@@ -93,16 +84,13 @@ def main(runid):
     device = torch.device(args.device)
     dataloader = load_dataset(args.data, args.batch_size, args.batch_size, args.batch_size)
     scaler = dataloader["scaler"]
-
     predefined_A = load_adj(args.adj_data)
     predefined_A = torch.tensor(predefined_A) - torch.eye(args.num_nodes)
     predefined_A = predefined_A.to(device)
-
     # if args.load_static_feature:
     #     static_feat = load_node_feature('data/sensor_graph/location.csv')
     # else:
     #     static_feat = None
-
     model = gtnet(
         args.gcn_true,
         args.buildA_true,
@@ -126,12 +114,10 @@ def main(runid):
         tanhalpha=args.tanhalpha,
         layer_norm_affline=True,
     )
-
     print(args)
     print("The recpetive field size is", model.receptive_field)
     nParams = sum([p.nelement() for p in model.parameters()])
     print("Number of model parameters is", nParams)
-
     engine = Trainer(
         model,
         args.learning_rate,
@@ -143,7 +129,6 @@ def main(runid):
         device,
         args.cl,
     )
-
     print("start training...", flush=True)
     his_loss = []
     val_time = []
@@ -187,7 +172,6 @@ def main(runid):
         valid_loss = []
         valid_mape = []
         valid_rmse = []
-
         s1 = time.time()
         for iter, (x, y) in enumerate(dataloader["val_loader"].get_iterator()):
             testx = torch.Tensor(x).to(device)
@@ -225,7 +209,6 @@ def main(runid):
             ),
             flush=True,
         )
-
         if mvalid_loss < minl:
             torch.save(
                 engine.model.state_dict(),
@@ -235,18 +218,14 @@ def main(runid):
 
     print("Average Training Time: {:.4f} secs/epoch".format(np.mean(train_time)))
     print("Average Inference Time: {:.4f} secs".format(np.mean(val_time)))
-
     bestid = np.argmin(his_loss)
     engine.model.load_state_dict(torch.load(args.save + "exp" + str(args.expid) + "_" + str(runid) + ".pth"))
-
     print("Training finished")
     print("The valid loss on best model is", str(round(his_loss[bestid], 4)))
-
     # valid data
     outputs = []
     realy = torch.Tensor(dataloader["y_val"]).to(device)
     realy = realy.transpose(1, 3)[:, 0, :, :]
-
     for iter, (x, y) in enumerate(dataloader["val_loader"].get_iterator()):
         testx = torch.Tensor(x).to(device)
         testx = testx.transpose(1, 3)
@@ -257,15 +236,12 @@ def main(runid):
 
     yhat = torch.cat(outputs, dim=0)
     yhat = yhat[:realy.size(0), ...]
-
     pred = scaler.inverse_transform(yhat)
     vmae, vmape, vrmse = metric(pred, realy)
-
     # test data
     outputs = []
     realy = torch.Tensor(dataloader["y_test"]).to(device)
     realy = realy.transpose(1, 3)[:, 0, :, :]
-
     for iter, (x, y) in enumerate(dataloader["test_loader"].get_iterator()):
         testx = torch.Tensor(x).to(device)
         testx = testx.transpose(1, 3)
@@ -273,7 +249,6 @@ def main(runid):
             preds = engine.model(testx)
             preds = preds.transpose(1, 3)
         outputs.append(preds.squeeze())
-
     yhat = torch.cat(outputs, dim=0)
     yhat = yhat[:realy.size(0), ...]
 
@@ -291,9 +266,7 @@ def main(runid):
         rmse.append(metrics[2])
     return vmae, vmape, vrmse, mae, mape, rmse
 
-
 if __name__ == "__main__":
-
     vmae = []
     vmape = []
     vrmse = []
@@ -308,7 +281,6 @@ if __name__ == "__main__":
         mae.append(m1)
         mape.append(m2)
         rmse.append(m3)
-
     mae = np.array(mae)
     mape = np.array(mape)
     rmse = np.array(rmse)

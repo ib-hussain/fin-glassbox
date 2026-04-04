@@ -6,10 +6,18 @@ from __future__ import unicode_literals
 import argparse
 import numpy as np
 import os
+import dotenv
+dotenv.load_dotenv()
 import pandas as pd
+'''
+ib-hussain: This file needs to be run from the CLI and it has default args so they are configured and the paths are also configured.
+It will read the raw data from the h5 file, generate the training, validation and testing data and save them to npz files in the output directory.
+The output npz files will be used by the training code to train the models.
+'''
 
-
-def generate_graph_seq2seq_io_data(df, x_offsets, y_offsets, add_time_in_day=True, add_day_in_week=False, scaler=None):
+def generate_graph_seq2seq_io_data(
+    df, x_offsets, y_offsets, add_time_in_day=True, add_day_in_week=False, 
+    scaler=None):
     """
     Generate samples from
     :param df:
@@ -18,11 +26,11 @@ def generate_graph_seq2seq_io_data(df, x_offsets, y_offsets, add_time_in_day=Tru
     :param add_time_in_day:
     :param add_day_in_week:
     :param scaler:
-    :return:
-    # x: (epoch_size, input_length, num_nodes, input_dim)
-    # y: (epoch_size, output_length, num_nodes, output_dim)
-    """
 
+    ## Return:
+    ### x: (epoch_size, input_length, num_nodes, input_dim)
+    ### y: (epoch_size, output_length, num_nodes, output_dim)
+    """
     num_samples, num_nodes = df.shape
     data = np.expand_dims(df.values, axis=-1)
     data_list = [data]
@@ -34,7 +42,6 @@ def generate_graph_seq2seq_io_data(df, x_offsets, y_offsets, add_time_in_day=Tru
         day_in_week = np.zeros(shape=(num_samples, num_nodes, 7))
         day_in_week[np.arange(num_samples), :, df.index.dayofweek] = 1
         data_list.append(day_in_week)
-
     data = np.concatenate(data_list, axis=-1)
     # epoch_len = num_samples + min(x_offsets) - max(y_offsets)
     x, y = [], []
@@ -49,8 +56,6 @@ def generate_graph_seq2seq_io_data(df, x_offsets, y_offsets, add_time_in_day=Tru
     x = np.stack(x, axis=0)
     y = np.stack(y, axis=0)
     return x, y
-
-
 def generate_train_val_test(args):
     df = pd.read_hdf(args.traffic_df_filename)
     # 0 is the latest observed sample.
@@ -68,7 +73,6 @@ def generate_train_val_test(args):
         add_time_in_day=True,
         add_day_in_week=False,
     )
-
     print("x shape: ", x.shape, ", y shape: ", y.shape)
     # Write the data into npz file.
     # num_test = 6831, using the last 6831 examples as testing.
@@ -77,7 +81,6 @@ def generate_train_val_test(args):
     num_test = round(num_samples * 0.2)
     num_train = round(num_samples * 0.7)
     num_val = num_samples - num_test - num_train
-
     # train
     x_train, y_train = x[:num_train], y[:num_train]
     # val
@@ -87,7 +90,6 @@ def generate_train_val_test(args):
     )
     # test
     x_test, y_test = x[-num_test:], y[-num_test:]
-
     for cat in ["train", "val", "test"]:
         _x, _y = locals()["x_" + cat], locals()["y_" + cat]
         print(cat, "x: ", _x.shape, "y:", _y.shape)
@@ -98,20 +100,16 @@ def generate_train_val_test(args):
             x_offsets=x_offsets.reshape(list(x_offsets.shape) + [1]),
             y_offsets=y_offsets.reshape(list(y_offsets.shape) + [1]),
         )
-
-
 def main(args):
     print("Generating training data")
     generate_train_val_test(args)
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output_dir", type=str, default="data/", help="Output directory.")
+    parser.add_argument("--output_dir", type=str, default=str(os.getenv("datasets_MTGNN_path", "assignment2work/MTGNN/data")) + "/", help="Output directory.")
     parser.add_argument(
         "--traffic_df_filename",
         type=str,
-        default="data/metr-la.h5",
+        default=f"{str(os.getenv("datasets_MTGNN_path", "assignment2work/MTGNN/data"))}/metr-la.h5",
         help="Raw traffic readings.",
     )
     args = parser.parse_args()

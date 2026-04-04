@@ -1,3 +1,6 @@
+'''
+ib-hussain: This is utils file and contains no path so it should be fine, I have not made any changes to it.
+'''
 import math
 import time
 from dataclasses import dataclass
@@ -53,7 +56,6 @@ class SingleStep:
     tanhalpha = 3
     num_split = 1
     step_size = 100
-
     def __post_init__(self):
         file_name = self.data_path.replace(".csv", "")
         if "out/" in file_name:
@@ -77,7 +79,6 @@ class SingleStep:
             self.normalize,
             self.run_for_prediction,
         )
-
         self.criterion = (nn.L1Loss(size_average=False).to(self.device) if self.L1Loss else nn.MSELoss(
             size_average=False).to(self.device))
         self.evaluateL1 = nn.L1Loss(size_average=False).to(self.device)
@@ -86,31 +87,25 @@ class SingleStep:
         self.model = self.create_model()
         self.optimizer = self.create_optimizer()
         self.print_num_of_model_parameters()
-
     def __del__(self):
         # noinspection PyBroadException
         try:
             self.summary_writer.close()
         except Exception as e:
             print("Failed to close summary writer.", e)
-
     def init_prediction_path(self, file_name):
         return self.init_path(f"prediction/{self.seq_in_len}", f"{file_name}/weeks/{self.week + 1}")
-
     @staticmethod
     def init_path(base_path, file_name, file_extension=""):
         os.makedirs(f"{base_path}/{os.path.dirname(file_name)}", exist_ok=True)
         return f"{base_path}/{file_name}{file_extension}"
-
     @staticmethod
     def create_path(path):
         os.makedirs(path, exist_ok=True)
         return path
-
     def create_summary_writer(self, file_name):
         path = self.create_path(f"runs/{Constants.PREDICTION_TIME}/{self.seq_in_len}/{file_name}/weeks/{self.week}")
         return SummaryWriter(log_dir=path)
-
     def create_model(self):
         return gtnet(
             self.gcn_true,
@@ -134,7 +129,6 @@ class SingleStep:
             tanhalpha=self.tanhalpha,
             layer_norm_affline=False,
         ).to(self.device)
-
     def create_optimizer(self):
         return Optim(
             self.model.parameters(),
@@ -143,20 +137,16 @@ class SingleStep:
             self.clip,
             lr_decay=self.weight_decay,
         )
-
     def print_num_of_model_parameters(self):
         print("The recpetive field size is", self.model.receptive_field)
         nParams = sum([p.nelement() for p in self.model.parameters()])
         print("Number of model parameters is", nParams, flush=True)
-
     def run(self):
         self.run_train_only()
         return self.evaluate_the_best_model()
-
     def run_train_only(self):
         max_value_for_best_validation_loss = 10000000
         best_validation_mape_for_best_loss = 10000000
-
         # At any point you can hit Ctrl + C to break out of training early.
         try:
             print("begin training")
@@ -190,7 +180,6 @@ class SingleStep:
                     flush=True,
                 )
                 # Save the model if the validation loss is the best we've seen so far.
-
                 if val_loss < max_value_for_best_validation_loss:
                     with open(self.model_path, "wb") as f:
                         torch.save(self.model, f)
@@ -234,7 +223,6 @@ class SingleStep:
                         ),
                         flush=True,
                     )
-
         except KeyboardInterrupt:
             print("-" * 89)
             print("Exiting from training early")
@@ -244,7 +232,6 @@ class SingleStep:
             flush=True,
         )
         return best_validation_mape_for_best_loss
-
     def add_to_summary(self, epoch, train_loss, val_loss, val_rae, val_corr, val_mape):
         # noinspection PyBroadException
         try:
@@ -255,7 +242,6 @@ class SingleStep:
             self.summary_writer.add_scalar("val_mape", val_mape, epoch)
         except Exception as e:
             print("Failed to add to summary writer.", e)
-
     def add_test_metrics_to_summary(self, epoch, test_loss, test_rae, test_corr, test_mape):
         # noinspection PyBroadException
         try:
@@ -265,7 +251,6 @@ class SingleStep:
             self.summary_writer.add_scalar("test_mape", test_mape, epoch)
         except Exception as e:
             print("Failed to add to summary writer.", e)
-
     def train(self):
         X, Y = self.data.train[0], self.data.train[1]
         self.model.train()
@@ -302,10 +287,8 @@ class SingleStep:
                 print("iter:{:3d} | loss: {:.3f}".format(iter, loss.item() / (output.size(0) * self.data.num_cols)))
             iter += 1
         return total_loss / n_samples
-
     def evaluate_the_best_model(self):
         model = self.load_model()
-
         (
             vtest_acc,
             vtest_rae,
@@ -344,7 +327,6 @@ class SingleStep:
             test_corr,
             test_mape,
         )
-
     def predict_with_the_best_model(self):
         model = self.load_model()
 
@@ -377,18 +359,14 @@ class SingleStep:
 
         print(f"Saving prediction results: {self.prediction_path}")
         np.save(self.prediction_path, prediction)
-
     def load_model(self):
         print(f"Loading model from: {self.model_path}")
         with open(self.model_path, "rb") as f:
             model = torch.load(f, map_location=torch.device(self.device))
         return model
-
     def denormalize(self, data):
         data = data.to(self.device) * self.data.scale
         return data
-
-
 def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size):
     model.eval()
     total_loss = 0
@@ -397,7 +375,6 @@ def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size):
     n_samples = 0
     predict = None
     test = None
-
     for X, Y in data.get_batches(X, Y, batch_size, False):
         X = torch.unsqueeze(X, dim=1)
         X = X.transpose(2, 3)
@@ -418,25 +395,19 @@ def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size):
         total_loss_l1 += evaluateL1(output * scale, Y * scale).item()
         total_mape += (torch.abs(((output * scale) - (Y * scale)) / (Y * scale)).sum().item())
         n_samples += output.size(0) * data.num_cols
-
     mse = total_loss / n_samples
     rmse = math.sqrt(mse)
     mae = total_loss_l1 / n_samples
     mape = total_mape / n_samples
-
     rse = rmse / data.rse
     rae = mae / data.rae
-
     predict = predict.data.cpu().numpy()
     Ytest = test.data.cpu().numpy()
-
     def a20_index(v, v_):
         evaluator = RegressionMetric(v.reshape(v.shape[0], -1), v_.reshape(v_.shape[0], -1))
         a20 = evaluator.a20_index()
         return np.mean(a20)
-
     a20_idx = a20_index(Ytest, predict)
-
     sigma_p = predict.std(axis=0)
     sigma_g = Ytest.std(axis=0)
     mean_p = predict.mean(axis=0)
@@ -445,8 +416,6 @@ def evaluate(data, X, Y, model, evaluateL2, evaluateL1, batch_size):
     correlation = ((predict - mean_p) * (Ytest - mean_g)).mean(axis=0) / (sigma_p * sigma_g)
     correlation = (correlation[index]).mean()
     return rse, rae, correlation, mape, mae, rmse, a20_idx
-
-
 def print_results(runs, acc, corr, mape, rae, vacc, vcorr, vmape, vrae):
     print("\n\n")
     print(f"{runs} runs average")
@@ -458,11 +427,7 @@ def print_results(runs, acc, corr, mape, rae, vacc, vcorr, vmape, vrae):
     print("test\trse\trae\tcorr\tmape")
     print_means(acc, corr, mape, rae)
     print_stds(acc, corr, mape, rae)
-
-
 def print_means(acc, corr, mape, rae):
     print("mean\t{:5.4f}\t{:5.4f}\t{:5.4f}\t{:5.4f}".format(np.mean(acc), np.mean(rae), np.mean(corr), np.mean(mape)))
-
-
 def print_stds(acc, corr, mape, rae):
     print("std\t{:5.4f}\t{:5.4f}\t{:5.4f}\t{:5.4f}".format(np.std(acc), np.std(rae), np.std(corr), np.std(mape)))

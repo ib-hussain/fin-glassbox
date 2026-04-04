@@ -1,3 +1,6 @@
+'''
+ib-hussain: This file needs to be run from the CLI and it has paths. The CLI args need to be figured out.
+'''
 import sys
 
 import pandas as pd
@@ -13,8 +16,6 @@ class Config:
     lr = 6.370722737649946e-05
     num_of_weeks_in_window = 3
     weight_decay = 2.029637392692641e-05
-
-
 def main(device, data_path, horizon, num_weeks):
     num_assets = len(pd.read_csv(data_path).columns) - 2
     end_indexes = [25, 50, 75, 90, num_weeks]
@@ -27,8 +28,6 @@ def main(device, data_path, horizon, num_weeks):
             get_predictor(data_path, horizon, num_assets, predicting_week, num_weeks,
                           device).predict_with_the_best_model()
         i += 1
-
-
 def get_trainer(data_path, horizon, num_assets, week, num_weeks, device):
     return SingleStep(
         data_path=data_path,
@@ -51,8 +50,6 @@ def get_trainer(data_path, horizon, num_assets, week, num_weeks, device):
         training_split=0.74,
         validation_split=0.24,
     )
-
-
 def get_predictor(data_path, horizon, num_assets, week, num_weeks, device):
     return SingleStep(
         data_path=data_path,
@@ -76,8 +73,6 @@ def get_predictor(data_path, horizon, num_assets, week, num_weeks, device):
         validation_split=0.24,
         run_for_prediction=True,
     )
-
-
 if __name__ == "__main__":
     device, data_path, horizon, num_weeks = sys.argv[1:]
     main(device, data_path, int(horizon), int(num_weeks))

@@ -1,10 +1,12 @@
+'''
+ib-hussain: This file needs to be run from the CLI and it has paths. The CLI args need to be figured out.
+'''
 import sys
 
 import pandas as pd
 from tqdm import tqdm
 
 from train_single_step import SingleStep
-
 
 class Config:
     conv_channels = 4
@@ -13,8 +15,6 @@ class Config:
     lr = 0.0006351708427814676
     num_of_weeks_in_window = 5
     weight_decay = 2.0337851025938947e-05
-
-
 def main(device, data_path, horizon, starting_week, num_weeks):
     num_assets = len(pd.read_csv(data_path).columns) - 2
     for week in tqdm(range(starting_week, num_weeks), desc="train_and_predict_weeks.py > week"):
@@ -22,8 +22,6 @@ def main(device, data_path, horizon, starting_week, num_weeks):
         get_trainer(data_path, horizon, num_assets, week, num_weeks, device).run_train_only()
         print(f"Predicting week: {week}")
         get_predictor(data_path, horizon, num_assets, week, num_weeks, device).predict_with_the_best_model()
-
-
 def get_trainer(data_path, horizon, num_assets, week, num_weeks, device):
     return SingleStep(
         data_path=data_path,
@@ -46,8 +44,6 @@ def get_trainer(data_path, horizon, num_assets, week, num_weeks, device):
         training_split=0.74,
         validation_split=0.24,
     )
-
-
 def get_predictor(data_path, horizon, num_assets, week, num_weeks, device):
     return SingleStep(
         data_path=data_path,
@@ -71,8 +67,6 @@ def get_predictor(data_path, horizon, num_assets, week, num_weeks, device):
         validation_split=0.24,
         run_for_prediction=True,
     )
-
-
 if __name__ == "__main__":
     device, data_path, horizon, starting_week, num_weeks = sys.argv[1:]
     main(device, data_path, int(horizon), int(starting_week), int(num_weeks))

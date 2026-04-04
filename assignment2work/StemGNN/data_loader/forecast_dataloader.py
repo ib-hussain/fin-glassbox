@@ -20,8 +20,6 @@ def normalized(data, normalize_method, norm_statistic=None):
         data = (data - mean) / std
         norm_statistic["std"] = std
     return data, norm_statistic
-
-
 def de_normalized(data, normalize_method, norm_statistic):
     if normalize_method == "min_max":
         if not norm_statistic:

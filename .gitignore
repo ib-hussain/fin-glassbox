@@ -118,6 +118,7 @@ assignment2work/paper-metric-reporter/**/*.ini
 .spyproject/
 .streamlit/
 ignore/
+*ignore*.*
 
 # ── Secrets & config ─────────────────────────────────────
 *.env

@@ -4,18 +4,13 @@ import torch.nn.functional as F
 
 
 class GLU(nn.Module):
-
     def __init__(self, input_channel, output_channel):
         super(GLU, self).__init__()
         self.linear_left = nn.Linear(input_channel, output_channel)
         self.linear_right = nn.Linear(input_channel, output_channel)
-
     def forward(self, x):
         return torch.mul(self.linear_left(x), torch.sigmoid(self.linear_right(x)))
-
-
 class StockBlockLayer(nn.Module):
-
     def __init__(self, time_step, unit, multi_layer, stack_cnt=0):
         super(StockBlockLayer, self).__init__()
         self.time_step = time_step
@@ -55,7 +50,6 @@ class StockBlockLayer(nn.Module):
                     self.time_step * self.output_channel,
                     self.time_step * self.output_channel,
                 ))
-
     def spe_seq_cell(self, input):
         batch_size, k, input_channel, node_cnt, time_step = input.size()
         input = input.view(batch_size, -1, node_cnt, time_step)
@@ -74,7 +68,6 @@ class StockBlockLayer(nn.Module):
             dim=1,
         )
         return iffted
-
     def forward(self, x, mul_L):
         mul_L = mul_L.unsqueeze(1)
         x = x.unsqueeze(1)
@@ -87,13 +80,9 @@ class StockBlockLayer(nn.Module):
         if self.stack_cnt == 0:
             backcast_short = self.backcast_short_cut(x).squeeze(1)
             backcast_source = torch.sigmoid(self.backcast(igfted) - backcast_short)
-        else:
-            backcast_source = None
+        else:backcast_source = None
         return forecast, backcast_source
-
-
 class Model(nn.Module):
-
     def __init__(
         self,
         units,
@@ -129,7 +118,6 @@ class Model(nn.Module):
         self.leakyrelu = nn.LeakyReLU(self.alpha)
         self.dropout = nn.Dropout(p=dropout_rate)
         self.to(device)
-
     def get_laplacian(self, graph, normalize):
         """
         return the laplacian of the graph.
@@ -144,7 +132,6 @@ class Model(nn.Module):
             D = torch.diag(torch.sum(graph, dim=-1))
             L = D - graph
         return L
-
     def cheb_polynomial(self, laplacian):
         """
         Compute the Chebyshev Polynomial, according to the graph laplacian.
@@ -159,7 +146,6 @@ class Model(nn.Module):
         forth_laplacian = (2 * torch.matmul(laplacian, third_laplacian) - second_laplacian)
         multi_order_laplacian = torch.cat([first_laplacian, second_laplacian, third_laplacian, forth_laplacian], dim=0)
         return multi_order_laplacian
-
     def latent_correlation_layer(self, x):
         input, _ = self.GRU(x.permute(2, 0, 1).contiguous())
         input = input.permute(1, 0, 2).contiguous()
@@ -173,7 +159,6 @@ class Model(nn.Module):
         laplacian = torch.matmul(diagonal_degree_hat, torch.matmul(degree_l - attention, diagonal_degree_hat))
         mul_L = self.cheb_polynomial(laplacian)
         return mul_L, attention
-
     def self_graph_attention(self, input):
         input = input.permute(0, 2, 1).contiguous()
         bat, N, fea = input.size()
@@ -186,10 +171,7 @@ class Model(nn.Module):
         attention = F.softmax(data, dim=2)
         attention = self.dropout(attention)
         return attention
-
-    def graph_fft(self, input, eigenvectors):
-        return torch.matmul(eigenvectors, input)
-
+    def graph_fft(self, input, eigenvectors):return torch.matmul(eigenvectors, input)
     def forward(self, x):
         mul_L, attention = self.latent_correlation_layer(x)
         X = x.unsqueeze(1).permute(0, 1, 3, 2).contiguous()
@@ -199,7 +181,5 @@ class Model(nn.Module):
             result.append(forecast)
         forecast = result[0] + result[1]
         forecast = self.fc(forecast)
-        if forecast.size()[-1] == 1:
-            return forecast.unsqueeze(1).squeeze(-1), attention
-        else:
-            return forecast.permute(0, 2, 1).contiguous(), attention
+        if forecast.size()[-1] == 1:return forecast.unsqueeze(1).squeeze(-1), attention
+        else:return forecast.permute(0, 2, 1).contiguous(), attention

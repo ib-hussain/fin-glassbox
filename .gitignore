@@ -27,7 +27,7 @@ cython_debug/
 .envrc
 .venv
 env/
-venv*/
+*venv*/
 ENV/
 env.bak/
 venv.bak/

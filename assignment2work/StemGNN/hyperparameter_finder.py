@@ -1,4 +1,14 @@
+'''
+ib-hussain: The paths are configured and the default arguments and the commands as well.
+'''
 import os
+import dotenv
+dotenv.load_dotenv()
+datasets_StemGNN_path = str(os.getenv("datasets_StemGNN_path", "assignment2work/StemGNN/datasets"))
+result_file_StemGNN_path = str(os.getenv("result_file_StemGNN_path", "assignment2work/StemGNN/output"))
+ENDING_WEEK = int(os.getenv("ENDING_WEEK", "21"))
+base_StemGNN_path = str(os.getenv("base_StemGNN_path", "assignment2work/StemGNN"))
+model_StemGNN_path = str(os.getenv("model_StemGNN_path", "assignment2work/StemGNN/model"))
 
 import torch
 
@@ -48,9 +58,9 @@ def main_call(
 
     args = parser.parse_args()
     print(f"Training configs: {args}")
-    data_file = os.path.join("dataset", args.dataset + ".csv")
-    result_train_file = os.path.join("output", args.dataset, "train")
-    result_test_file = os.path.join("output", args.dataset, "test")
+    data_file = os.path.join(datasets_StemGNN_path, args.dataset + ".csv")
+    result_train_file = os.path.join(result_file_StemGNN_path, args.dataset, "train")
+    result_test_file = os.path.join(result_file_StemGNN_path, args.dataset, "test")
     if not os.path.exists(result_train_file):
         os.makedirs(result_train_file)
     if not os.path.exists(result_test_file):
@@ -76,11 +86,8 @@ def main_call(
         except KeyboardInterrupt:
             print("-" * 99)
             print("Exiting from training early")
-    if args.evaluate:
-        return test(valid_data, args, result_train_file, result_test_file)
+    if args.evaluate:return test(valid_data, args, result_train_file, result_test_file)
     print("done")
-
-
 if __name__ == "__main__":
     hpo_max_evals = 100
     hpo_space = {
@@ -92,13 +99,15 @@ if __name__ == "__main__":
         "dropout_rate": hp.choice("dropout_rate", [0, 0.25, 0.5, 0.75]),
         "lr": hp.loguniform("lr", np.log(1e-6), np.log(1e-3)),
     }
-
     def objective(hparams):
         print(f"Trying hyperparameters: {hparams}", flush=True)
-        rmse = main_call("cuda", "__crypto_daily_simple_returns_week_104", 7, **hparams)
+        rmse = main_call("cuda", f"__crypto_daily_simple_returns_week_{ENDING_WEEK}", 7, **hparams)
         print("Validation RMSE: ", rmse, flush=True)
         return rmse
-
     best = fmin(objective, hpo_space, algo=tpe.suggest, max_evals=hpo_max_evals)
     best_hparams = space_eval(hpo_space, best)
     print(f"Best hparams: {best_hparams}")
+
+
+# python assignment2work/StemGNN/hyperparameter_finder.py   > assignment2work/StemGNN/hyperparameter_finder_crypto_results.txt
+# python assignment2work/StemGNN/hyperparameter_finder.py --dataset __fx_daily_simple_returns_week_21 > assignment2work/StemGNN/hyperparameter_finder_fx_results.txt

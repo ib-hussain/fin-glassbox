@@ -115,6 +115,17 @@ def load_model(model_dir, epoch=None):
     Returns:
         nn.Module: Instantiated populated system models.
     """
+    # if not model_dir:
+    #     return
+    # epoch = str(epoch) if epoch else ""
+    # file_name = os.path.join(model_dir, epoch + "_dhfm.pt")
+    # if not os.path.exists(model_dir):
+    #     os.makedirs(model_dir)
+    # if not os.path.exists(file_name):
+    #     return
+    # with open(file_name, "rb") as f:
+    #     model = torch.load(f)
+    # return model
     if not model_dir:
         return
     epoch = str(epoch) if epoch else ""
@@ -124,7 +135,9 @@ def load_model(model_dir, epoch=None):
     if not os.path.exists(file_name):
         return
     with open(file_name, "rb") as f:
-        model = torch.load(f)
+        # FIX: Add weights_only=False to bypass the new security restriction
+        # This is safe because you trained the model yourself
+        model = torch.load(f, weights_only=False)
     return model
 def masked_MAPE(v, v_, axis=None):
     if debugOption: print(f"[Debug_Output]: Function 'masked_MAPE' called with axis={axis}")

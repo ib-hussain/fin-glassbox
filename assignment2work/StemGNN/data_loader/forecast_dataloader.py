@@ -3,17 +3,14 @@ import numpy as np
 import torch
 import pandas as pd
 
-
 def normalized(data, normalize_method, norm_statistic=None):
     if normalize_method == "min_max":
-        if not norm_statistic:
-            norm_statistic = dict(max=np.max(data, axis=0), min=np.min(data, axis=0))
+        if not norm_statistic:norm_statistic = dict(max=np.max(data, axis=0), min=np.min(data, axis=0))
         scale = norm_statistic["max"] - norm_statistic["min"] + 1e-5
         data = (data - norm_statistic["min"]) / scale
         data = np.clip(data, 0.0, 1.0)
     elif normalize_method == "z_score":
-        if not norm_statistic:
-            norm_statistic = dict(mean=np.mean(data, axis=0), std=np.std(data, axis=0))
+        if not norm_statistic:norm_statistic = dict(mean=np.mean(data, axis=0), std=np.std(data, axis=0))
         mean = norm_statistic["mean"]
         std = norm_statistic["std"]
         std = [1 if i == 0 else i for i in std]
@@ -34,10 +31,7 @@ def de_normalized(data, normalize_method, norm_statistic):
         std = [1 if i == 0 else i for i in std]
         data = data * std + mean
     return data
-
-
 class ForecastDataset(torch_data.Dataset):
-
     def __init__(
         self,
         df,
@@ -57,9 +51,7 @@ class ForecastDataset(torch_data.Dataset):
         self.data = df
         self.df_length = len(df)
         self.x_end_idx = self.get_x_end_idx()
-        if normalize_method:
-            self.data, _ = normalized(self.data, normalize_method, norm_statistic)
-
+        if normalize_method:self.data, _ = normalized(self.data, normalize_method, norm_statistic)
     def __getitem__(self, index):
         hi = self.x_end_idx[index]
         lo = hi - self.window_size
@@ -68,10 +60,7 @@ class ForecastDataset(torch_data.Dataset):
         x = torch.from_numpy(train_data).type(torch.float)
         y = torch.from_numpy(target_data).type(torch.float)
         return x, y
-
-    def __len__(self):
-        return len(self.x_end_idx)
-
+    def __len__(self):return len(self.x_end_idx)
     def get_x_end_idx(self):
         # each element `hi` in `x_index_set` is an upper bound for get training data
         # training data range: [lo, hi), lo = hi - window_size

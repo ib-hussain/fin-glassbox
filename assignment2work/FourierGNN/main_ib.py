@@ -86,7 +86,8 @@ def search_hyperparameters(data, pre_length, train_epochs, batch_size, train_rat
         dict: The best hyperparameter combination dict.
     """
     print(f"Searching hyperparameters at week: {week}")
-    hpo_max_evals = 100
+    # this was 100 before 
+    hpo_max_evals = 25
 
     def objective(hparams):
         hparams_as_args = SimpleNamespace(**hparams)

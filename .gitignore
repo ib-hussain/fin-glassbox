@@ -20,6 +20,7 @@ None/
 *$py.class
 *.so
 cython_debug/
+jawwad_bhai.pem
 
 # ── Virtual environments ─────────────────────────────────
 .Python

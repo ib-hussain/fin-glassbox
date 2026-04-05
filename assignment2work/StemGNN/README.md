@@ -47,35 +47,3 @@ The detailed descriptions about the parameters are as following:
 | norm_method | method for normalization, 'z_score' or 'min_max' |
 | early_stop | whether to enable early stop, default False |
 
-
-**Table 1** Configurations for all datasets
-| Dataset | train | evaluate | node_cnt | window_size | horizon | norm_method |
-| -----   | ---- | ---- |---- |---- |---- | --- |
-| METR-LA | True | True | 207 | 12 | 3 | z_score |
-| PEMS-BAY | True | True |  325 | 12 | 3 | z_score |
-| PEMS03 | True | True |  358 | 12 | 3 | z_score |
-| PEMS04 | True | True |  307 | 12 | 3 | z_score |
-| PEMS07 | True | True | 228 | 12 | 3 | z_score |
-| PEMS08 | True | True |  170 | 12 | 3 | z_score |
-| COVID-19| True | True | 25 | 28 | 28 | z_score |
-
-## Results
-
-Our model achieves the following performance on the 10 datasets:
-
-**Table 2** (predict horizon: 3 steps)
-
-| Dataset | MAE  | RMSE | MAPE(%) |
-| -----   | ---- | ---- | ---- |
-| METR-LA | 2.56 | 5.06 | 6.46 |
-| PEMS-BAY | 1.23 | 2.48 | 2.63 |
-| PEMS03 | 14.32 | 21.64 | 16.24 |
-| PEMS04 | 20.24 | 32.15 | 10.03 |
-| PEMS07 | 2.14 | 4.01 | 5.01 |
-| PEMS08 | 15.83 | 24.93 | 9.26 |
-
-**Table 3** (predict horizon: 28 steps)
-
-| Dataset | MAE  | RMSE | MAPE |
-| -----   | ---- | ---- | ---- |
-| COVID-19 | 662.24 | 1023.19| 19.3|

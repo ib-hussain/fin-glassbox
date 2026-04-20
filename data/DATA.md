@@ -23,7 +23,7 @@ You do not need to download a separate “graph dataset” first. For your GNN c
 
 ## How much data is “enough”
 
-There is **no magical MB or GB threshold** that guarantees no overfitting. In your case, overfitting will depend more on:
+There is **no GB threshold** that guarantees no overfitting. In your case, overfitting will depend more on:
 
 * how many assets you cover
 * how many time periods you cover

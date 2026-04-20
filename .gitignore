@@ -2,6 +2,21 @@
 # FIN-GLASSBOX  –  .gitignore
 # -------------------------------------------------------
 
+# ── Project-specific: ML experiment outputs ──────────────
+# Generated outputs – never commit these; they can be large
+**/*experiment_log*.txt
+**/*_week_*.csv
+**/*_week_*.npy
+**/output/
+# **/prediction/
+**/old_simulations/
+multivariate-time-series-data/
+# models*/
+runs*/
+# figs*/
+data/sec_edgar/
+
+
 # ── OS & editor noise ───────────────────────────────────
 .DS_Store
 Thumbs.db
@@ -90,20 +105,6 @@ dmypy.json
 .ipynb_checkpoints/
 profile_default/
 ipython_config.py
-
-# ── Project-specific: ML experiment outputs ──────────────
-# Generated outputs – never commit these; they can be large
-**/*experiment_log*.txt
-**/*_week_*.csv
-**/*_week_*.npy
-**/output/
-# **/prediction/
-**/old_simulations/
-multivariate-time-series-data/
-# models*/
-runs*/
-# figs*/
-
 
 # ── Project-specific: data files ─────────────────────────
 data/Huge Stock Market Dataset/

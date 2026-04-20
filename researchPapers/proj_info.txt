@@ -14,20 +14,12 @@ Explainable AI (XAI)
 • For NLP: visualize attention weights to show which words triggered sentiment.
 • For fraud: show which transaction features had the highest reconstruction error.
 • Record for each prediction: which agent fired, which features mattered, confidence score.
+##########################################################################################
+a separate feedback loop should be suggested in the conclusion section.
+##########################################################################################
 
-The Risk Management Team monitors the risk exposure of the portfolio and ensures trading decisions remain within acceptable limits. 
-Main Responsibilities
-The paper lists several responsibilities:
-Assess market risk factors
-market volatility
-liquidity risk
-counterparty risk
-Apply risk mitigation strategies
-Examples mentioned:
-stop-loss orders
-diversification
-Provide feedback to Trader Agents
-Suggest adjustments to trading strategies.
-Ensure portfolio risk stays within firm limits and aligns with investment objectives.
+##########################################################################################
 
-maybe use catboost/xgboost for quanitative analysis
+
+
+##########################################################################################

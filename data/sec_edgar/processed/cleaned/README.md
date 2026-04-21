@@ -1,259 +1,186 @@
-# SEC Processed Data - Cleaned Datasets
+# Cleaned SEC EDGAR Datasets
 
 ## Overview
 
-This directory contains the cleaned and production-ready versions of the SEC EDGAR processed data. These datasets have undergone rigorous cleaning, filtering, deduplication, and standardization to prepare them for use in the **Explainable Distributed Deep Learning Framework for Financial Risk Management**.
+This directory contains the cleaned and production-ready versions of the SEC EDGAR processed datasets. These files are the result of a multi-stage data engineering pipeline that transformed raw SEC bulk archives into normalized, analysis-ready tabular data suitable for the **Explainable Distributed Deep Learning Framework for Financial Risk Management**.
 
-The datasets in this directory are the **definitive source** for:
-- **Fundamental Analyst** module input
-- **U.S. issuer universe definition**
-- **CIK-to-ticker mapping** for joining with market data
+**All datasets are filtered to U.S. public companies listed on NYSE or Nasdaq.**
 
 ---
 
-## Data Lineage Summary
+## Pipeline Summary
 
 ```
-SEC EDGAR Bulk Archives (submissions.zip, companyfacts.zip)
-                    ↓
-            Raw JSON Extraction
-                    ↓
-    ┌───────────────┴───────────────┐
-    ↓                               ↓
-submissions_pipeline.py    companyfacts_pipeline.py
-    ↓                               ↓
-issuer_master.csv (973K)    facts_part_*.csv (121.9M rows)
-    ↓                               ↓
-    └───────────┬───────────────────┘
-                ↓
-    sec_issuer_master.py + sec_core_fundamentals.py
-                ↓
-    cik_ticker_map.csv (5,644) + core_fundamentals_quarterly.csv (7,310)
-                ↓
-    sec_fundamentals_features.py (derived ratios + growth)
-                ↓
-    fundamentals_features.csv (7,310 rows, 70 columns)
-                ↓
-    ┌───────────┴───────────┐
-    ↓                       ↓
-sec_data_cleaning_pipeline.py (THIS STEP)
+Raw SEC Bulk Archives (ZIP)
     ↓
-cleaned/ directory (production-ready datasets)
+sec_edgar_download.py (raw acquisition)
+    ↓
+sec_submissions_pipeline.py + sec_companyfacts_pipeline.py (flattening)
+    ↓
+sec_issuer_master.py + sec_core_fundamentals.py + sec_fundamentals_features.py (feature engineering)
+    ↓
+sec_data_cleaning_pipeline.py (cleaning - THIS STEP)
+    ↓
+Cleaned datasets (this directory)
 ```
 
 ---
 
 ## Input Datasets (Before Cleaning)
 
-### 1. `cik_ticker_map.csv`
-**Source:** Derived from `issuer_master.csv` by `sec_issuer_master.py`
-
-| Metric | Value |
-|--------|-------|
-| Original rows | 5,644 |
-| Columns | `cik`, `padded_cik`, `primary_ticker`, `entity_name`, `primary_exchange` |
-| Issues identified | 2% missing `primary_exchange`, 4 distinct exchange values (Nasdaq, NYSE, OTC, Other) |
-
-### 2. `issuer_master.csv`
-**Source:** Built by `sec_issuer_master.py` from submissions and companyfacts inventories
-
-| Metric | Value |
-|--------|-------|
-| Original rows | 973,279 |
-| Columns | 35 columns including entity metadata, filing coverage, addresses |
-| Issues identified | ~90% missing `primary_ticker`, non-US issuers included, redundant location columns |
-
-### 3. `fundamentals_features.csv`
-**Source:** Built by `sec_fundamentals_features.py` from `core_fundamentals_quarterly.csv`
-
-| Metric | Value |
-|--------|-------|
-| Original rows | 7,310 |
-| Columns | 70 (36 raw + 34 derived features) |
-| Issues identified | 100% duplicate rows, 100% null columns, missing ticker/entity_name, extreme outliers |
-
----
-
-## Cleaning Operations Performed
-
-### Step 1: `cik_ticker_map.csv` Cleaning
-
-| Operation | Details | Rows Affected |
-|-----------|---------|---------------|
-| Remove missing exchange | Drop rows where `primary_exchange` is empty | ~113 rows (2%) |
-| Filter valid exchanges | Keep only `Nasdaq` and `NYSE` | ~30 rows removed |
-| **Result** | Clean mapping of CIK → ticker for major U.S. exchanges | **~5,500 rows** |
-
-### Step 2: `issuer_master.csv` Cleaning
-
-| Operation | Details | Impact |
-|-----------|---------|--------|
-| US-only filter | Keep `is_us_issuer == 1`, then drop column | 851,569 retained (87.5%) |
-| Exchange filter | Keep `Nasdaq`, `NYSE`, or missing values | OTC/other exchanges removed |
-| Column pruning | Drop `all_tickers`, `padded_cik`, `entity_type`, `state_of_incorporation_desc`, `state_of_incorporation` | 6 columns removed |
-| Ticker filling | Fill missing `primary_ticker` using `cik_ticker_map` | ~90% of missing tickers filled |
-| **Result** | US-only issuer registry with cleaned columns | **~850,000 rows** |
-
-**Columns retained:**
-- Identifiers: `cik`, `entity_name`, `primary_ticker`, `primary_exchange`
-- Business: `sic`, `sic_description`, `fiscal_year_end`, `business_city`
-- Coverage: `has_submissions`, `has_companyfacts`, filing date ranges, fact counts
-
-### Step 3: `fundamentals_features.csv` Cleaning
-
-| Operation | Details | Impact |
-|-----------|---------|--------|
-| **Deduplication** | Keep first occurrence of each (`cik`, `fiscal_year`, `fiscal_period`, `filing_date`) | 50% reduction (3,655 rows) |
-| **Drop null columns** | Remove columns with 100% missing values: `inventory`, `goodwill`, `intangible_assets`, `short_term_debt` | 4 columns removed |
-| **Fill identifiers** | Populate missing `ticker` and `entity_name` from `cik_ticker_map` | All rows now have identifiers |
-| **Cap outliers** | Limit all ratios to ±1000% (±10.0) and reasonable bounds | Extreme values clipped |
-| **Result** | Clean, deduplicated, normalized fundamentals | **~3,655 rows, 66 columns** |
-
-**Outlier capping details:**
-- Profitability margins: `[-10.0, 10.0]` (-1000% to +1000%)
-- Return ratios (ROA, ROE): `[-10.0, 10.0]`
-- Leverage ratios: `debt_to_equity` `[-10.0, 100.0]`, `current_ratio` `[0.0, 100.0]`
-- Growth rates (YoY, QoQ): `[-10.0, 10.0]`
+| File | Source | Original Rows | Issues Addressed |
+|------|--------|---------------|------------------|
+| `cik_ticker_map.csv` | `issuer_master/` | 5,644 | Missing exchange values (106), non-NYSE/Nasdaq exchanges (1,110) |
+| `issuer_master.csv` | `issuer_master/` | 973,279 | Non-US issuers (121,710), invalid exchanges, redundant columns, missing tickers |
+| `fundamentals_features.csv` | `fundamentals/` | 7,310 | Duplicate rows (1,050), 100% null columns (4), missing ticker/entity_name (4,689), extreme outliers (4,722 values) |
 
 ---
 
 ## Output Datasets (After Cleaning)
 
 ### 1. `cik_ticker_map_cleaned.csv`
-**Purpose:** Canonical CIK-to-ticker mapping for U.S. public companies on major exchanges.
+**4,428 rows** | CIK to ticker mapping for U.S. public companies
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `cik` | string | SEC Central Index Key (10-digit, no padding) |
-| `padded_cik` | string | CIK zero-padded to 10 digits |
-| `primary_ticker` | string | Trading symbol (e.g., AAPL, MSFT) |
-| `entity_name` | string | Legal entity name |
-| `primary_exchange` | string | `Nasdaq` or `NYSE` only |
+| Column | Description |
+|--------|-------------|
+| `cik` | SEC Central Index Key (unique identifier) |
+| `padded_cik` | Zero-padded 10-digit CIK |
+| `primary_ticker` | Trading symbol |
+| `entity_name` | Legal company name |
+| `primary_exchange` | **Nasdaq** or **NYSE** only |
 
-**Usage:**
-- Join with market data (yfinance) using `primary_ticker`
-- Map SEC filings to trading symbols
-- Define stock universe for prediction
+**Transformations applied:**
+- Removed 106 rows with missing exchange
+- Removed 1,110 rows with OTC/other exchanges
+- Result: Clean universe of 4,428 NYSE/Nasdaq companies
+
+---
 
 ### 2. `issuer_master_cleaned.csv`
-**Purpose:** Comprehensive registry of all U.S. SEC filers with coverage metadata.
+**850,459 rows** | Master registry of all U.S. SEC filers
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `cik` | string | SEC Central Index Key |
-| `entity_name` | string | Legal entity name |
-| `primary_ticker` | string | Trading symbol (if publicly traded) |
-| `primary_exchange` | string | Exchange (Nasdaq, NYSE, or empty) |
-| `sic` | string | Standard Industrial Classification code |
-| `sic_description` | string | Industry description |
-| `fiscal_year_end` | string | Month/Day of fiscal year end (MMDD) |
-| `business_city` | string | Headquarters city |
-| `has_submissions` | string | "1" if filings metadata available |
-| `has_companyfacts` | string | "1" if XBRL fundamentals available |
-| `earliest_filing_sub` | date | First filing date in submissions |
-| `latest_filing_sub` | date | Most recent filing date |
-| `earliest_filed_facts` | date | First XBRL fact date |
-| `latest_filed_facts` | date | Most recent XBRL fact date |
-| `n_fact_observations` | integer | Total XBRL facts available |
+| Column | Description |
+|--------|-------------|
+| `cik` | SEC Central Index Key |
+| `entity_name` | Legal company name |
+| `primary_ticker` | Trading symbol (if available) |
+| `primary_exchange` | Nasdaq, NYSE, or empty |
+| `sic` | Standard Industrial Classification code |
+| `sic_description` | Industry description |
+| `fiscal_year_end` | Month-day of fiscal year end (MMDD) |
+| `business_city` | City of business address |
+| `has_submissions` | 1 if filings metadata available |
+| `has_companyfacts` | 1 if XBRL facts available |
+| `earliest_filing_sub` | First filing date in submissions |
+| `latest_filing_sub` | Most recent filing date |
+| `earliest_filed_facts` | First XBRL fact date |
+| `latest_filed_facts` | Most recent XBRL fact date |
+| `n_fact_observations` | Total XBRL facts available |
 
-**Usage:**
-- Audit data coverage by company
-- Filter companies with sufficient history
-- Sector/industry grouping for analysis
+**Transformations applied:**
+- Filtered to U.S. issuers only (`is_us_issuer == 1`): removed 121,710 non-US entities
+- Removed OTC/other exchanges: 1,110 rows
+- Dropped 9 redundant columns: `is_us_issuer`, `all_tickers`, `padded_cik`, `entity_type`, `state_of_incorporation`, `state_of_incorporation_desc`, `mailing_city`, `mailing_state`, `business_state`
+- **Kept** `business_city` for geographic analysis
+
+---
 
 ### 3. `fundamentals_features_cleaned.csv`
-**Purpose:** Point-in-time quarterly fundamentals with derived ratios for Fundamental Analyst module.
+**6,260 rows** | Point-in-time quarterly fundamentals with derived ratios
 
-**Raw fields (36 columns):**
-| Category | Fields |
-|----------|--------|
-| Identifiers | `cik`, `ticker`, `entity_name` |
-| Period | `fiscal_year`, `fiscal_period` (Q1-Q4, FY), `filing_date`, `period_end_date` |
-| Filing | `form_type` (10-K, 10-Q), `accession` |
-| Income | `revenue`, `cost_of_revenue`, `gross_profit`, `operating_expenses`, `operating_income`, `net_income`, `eps_basic`, `eps_diluted`, `shares_basic` |
-| Assets | `total_assets`, `current_assets`, `cash_and_equivalents`, `ppe_net` |
-| Liabilities | `total_liabilities`, `current_liabilities`, `long_term_debt` |
-| Equity | `shareholders_equity`, `retained_earnings` |
-| Cash Flow | `operating_cash_flow`, `investing_cash_flow`, `financing_cash_flow`, `capex`, `free_cash_flow` |
+This is the **primary dataset** for the Fundamental Analyst module.
 
-**Derived features (30 columns):**
-| Category | Fields |
-|----------|--------|
-| Profitability | `gross_margin`, `operating_margin`, `net_margin`, `opex_to_revenue`, `cogs_to_revenue` |
-| Returns | `roa`, `roe` |
-| Leverage | `debt_to_equity`, `debt_to_assets`, `current_ratio`, `quick_ratio`, `cash_ratio` |
-| Efficiency | `asset_turnover`, `ppe_turnover` |
-| Cash Flow | `ocf_to_revenue`, `fcf_to_revenue`, `capex_to_revenue`, `fcf_to_net_income`, `ocf_to_net_income` |
-| Per Share | `revenue_per_share`, `book_value_per_share`, `ocf_per_share`, `fcf_per_share` |
-| Quality | `accruals_to_assets` |
-| Growth | `revenue_growth_yoy`, `revenue_growth_qoq`, `net_income_growth_yoy`, `net_income_growth_qoq`, `operating_income_growth_yoy`, `operating_income_growth_qoq`, `eps_basic_growth_yoy`, `eps_basic_growth_qoq`, `total_assets_growth_yoy`, `total_assets_growth_qoq` |
+#### Identifiers
+| Column | Description |
+|--------|-------------|
+| `cik` | SEC Central Index Key |
+| `ticker` | Trading symbol (filled from mapping) |
+| `entity_name` | Company name (filled from mapping) |
+| `fiscal_year` | Fiscal year |
+| `fiscal_period` | Q1, Q2, Q3, Q4, or FY |
+| `filing_date` | SEC filing date (point-in-time anchor) |
+| `period_end_date` | End date of fiscal period |
+| `form_type` | 10-K, 10-Q, or amendments |
+| `accession` | SEC accession number |
 
-**Point-in-Time Guarantee:**
-All data uses the **earliest filing date** for each fiscal period, ensuring no lookahead bias from restated values. This is critical for backtesting integrity.
+#### Raw Financials (34 columns)
+Revenue, cost_of_revenue, gross_profit, operating_expenses, operating_income, net_income, eps_basic, eps_diluted, shares_basic, total_assets, current_assets, cash_and_equivalents, ppe_net, total_liabilities, current_liabilities, long_term_debt, shareholders_equity, retained_earnings, operating_cash_flow, investing_cash_flow, financing_cash_flow, capex, free_cash_flow
+
+#### Derived Features (28 columns)
+| Category | Features |
+|----------|----------|
+| **Profitability** | gross_margin, operating_margin, net_margin, opex_to_revenue, cogs_to_revenue |
+| **Returns** | roa, roe |
+| **Leverage** | debt_to_equity, debt_to_assets, current_ratio, quick_ratio, cash_ratio |
+| **Efficiency** | asset_turnover, ppe_turnover |
+| **Cash Flow** | ocf_to_revenue, fcf_to_revenue, capex_to_revenue, fcf_to_net_income, ocf_to_net_income |
+| **Per Share** | revenue_per_share, book_value_per_share, ocf_per_share, fcf_per_share |
+| **Quality** | accruals_to_assets |
+| **Growth** | revenue_growth_yoy, revenue_growth_qoq, net_income_growth_yoy, net_income_growth_qoq, operating_income_growth_yoy, operating_income_growth_qoq, eps_basic_growth_yoy, eps_basic_growth_qoq, total_assets_growth_yoy, total_assets_growth_qoq |
+
+**Transformations applied:**
+- **Deduplication:** Removed 1,050 duplicate rows (each period now appears once)
+- **Null columns dropped:** `inventory`, `goodwill`, `intangible_assets`, `short_term_debt` (100% missing)
+- **Missing values filled:** 4,689 tickers and entity names filled using CIK mapping
+- **Outlier capping:** 4,722 values capped at ±1000% (±10.0) or reasonable domain bounds
+- **Point-in-time strict:** All values are "as-first-reported" (earliest filing per period)
 
 ---
 
-## Data Quality Summary
+## Cleaning Statistics Summary
 
-| Dataset | Rows | Completeness | Key Quality Metrics |
-|---------|------|--------------|---------------------|
-| `cik_ticker_map_cleaned.csv` | ~5,500 | 100% | No missing tickers or exchanges |
-| `issuer_master_cleaned.csv` | ~850,000 | 100% for key fields | All U.S. issuers, tickers filled where available |
-| `fundamentals_features_cleaned.csv` | ~3,655 | 100% for identifiers | Deduplicated, outliers capped, ratios normalized |
+| Metric | Value |
+|--------|-------|
+| **Total runtime** | 41.5 seconds |
+| **cik_ticker_map rows** | 4,428 (from 5,644) |
+| **issuer_master rows** | 850,459 (from 973,279) |
+| **fundamentals_features rows** | 6,260 (from 7,310) |
+| **Duplicates removed** | 1,050 |
+| **Missing tickers/names filled** | 4,689 |
+| **Outlier values capped** | 4,722 |
+| **Columns dropped** | 13 across all files |
 
 ---
 
-## Usage in the Framework
+## Usage Notes
 
-### Fundamental Analyst Module
-```python
-import pandas as pd
+### For Fundamental Analyst Module
+Use `fundamentals_features_cleaned.csv` as the primary input. All features are:
+- **Normalized ratios** (comparable across companies of any size)
+- **Point-in-time correct** (no lookahead bias from restatements)
+- **Outlier-capped** (extreme values bounded at ±1000%)
 
-# Load cleaned fundamentals
-fundamentals = pd.read_csv("data/sec_edgar/processed/cleaned/fundamentals_features_cleaned.csv")
+### For Universe Definition
+Use `cik_ticker_map_cleaned.csv` to:
+- Join with market data (yfinance) using `primary_ticker`
+- Filter to valid U.S. public companies
+- Map SEC CIKs to trading symbols
 
-# Features ready for modeling (all normalized ratios)
-feature_columns = [
-    "gross_margin", "operating_margin", "net_margin",
-    "roa", "roe", "debt_to_equity", "current_ratio",
-    "revenue_growth_yoy", "net_income_growth_yoy"
-]
+### For Company Metadata
+Use `issuer_master_cleaned.csv` for:
+- Industry classification (SIC codes)
+- Data coverage assessment (has_submissions, has_companyfacts)
+- Filing date ranges
 
-X = fundamentals[feature_columns]
-```
+---
 
-### Market Data Join
-```python
-# Load ticker mapping
-tickers = pd.read_csv("data/sec_edgar/processed/cleaned/cik_ticker_map_cleaned.csv")
+## Related Files
 
-# Use for yfinance downloads
-ticker_list = tickers["primary_ticker"].unique().tolist()
-```
-
-### Universe Filtering
-```python
-# Load issuer master for coverage filtering
-issuers = pd.read_csv("data/sec_edgar/processed/cleaned/issuer_master_cleaned.csv")
-
-# Filter companies with sufficient history
-qualified = issuers[
-    (issuers["has_companyfacts"] == "1") & 
-    (issuers["n_fact_observations"] > 1000)
-]
-```
+| File | Purpose |
+|------|---------|
+| `cleaning_summary.json` | Full statistics and parameters from cleaning run |
+| `../companyfacts/companyfacts_flat/` | Raw XBRL facts (72 partitioned CSVs, 121.9M rows) |
+| `../submissions/submissions_flat/` | Raw filing metadata (partitioned CSVs) |
 
 ---
 
 ## Regeneration
 
-To regenerate these cleaned datasets from source:
+To regenerate these cleaned files:
 
 ```bash
 cd /path/to/fin-glassbox
-source venv3.12.7/bin/activate
-
-# Run cleaning pipeline
+source venv/bin/activate
 python data/sec_data_cleaning_pipeline.py --overwrite
 ```
 

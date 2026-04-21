@@ -22,7 +22,9 @@ Data2/
 data/sec_edgar/logs/
 data/sec_edgar/raw/
 # !data/sec_edgar/processed/manifests/filings_manifest_2000_2024_merged.csv
-data/sec_edgar/processed/
+data/sec_edgar/processed/companyfacts/
+data/sec_edgar/processed/submissions/
+data/sec_edgar/processed/manifests/
 data/FRED_data/
 data/yFinance/
 

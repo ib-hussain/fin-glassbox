@@ -1,0 +1,73 @@
+{
+  "input_file": "data/sec_edgar/processed/fundamentals/core_fundamentals_quarterly.csv", // Original dataset with core financial metrics on which features engineering was performed
+  "output_file": "data/sec_edgar/processed/fundamentals/fundamentals_features.csv",
+  "statistics": {
+    "total_rows": 7310,
+    "rows_with_growth": 6607,
+    "ciks_processed": 703,
+    "features_added": 34
+  },
+  "feature_groups": {
+    "profitability": [
+      "gross_margin",
+      "operating_margin",
+      "net_margin",
+      "opex_to_revenue",
+      "cogs_to_revenue"
+    ],
+    "returns": [
+      "roa",
+      "roe"
+    ],
+    "leverage_liquidity": [
+      "debt_to_equity",
+      "debt_to_assets",
+      "current_ratio",
+      "quick_ratio",
+      "cash_ratio"
+    ],
+    "efficiency": [
+      "asset_turnover",
+      "ppe_turnover"
+    ],
+    "cash_flow": [
+      "ocf_to_revenue",
+      "fcf_to_revenue",
+      "capex_to_revenue",
+      "fcf_to_net_income",
+      "ocf_to_net_income"
+    ],
+    "per_share": [
+      "revenue_per_share",
+      "book_value_per_share",
+      "ocf_per_share",
+      "fcf_per_share"
+    ],
+    "earnings_quality": [
+      "accruals_to_assets"
+    ],
+    "growth": [
+      "revenue_growth_yoy",
+      "revenue_growth_qoq",
+      "net_income_growth_yoy",
+      "net_income_growth_qoq",
+      "operating_income_growth_yoy",
+      "operating_income_growth_qoq",
+      "eps_basic_growth_yoy",
+      "eps_basic_growth_qoq",
+      "total_assets_growth_yoy",
+      "total_assets_growth_qoq"
+    ]
+  },
+  "notes": [
+    "All derived features are normalized ratios or percentages comparable across companies",
+    "Growth rates calculated as (current - prior) / abs(prior)",
+    "Valuation metrics (P/E, P/B, P/S) omitted - require price data",
+    "YoY growth uses same fiscal period in prior year",
+    "QoQ growth uses immediate prior period"
+  ],
+  "timing": {
+    "processing_seconds": 38.712071895599365,
+    "total_seconds": 39.43918585777283
+  }
+}

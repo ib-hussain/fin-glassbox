@@ -1,0 +1,20 @@
+{
+  "output_file": "data/sec_edgar/processed/fundamentals/core_fundamentals_quarterly.csv",
+  "point_in_time_method": "strict_earliest_filing",
+  "quarterly_forms": [
+    "10-Q/A",
+    "10-K",
+    "10-Q",
+    "10-K/A"
+  ],
+  "concepts_extracted": 27,
+  "statistics": {
+    "total_output_rows": 7310,
+    "total_observations_processed": 73677604,
+    "us_ciks_filtered": 5644
+  },
+  "timing": {
+    "processing_seconds": 2777.54367685318,
+    "total_seconds": 2777.75230383873
+  }
+}

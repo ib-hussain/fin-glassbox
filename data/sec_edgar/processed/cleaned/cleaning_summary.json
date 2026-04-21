@@ -1,0 +1,186 @@
+{
+  "input_files": {
+    "cik_ticker_map": "data/sec_edgar/processed/issuer_master/cik_ticker_map.csv",
+    "issuer_master": "data/sec_edgar/processed/issuer_master/issuer_master.csv",
+    "fundamentals_features": "data/sec_edgar/processed/fundamentals/fundamentals_features.csv"
+  },
+  "output_files": {
+    "cik_ticker_map": "data/sec_edgar/processed/cleaned/cik_ticker_map_cleaned.csv",
+    "issuer_master": "data/sec_edgar/processed/cleaned/issuer_master_cleaned.csv",
+    "fundamentals_features": "data/sec_edgar/processed/cleaned/fundamentals_features_cleaned.csv"
+  },
+  "valid_exchanges": [
+    "NYSE",
+    "Nasdaq"
+  ],
+  "ratio_caps_applied": {
+    "gross_margin": [
+      -10.0,
+      10.0
+    ],
+    "operating_margin": [
+      -10.0,
+      10.0
+    ],
+    "net_margin": [
+      -10.0,
+      10.0
+    ],
+    "opex_to_revenue": [
+      -10.0,
+      10.0
+    ],
+    "cogs_to_revenue": [
+      -10.0,
+      10.0
+    ],
+    "roa": [
+      -10.0,
+      10.0
+    ],
+    "roe": [
+      -10.0,
+      10.0
+    ],
+    "debt_to_equity": [
+      -10.0,
+      100.0
+    ],
+    "debt_to_assets": [
+      0.0,
+      10.0
+    ],
+    "current_ratio": [
+      0.0,
+      100.0
+    ],
+    "quick_ratio": [
+      0.0,
+      100.0
+    ],
+    "cash_ratio": [
+      0.0,
+      100.0
+    ],
+    "asset_turnover": [
+      0.0,
+      100.0
+    ],
+    "ppe_turnover": [
+      0.0,
+      100.0
+    ],
+    "ocf_to_revenue": [
+      -10.0,
+      10.0
+    ],
+    "fcf_to_revenue": [
+      -10.0,
+      10.0
+    ],
+    "capex_to_revenue": [
+      -10.0,
+      10.0
+    ],
+    "fcf_to_net_income": [
+      -100.0,
+      100.0
+    ],
+    "ocf_to_net_income": [
+      -100.0,
+      100.0
+    ],
+    "revenue_per_share": [
+      -1000000000.0,
+      1000000000.0
+    ],
+    "book_value_per_share": [
+      -1000000000.0,
+      1000000000.0
+    ],
+    "ocf_per_share": [
+      -1000000000.0,
+      1000000000.0
+    ],
+    "fcf_per_share": [
+      -1000000000.0,
+      1000000000.0
+    ],
+    "accruals_to_assets": [
+      -10.0,
+      10.0
+    ],
+    "revenue_growth_yoy": [
+      -10.0,
+      10.0
+    ],
+    "revenue_growth_qoq": [
+      -10.0,
+      10.0
+    ],
+    "net_income_growth_yoy": [
+      -10.0,
+      10.0
+    ],
+    "net_income_growth_qoq": [
+      -10.0,
+      10.0
+    ],
+    "operating_income_growth_yoy": [
+      -10.0,
+      10.0
+    ],
+    "operating_income_growth_qoq": [
+      -10.0,
+      10.0
+    ],
+    "eps_basic_growth_yoy": [
+      -10.0,
+      10.0
+    ],
+    "eps_basic_growth_qoq": [
+      -10.0,
+      10.0
+    ],
+    "total_assets_growth_yoy": [
+      -10.0,
+      10.0
+    ],
+    "total_assets_growth_qoq": [
+      -10.0,
+      10.0
+    ]
+  },
+  "columns_dropped_from_fundamentals": [
+    "inventory",
+    "goodwill",
+    "intangible_assets",
+    "short_term_debt"
+  ],
+  "statistics": {
+    "cik_ticker_map": {
+      "rows_in": 5644,
+      "rows_out": 4428,
+      "missing_exchange_removed": 106,
+      "invalid_exchange_removed": 1110
+    },
+    "issuer_master": {
+      "rows_in": 973279,
+      "rows_out": 850459,
+      "non_us_removed": 121710,
+      "invalid_exchange_removed": 1110,
+      "tickers_filled": 0
+    },
+    "fundamentals_features": {
+      "rows_in": 7310,
+      "rows_out": 6260,
+      "duplicates_removed": 1050,
+      "tickers_filled": 4689,
+      "entity_names_filled": 4689,
+      "values_capped": 4722
+    }
+  },
+  "timing": {
+    "total_seconds": 41.540305376052856
+  }
+}

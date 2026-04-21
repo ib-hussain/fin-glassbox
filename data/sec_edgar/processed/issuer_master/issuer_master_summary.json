@@ -1,0 +1,16 @@
+{
+  "output_root": "data/sec_edgar/processed/issuer_master",
+  "issuer_master": "data/sec_edgar/processed/issuer_master/issuer_master.csv",
+  "cik_ticker_map": "data/sec_edgar/processed/issuer_master/cik_ticker_map.csv",
+  "statistics": {
+    "total_ciks": 973279,
+    "us_issuers": 851569,
+    "non_us_issuers": 63553,
+    "unknown_jurisdiction": 58157,
+    "issuers_with_ticker": 8081
+  },
+  "timing": {
+    "build_seconds": 67.34700131416321,
+    "total_seconds": 85.39807367324829
+  }
+}

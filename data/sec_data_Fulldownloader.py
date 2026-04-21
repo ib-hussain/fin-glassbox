@@ -422,3 +422,10 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# Example Usage:
+# python data/sec_data_Fulldownloader.py bulk
+# python data/sec_data_Fulldownloader.py filings --manifest data/sec_edgar/processed/filings_manifest_1995_2024.csv
+# python data/sec_data_Fulldownloader.py company-json --cik 320193
+# python data/sec_data_Fulldownloader.py manifest --start-year 1995 --end-year 2024
+# python data/sec_data_Fulldownloader.py all --start-year 1995 --end-year 2024

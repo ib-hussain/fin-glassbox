@@ -19,9 +19,9 @@ ibrahim_hussain@IbLaptop:/mnt/c/Users/ibrahim/Downloads/fin-glassbox$ ls data/se
 ibrahim_hussain@IbLaptop:/mnt/c/Users/ibrahim/Downloads/fin-glassbox$ cd data/sec_edgar/processed/companyfacts/
 ibrahim_hussain@IbLaptop:/mnt/c/Users/ibrahim/Downloads/fin-glassbox$
 ibrahim_hussain@IbLaptop:/mnt/c/Users/ibrahim/Downloads/fin-glassbox$ cat .env 
-API_KEY_IB = "0d3acacabf93691c3cb4cea1b0fb4a6d"
-API_KEY_SB = "a2688903e279a9178d98899ea097fd08"
-API_KEY_LB = "39cc89e8e96ba809e81198414fc22186"
+FRED_API_KEY_IB = "0d3acacabf93691c3cb4cea1b0fb4a6d"
+FRED_API_KEY_SB = "a2688903e279a9178d98899ea097fd08"
+FRED_API_KEY_LB = "39cc89e8e96ba809e81198414fc22186"
 
 SBRepoPath = ""
 LBRepoPath = "/mnt/d/Deeplearning/fin-glassbox"
@@ -30,7 +30,7 @@ IBRepoPath = "/mnt/d/Downloads/University/DeepLearning/fin-glassbox"
 DEBUG_MODE = 0
 # 0 = no debug, 1 = debug mode on (prints additional info for debugging purposes)
 ENDING_WEEK ="21"
-PROCESSOR = "cpu"
+PROCESSOR = "cpu"  
 # "cuda" or "cpu"
 
 datasets_in_tickerCollector_path = "assignment2work/datasetsIn"
@@ -56,7 +56,14 @@ resultsPathGlobal = "outputs/results"
 codeOutputsPathGlobal = "outputs/codeResults"
 
 dataPathGlobal = "data"
-secDataPathGlobal = "data/sec_edgar"ibrahim_hussain@IbLaptop:/mnt/c/Users/ibrahim/Downloads/fin-glassbox$ 
+secDataPathGlobal = "data/sec_edgar"
+FREDdataPath = "data/FRED_data"
+yFinDataPath = "data/yFinance"
+# these below code files directory is for model codes not for codes for data processing
+# The codes for any data processing and engineering needs to be put in the data/ directory
+codeFilesRoot = "code"
+
+ibrahim_hussain@IbLaptop:/mnt/c/Users/ibrahim/Downloads/fin-glassbox$ 
 
 ```
 Treat all of that as already available context.

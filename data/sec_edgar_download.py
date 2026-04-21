@@ -27,7 +27,7 @@ FILING_DIR = RAW_DIR / "filings_txt"
 
 MANIFEST_DIR = PROCESSED_DIR / "manifests"
 
-SEC_USER_AGENT = os.getenv("SEC_USER_AGENT", "IbrahimHussain ibrahimbeaconarion@gmail.com").strip()
+SEC_USER_AGENT = os.getenv("SEC_USER_AGENT", "").strip()
 REQUEST_INTERVAL_SECONDS = 0.15  # < 10 req/s, conservative
 TIMEOUT = (20, 180)
 

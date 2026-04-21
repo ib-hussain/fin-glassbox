@@ -14,8 +14,10 @@ multivariate-time-series-data/
 # models*/
 runs*/
 # figs*/
-data/sec_edgar/
-
+data/sec_edgar/logs/
+data/sec_edgar/raw/
+# !data/sec_edgar/processed/manifests/filings_manifest_2000_2024_merged.csv
+data/sec_edgar/processed/
 
 # ── OS & editor noise ───────────────────────────────────
 .DS_Store

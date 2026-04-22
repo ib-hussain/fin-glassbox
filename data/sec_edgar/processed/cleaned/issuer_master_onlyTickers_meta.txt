@@ -1,0 +1,2 @@
+This file data\sec_edgar\processed\cleaned\issuer_master_onlyTickers.csv contains the comprehensive list of tickers and company names that operate at nasdaq and NYSE. 
+These are tickers for which market daily data is needed. 

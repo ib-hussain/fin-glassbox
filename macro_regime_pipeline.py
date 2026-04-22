@@ -1,0 +1,512 @@
+#!/usr/bin/env python3
+"""
+macro_regime_pipeline.py
+
+Complete FRED macro data pipeline for the Explainable Distributed Deep Learning Framework.
+Handles acquisition, cleaning, feature engineering, frequency alignment, and quality control.
+
+Author: Senior Data Engineering Partner
+Project: Financial Risk Management Framework
+Module: Data Family #4 - Macro / Regime Data
+
+Usage:
+    python macro_regime_pipeline.py --full-run
+    python macro_regime_pipeline.py --skip-download  # Resume from cache
+    python macro_regime_pipeline.py --force-refresh   # Redownload everything
+"""
+
+import os
+import sys
+import json
+import logging
+import pickle
+from pathlib import Path
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Tuple
+import warnings
+warnings.filterwarnings('ignore')
+
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+import requests
+from dotenv import load_dotenv
+
+# Load environment
+load_dotenv()
+FRED_API_KEY = os.getenv('FRED_API_KEY_LB')
+if not FRED_API_KEY:
+    raise ValueError("FRED_API_KEY_LB not found in .env file")
+
+# Configuration
+START_DATE = '2000-01-01'
+END_DATE = '2024-12-31'
+BASE_PATH = Path(os.getenv('LBRepoPath', '/mnt/f/Deeplearning/fin-glassbox'))
+DATA_PATH = BASE_PATH / 'data' / 'FRED_data'
+
+# ============================================================================
+# CREATE DIRECTORIES FIRST (BEFORE LOGGING)
+# ============================================================================
+for subdir in ['raw/series_csv', 'raw/api_responses', 'processed', 'transformed', 'aligned', 'logs']:
+    (DATA_PATH / subdir).mkdir(parents=True, exist_ok=True)
+
+# ============================================================================
+# SETUP LOGGING (AFTER DIRECTORIES EXIST)
+# ============================================================================
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(DATA_PATH / 'logs' / 'pipeline.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# ============================================================================
+# PART 1: FRED SERIES DEFINITION
+# ============================================================================
+
+FRED_SERIES = {
+    # Interest Rates
+    'FEDFUNDS': {'frequency': 'Daily', 'category': 'rates', 'transform': 'level'},
+    'DGS1MO': {'frequency': 'Daily', 'category': 'rates', 'transform': 'level'},
+    'DGS3MO': {'frequency': 'Daily', 'category': 'rates', 'transform': 'level'},
+    'DGS6MO': {'frequency': 'Daily', 'category': 'rates', 'transform': 'level'},
+    'DGS1': {'frequency': 'Daily', 'category': 'rates', 'transform': 'level'},
+    'DGS2': {'frequency': 'Daily', 'category': 'rates', 'transform': 'level'},
+    'DGS5': {'frequency': 'Daily', 'category': 'rates', 'transform': 'level'},
+    'DGS10': {'frequency': 'Daily', 'category': 'rates', 'transform': 'level'},
+    'DGS30': {'frequency': 'Daily', 'category': 'rates', 'transform': 'level'},
+    
+    # Inflation
+    'CPIAUCSL': {'frequency': 'Monthly', 'category': 'inflation', 'transform': 'pct_change'},
+    'CPILFESL': {'frequency': 'Monthly', 'category': 'inflation', 'transform': 'pct_change'},
+    'PCEPI': {'frequency': 'Monthly', 'category': 'inflation', 'transform': 'pct_change'},
+    'PCEPILFE': {'frequency': 'Monthly', 'category': 'inflation', 'transform': 'pct_change'},
+    'CPIENGSL': {'frequency': 'Monthly', 'category': 'inflation', 'transform': 'pct_change'},
+    
+    # Labor Market
+    'UNRATE': {'frequency': 'Monthly', 'category': 'labor', 'transform': 'level'},
+    'PAYEMS': {'frequency': 'Monthly', 'category': 'labor', 'transform': 'pct_change'},
+    'ICSA': {'frequency': 'Weekly', 'category': 'labor', 'transform': 'level'},
+    'CIVPART': {'frequency': 'Monthly', 'category': 'labor', 'transform': 'level'},
+    'AHEMAN': {'frequency': 'Monthly', 'category': 'labor', 'transform': 'pct_change'},
+    
+    # Economic Activity
+    'INDPRO': {'frequency': 'Monthly', 'category': 'activity', 'transform': 'pct_change'},
+    'RSAFS': {'frequency': 'Monthly', 'category': 'activity', 'transform': 'pct_change'},
+    'DGORDER': {'frequency': 'Monthly', 'category': 'activity', 'transform': 'pct_change'},
+    'NAPMNO': {'frequency': 'Monthly', 'category': 'activity', 'transform': 'level'},
+    'PERMIT': {'frequency': 'Monthly', 'category': 'activity', 'transform': 'pct_change'},
+    'HOUST': {'frequency': 'Monthly', 'category': 'activity', 'transform': 'pct_change'},
+    
+    # Credit & Stress
+    'BAMLH0A0HYM2': {'frequency': 'Daily', 'category': 'credit', 'transform': 'level'},
+    'BAMLC0A0CM': {'frequency': 'Daily', 'category': 'credit', 'transform': 'level'},
+    'TEDRATE': {'frequency': 'Daily', 'category': 'credit', 'transform': 'level'},
+    'DTWEXBGS': {'frequency': 'Daily', 'category': 'credit', 'transform': 'level'},
+    'VIXCLS': {'frequency': 'Daily', 'category': 'credit', 'transform': 'level'},
+    'MORTGAGE30US': {'frequency': 'Weekly', 'category': 'credit', 'transform': 'level'},
+    
+    # Regime Labels
+    'USREC': {'frequency': 'Monthly', 'category': 'regime', 'transform': 'level'},
+    'USRECD': {'frequency': 'Daily', 'category': 'regime', 'transform': 'level'},
+    
+    # Complementary
+    'WALCL': {'frequency': 'Weekly', 'category': 'complementary', 'transform': 'pct_change'},
+    'TOTALSL': {'frequency': 'Weekly', 'category': 'complementary', 'transform': 'pct_change'},
+    'M2SL': {'frequency': 'Monthly', 'category': 'complementary', 'transform': 'pct_change'},
+    'GFDEBTN': {'frequency': 'Quarterly', 'category': 'complementary', 'transform': 'pct_change'},
+    'PSAVERT': {'frequency': 'Monthly', 'category': 'complementary', 'transform': 'level'},
+    'UMCSENT': {'frequency': 'Monthly', 'category': 'complementary', 'transform': 'level'},
+}
+
+# Release lags (days after period end when data becomes available) - MOVED HERE before functions
+RELEASE_LAGS = {
+    'CPIAUCSL': 15, 'CPILFESL': 15, 'PCEPI': 15, 'PCEPILFE': 15, 'CPIENGSL': 15,
+    'UNRATE': 5, 'PAYEMS': 5, 'INDPRO': 15, 'RSAFS': 15, 'NAPMNO': 3,
+    'UMCSENT': 15, 'PSAVERT': 30, 'GFDEBTN': 45,
+    'ICSA': 3, 'WALCL': 3, 'MORTGAGE30US': 3,
+    'USREC': 30, 'USRECD': 30,
+}
+
+# ============================================================================
+# PART 2: RAW DATA ACQUISITION
+# ============================================================================
+
+def fetch_fred_series(series_id: str, api_key: str) -> pd.DataFrame:
+    """Fetch a single FRED series and return as DataFrame."""
+    url = f"https://api.stlouisfed.org/fred/series/observations"
+    params = {
+        'series_id': series_id,
+        'api_key': api_key,
+        'file_type': 'json',
+        'observation_start': START_DATE,
+        'observation_end': END_DATE,
+        'sort_order': 'asc'
+    }
+    
+    try:
+        response = requests.get(url, params=params, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        
+        observations = data['observations']
+        df = pd.DataFrame(observations)
+        
+        if df.empty:
+            logger.warning(f"No data for {series_id}")
+            return pd.DataFrame()
+        
+        df['date'] = pd.to_datetime(df['date'])
+        df['value'] = pd.to_numeric(df['value'], errors='coerce')
+        df = df[['date', 'value']].dropna()
+        df.columns = ['date', series_id]
+        
+        return df
+        
+    except Exception as e:
+        logger.error(f"Failed to fetch {series_id}: {e}")
+        return pd.DataFrame()
+
+def download_all_series(force_refresh: bool = False) -> Dict[str, pd.DataFrame]:
+    """Download all FRED series with resume support."""
+    manifest_path = DATA_PATH / 'raw' / 'download_manifest.json'
+    series_data = {}
+    
+    # Load existing manifest
+    if manifest_path.exists() and not force_refresh:
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+    else:
+        manifest = {}
+    
+    for series_id in tqdm(FRED_SERIES.keys(), desc="Downloading FRED series"):
+        # Skip if already downloaded and not forcing refresh
+        if not force_refresh and series_id in manifest:
+            csv_path = DATA_PATH / 'raw' / 'series_csv' / f"{series_id}.csv"
+            if csv_path.exists():
+                series_data[series_id] = pd.read_csv(csv_path, parse_dates=['date'])
+                continue
+        
+        # Download
+        df = fetch_fred_series(series_id, FRED_API_KEY)
+        if not df.empty:
+            # Save raw CSV
+            csv_path = DATA_PATH / 'raw' / 'series_csv' / f"{series_id}.csv"
+            df.to_csv(csv_path, index=False)
+            series_data[series_id] = df
+            
+            # Update manifest
+            manifest[series_id] = {
+                'downloaded_at': datetime.now().isoformat(),
+                'n_observations': len(df),
+                'date_range': [df['date'].min().isoformat(), df['date'].max().isoformat()]
+            }
+    
+    # Save manifest
+    with open(manifest_path, 'w') as f:
+        json.dump(manifest, f, indent=2)
+    
+    logger.info(f"Downloaded {len(series_data)} series")
+    return series_data
+
+# ============================================================================
+# PART 3: STANDARDIZATION & MASTER TABLE
+# ============================================================================
+
+def create_master_table(series_dict: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """Combine all series into a single master DataFrame with metadata."""
+    # Combine all series
+    master = None
+    for series_id, df in series_dict.items():
+        if master is None:
+            master = df.set_index('date')
+        else:
+            master = master.join(df.set_index('date'), how='outer')
+    
+    master = master.reset_index()
+    master.columns = ['date'] + list(series_dict.keys())
+    
+    # Create metadata table
+    metadata = []
+    for series_id, info in FRED_SERIES.items():
+        if series_id in master.columns:
+            metadata.append({
+                'series_id': series_id,
+                'frequency': info['frequency'],
+                'category': info['category'],
+                'transform_suggested': info['transform'],
+                'min_date': master[series_id].first_valid_index(),
+                'max_date': master[series_id].last_valid_index(),
+                'n_valid': master[series_id].count(),
+                'pct_missing': (1 - master[series_id].count() / len(master)) * 100
+            })
+    
+    metadata_df = pd.DataFrame(metadata)
+    metadata_df.to_parquet(DATA_PATH / 'processed' / 'series_metadata.parquet')
+    
+    # Save master table
+    master.to_parquet(DATA_PATH / 'processed' / 'macro_master.parquet')
+    
+    # Create quality_reports directory if it doesn't exist
+    (DATA_PATH / 'processed' / 'quality_reports').mkdir(parents=True, exist_ok=True)
+    
+    # Quality report
+    quality_report = metadata_df[['series_id', 'n_valid', 'pct_missing', 'min_date', 'max_date']]
+    quality_report.to_csv(DATA_PATH / 'processed' / 'quality_reports' / 'coverage_matrix.csv', index=False)
+    
+    logger.info(f"Master table created: {master.shape[0]} dates, {master.shape[1]} series")
+    return master
+
+# ============================================================================
+# PART 4: FEATURE ENGINEERING
+# ============================================================================
+
+def engineer_features(master_df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    """Create transformed features: changes, spreads, z-scores, regime flags."""
+    
+    df = master_df.set_index('date').copy()
+    
+    # 1. Percentage changes (for appropriate series)
+    pct_changes = pd.DataFrame(index=df.index)
+    for series in ['CPIAUCSL', 'CPILFESL', 'PCEPI', 'PCEPILFE', 'INDPRO', 'RSAFS']:
+        if series in df.columns:
+            pct_changes[f'{series}_mom'] = df[series].pct_change() * 100
+            pct_changes[f'{series}_yoy'] = df[series].pct_change(12) * 100
+    
+    # 2. Yield spreads (critical for regime detection)
+    spreads = pd.DataFrame(index=df.index)
+    if all(x in df.columns for x in ['DGS10', 'DGS2']):
+        spreads['yield_spread_10y2y'] = df['DGS10'] - df['DGS2']
+    if all(x in df.columns for x in ['DGS10', 'DGS3MO']):
+        spreads['yield_spread_10y3m'] = df['DGS10'] - df['DGS3MO']
+    if all(x in df.columns for x in ['DGS2', 'FEDFUNDS']):
+        spreads['rate_spread_2y_fed'] = df['DGS2'] - df['FEDFUNDS']
+    
+    # 3. Credit spreads
+    if all(x in df.columns for x in ['BAMLH0A0HYM2', 'DGS10']):
+        spreads['credit_spread_hy'] = df['BAMLH0A0HYM2'] - df['DGS10']
+    
+    # 4. Rolling Z-scores (20, 60, 252 day windows)
+    z_scores = pd.DataFrame(index=df.index)
+    windows = [20, 60, 252]
+    
+    for series in ['VIXCLS', 'TEDRATE', 'UNRATE', 'FEDFUNDS']:
+        if series in df.columns:
+            for window in windows:
+                rolling_mean = df[series].rolling(window).mean()
+                rolling_std = df[series].rolling(window).std()
+                rolling_std = rolling_std.replace(0, np.nan)
+                z_scores[f'{series}_z_{window}d'] = (df[series] - rolling_mean) / rolling_std
+    
+    # 5. Regime flags (binary indicators)
+    regime_flags = pd.DataFrame(index=df.index, dtype=float)
+    
+    # Yield curve inversion
+    if 'yield_spread_10y2y' in spreads.columns:
+        regime_flags['yield_curve_inverted'] = (spreads['yield_spread_10y2y'] < 0).astype(float)
+    
+    # Fed policy regime
+    if 'FEDFUNDS' in df.columns:
+        fed_ma = df['FEDFUNDS'].rolling(252).mean()
+        regime_flags['fed_tightening'] = (df['FEDFUNDS'] > fed_ma + 0.5).astype(float)
+        regime_flags['fed_easing'] = (df['FEDFUNDS'] < fed_ma - 0.5).astype(float)
+    
+    # Inflation regime
+    if 'CPIAUCSL' in df.columns:
+        cpi_3m = df['CPIAUCSL'].pct_change(3) * 100
+        regime_flags['inflation_rising'] = (cpi_3m > 0).astype(float)
+        regime_flags['inflation_falling'] = (cpi_3m < 0).astype(float)
+    
+    # Volatility regime
+    if 'VIXCLS' in df.columns:
+        regime_flags['high_volatility'] = (df['VIXCLS'] > 25).astype(float)
+        regime_flags['extreme_volatility'] = (df['VIXCLS'] > 35).astype(float)
+    
+    # Credit stress regime
+    if 'BAMLH0A0HYM2' in df.columns:
+        regime_flags['credit_stress'] = (df['BAMLH0A0HYM2'] > 6).astype(float)
+    
+    # Recession (from NBER)
+    if 'USREC' in df.columns:
+        regime_flags['recession'] = df['USREC'].fillna(0).astype(int)
+    
+    # Labor market regime
+    if 'UNRATE' in df.columns:
+        unrate_ma = df['UNRATE'].rolling(12).mean()
+        regime_flags['labor_tight'] = (df['UNRATE'] < unrate_ma - 0.5).astype(float)
+        regime_flags['labor_loose'] = (df['UNRATE'] > unrate_ma + 0.5).astype(float)
+    
+    # Fill NaN with 0 and convert to int
+    regime_flags = regime_flags.fillna(0).astype(int)
+    
+    # Save all feature sets
+    pct_changes.to_parquet(DATA_PATH / 'transformed' / 'macro_changes.parquet')
+    spreads.to_parquet(DATA_PATH / 'transformed' / 'macro_spreads.parquet')
+    z_scores.to_parquet(DATA_PATH / 'transformed' / 'macro_z_scores.parquet')
+    regime_flags.to_parquet(DATA_PATH / 'transformed' / 'macro_regime_flags.parquet')
+    
+    # Also save raw levels for reference
+    df.to_parquet(DATA_PATH / 'transformed' / 'macro_levels.parquet')
+    
+    logger.info(f"Feature engineering complete: changes={pct_changes.shape[1]}, spreads={spreads.shape[1]}, z_scores={z_scores.shape[1]}, regime_flags={regime_flags.shape[1]}")
+    
+    return {
+        'levels': df,
+        'changes': pct_changes,
+        'spreads': spreads,
+        'z_scores': z_scores,
+        'regime_flags': regime_flags
+    }
+
+# ============================================================================
+# PART 5: DAILY ALIGNMENT (CRITICAL - NO LEAKAGE)
+# ============================================================================
+
+def align_to_daily(features_dict: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Align all macro features to daily calendar with release date awareness.
+    Prevents look-ahead bias by using only data available on or before each date.
+    """
+    # Create daily calendar for entire period
+    daily_calendar = pd.date_range(start=START_DATE, end=END_DATE, freq='D')
+    
+    daily_df = pd.DataFrame(index=daily_calendar)
+    
+    # Process each feature type
+    for name, feat_df in features_dict.items():
+        if feat_df.empty:
+            continue
+        
+        # For each column in the feature dataframe
+        for col in feat_df.columns:
+            # Determine release lag based on base series name
+            base_series = col.split('_')[0]
+            lag = RELEASE_LAGS.get(base_series, 1)
+            
+            # Shift availability by lag days
+            available_dates = feat_df.index + pd.Timedelta(days=lag)
+            aligned_series = pd.Series(feat_df[col].values, index=available_dates)
+            
+            # Forward fill to daily (this ensures no look-ahead)
+            daily_df[f'macro_{name}_{col}'] = aligned_series.reindex(daily_df.index, method='ffill')
+    
+    # Drop dates before first valid macro observation
+    daily_df = daily_df[daily_df.index >= '2000-01-15']
+    
+    # Save daily-aligned features
+    daily_df.to_parquet(DATA_PATH / 'aligned' / 'daily_macro_features.parquet')
+    
+    # Save alignment log
+    alignment_log = pd.DataFrame({
+        'date': daily_df.index,
+        'n_macro_features': daily_df.notna().sum(axis=1),
+        'first_valid': daily_df.notna().any(axis=1).cumsum().clip(0, 1).diff().fillna(0)
+    })
+    alignment_log.to_csv(DATA_PATH / 'aligned' / 'alignment_log.csv', index=False)
+    
+    # Create feature dictionary for XAI
+    feature_dict = {
+        'feature_names': list(daily_df.columns),
+        'n_features': len(daily_df.columns),
+        'date_range': [daily_df.index.min().isoformat(), daily_df.index.max().isoformat()],
+        'feature_categories': {
+            'regime_flags': [c for c in daily_df.columns if 'regime' in c],
+            'spreads': [c for c in daily_df.columns if 'spread' in c],
+            'z_scores': [c for c in daily_df.columns if 'z_' in c],
+            'changes': [c for c in daily_df.columns if 'mom' in c or 'yoy' in c]
+        }
+    }
+    
+    with open(DATA_PATH / 'aligned' / 'feature_dictionary.json', 'w') as f:
+        json.dump(feature_dict, f, indent=2)
+    
+    logger.info(f"Daily alignment complete: {daily_df.shape[0]} days, {daily_df.shape[1]} features")
+    return daily_df
+
+# ============================================================================
+# PART 6: MAIN PIPELINE
+# ============================================================================
+
+def run_full_pipeline(skip_download: bool = False, force_refresh: bool = False):
+    """Execute the complete macro/regime data pipeline."""
+    
+    logger.info("=" * 80)
+    logger.info("Starting Macro/Regime Data Pipeline")
+    logger.info(f"Date range: {START_DATE} to {END_DATE}")
+    logger.info(f"Target series: {len(FRED_SERIES)}")
+    logger.info("=" * 80)
+    
+    # Step 1: Download raw data
+    if not skip_download:
+        logger.info("Step 1: Downloading FRED series...")
+        series_dict = download_all_series(force_refresh=force_refresh)
+    else:
+        logger.info("Step 1: Skipping download, loading from cache...")
+        series_dict = {}
+        for series_id in FRED_SERIES.keys():
+            csv_path = DATA_PATH / 'raw' / 'series_csv' / f"{series_id}.csv"
+            if csv_path.exists():
+                series_dict[series_id] = pd.read_csv(csv_path, parse_dates=['date'])
+            else:
+                logger.warning(f"Missing cached series: {series_id}")
+    
+    if not series_dict:
+        logger.error("No data available. Exiting.")
+        return
+    
+    # Step 2: Create master table
+    logger.info("Step 2: Creating master table...")
+    master_df = create_master_table(series_dict)
+    
+    # Step 3: Engineer features
+    logger.info("Step 3: Engineering features...")
+    features = engineer_features(master_df)
+    
+    # Step 4: Align to daily
+    logger.info("Step 4: Aligning to daily calendar...")
+    daily_features = align_to_daily(features)
+    
+    # Step 5: Summary report
+    logger.info("=" * 80)
+    logger.info("PIPELINE COMPLETE")
+    logger.info(f"Daily features shape: {daily_features.shape}")
+    logger.info(f"Date range: {daily_features.index[0]} to {daily_features.index[-1]}")
+    logger.info(f"Total macro features: {daily_features.shape[1]}")
+    logger.info(f"Missingness (mean): {daily_features.isna().mean().mean()*100:.2f}%")
+    logger.info("=" * 80)
+    
+    # Print sample features
+    print("\n" + "=" * 60)
+    print("SAMPLE DAILY MACRO FEATURES (First 5 rows, selected columns):")
+    print("=" * 60)
+    sample_cols = [c for c in daily_features.columns if any(x in c for x in ['spread', 'z_', 'regime', 'VIX'])]
+    if sample_cols:
+        print(daily_features[sample_cols[:10]].head())
+    else:
+        print(daily_features.iloc[:, :10].head())
+    
+    return daily_features
+
+# ============================================================================
+# ENTRY POINT
+# ============================================================================
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="FRED Macro/Regime Data Pipeline")
+    parser.add_argument("--full-run", action="store_true", help="Run full pipeline (download + process)")
+    parser.add_argument("--skip-download", action="store_true", help="Use cached downloads only")
+    parser.add_argument("--force-refresh", action="store_true", help="Redownload all series")
+    
+    args = parser.parse_args()
+    
+    if args.full_run:
+        run_full_pipeline(skip_download=False, force_refresh=args.force_refresh)
+    elif args.skip_download:
+        run_full_pipeline(skip_download=True, force_refresh=False)
+    else:
+        # Default: run everything
+        run_full_pipeline(skip_download=False, force_refresh=False)

@@ -10,9 +10,9 @@ Project: Financial Risk Management Framework
 Module: Data Family #4 - Macro / Regime Data
 
 Usage:
-    python macro_regime_pipeline.py --full-run
-    python macro_regime_pipeline.py --skip-download  # Resume from cache
-    python macro_regime_pipeline.py --force-refresh   # Redownload everything
+    python data/macro_regime_pipeline.py --full-run
+    python data/macro_regime_pipeline.py --skip-download  # Resume from cache
+    python data/macro_regime_pipeline.py --force-refresh   # Redownload everything
 """
 
 import os

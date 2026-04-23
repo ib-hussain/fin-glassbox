@@ -25,7 +25,7 @@ data/sec_edgar/raw/
 data/sec_edgar/processed/companyfacts/
 data/sec_edgar/processed/submissions/
 data/sec_edgar/processed/manifests/
-data/FRED_data/
+#data/FRED_data/
 data/yFinance/
 
 # ── OS & editor noise ───────────────────────────────────

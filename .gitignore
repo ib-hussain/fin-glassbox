@@ -16,7 +16,6 @@ runs*/
 # figs*/
 # ── Project-specific: data files ─────────────────────────
 data/Huge Stock Market Dataset/
-data/data_FRED/
 data/TradingAgents/
 Data2/
 data/sec_edgar/logs/
@@ -25,8 +24,13 @@ data/sec_edgar/raw/
 data/sec_edgar/processed/companyfacts/
 data/sec_edgar/processed/submissions/
 data/sec_edgar/processed/manifests/
-#data/FRED_data/
-data/yFinance/
+data/FRED_data/raw/
+data/yFinance/raw/
+data/yFinance/*.zip
+data/yFinance/raw_metadata/
+data/yFinance/processed/
+data/yFinance/_CON - Copy.json
+data/yFinance/_CON - Copy.parquet
 
 # ── OS & editor noise ───────────────────────────────────
 .DS_Store

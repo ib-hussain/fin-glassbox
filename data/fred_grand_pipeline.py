@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FRED Grand Pipeline — Complete Version
+FRED Grand Pipeline — Final Version
 
 1. Downloads ALL ~11,000 daily FRED series (if not already downloaded)
 2. Deletes series that DON'T cover 2000-01-01 to 2024-12-31
@@ -45,7 +45,7 @@ if not API_KEY:
 # ============================================================
 
 DATA_PATH = Path("data/FRED_data")
-RAW_DIR = DATA_PATH / "raw" 
+RAW_DIR = DATA_PATH / "raw"
 OUTPUT_DIR = DATA_PATH / "outputs"
 FRED_LIST_FILE = DATA_PATH / "fred_daily_series_list.csv"
 
@@ -59,6 +59,16 @@ TARGET_END = pd.Timestamp("2024-12-31")
 # ============================================================
 # SERIES SELECTION — Only keep interpretable, useful series
 # ============================================================
+
+# These MUST be available. If not in the daily tag, we download them separately.
+REQUIRED_SERIES = [
+    "VIXCLS",      # VIX (may not be tagged "daily")
+    "T10Y2Y",      # 10Y-2Y spread
+    "T10Y3M",      # 10Y-3M spread
+    "USRECD",      # Recession indicator
+    "TEDRATE",     # TED spread
+    "DTWEXBGS",    # Trade-weighted dollar
+]
 
 KEEP_PATTERNS = [
     # === Treasury Yields ===
@@ -117,7 +127,7 @@ KEEP_PATTERNS = [
     "KCPRU", "DLTIIT", "IUDSOIA", "INFECTDISEMVTRACKD",
 ]
 
-# Series to ALWAYS exclude
+# Series to ALWAYS exclude (even if they match KEEP_PATTERNS partially)
 EXCLUDE_PATTERNS = [
     "BAML", "NASDAQNQ", "NASDAQHX", "NASDAQCX", "NASDAQSX",
     "NASDAQIX", "NASDAQB", "THREEFF", "THREEFY", "RIFSPP",
@@ -197,11 +207,11 @@ def get_daily_series_list(api_key: str) -> list[str]:
     return series_ids
 
 
-def download_series(series_id: str, start: str, end: str) -> Optional[pd.DataFrame]:
+def download_single_series(series_id: str) -> Optional[pd.DataFrame]:
     """Download a single FRED series."""
     url = (
         f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
-        f"&cosd={start}&coed={end}"
+        f"&cosd=2000-01-01&coed=2024-12-31"
     )
     try:
         resp = requests.get(url, timeout=30)
@@ -220,46 +230,58 @@ def download_series(series_id: str, start: str, end: str) -> Optional[pd.DataFra
 
 
 def download_all_series(force_refresh: bool = False) -> None:
-    """Download all daily FRED series (if not already downloaded)."""
+    """Download all daily FRED series + required series."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     
-    # Count existing files
     existing = list(RAW_DIR.glob("*.csv"))
     print(f"Existing files in {RAW_DIR}: {len(existing):,}")
     
-    # Get list of all daily series
+    # Get list of all daily-tagged series
     series_ids = get_daily_series_list(API_KEY)
     print(f"Total daily FRED series available: {len(series_ids):,}")
     
+    # Add required series that might not be tagged "daily"
+    all_to_download = set(series_ids)
+    for sid in REQUIRED_SERIES:
+        if sid not in all_to_download:
+            all_to_download.add(sid)
+            if DEBUG_MODE:
+                print(f"[DEBUG]: Adding required series not in daily tag: {sid}")
+    
+    all_to_download = sorted(all_to_download)
+    
     # Save the list
-    pd.DataFrame({"id": series_ids}).to_csv(FRED_LIST_FILE, index=False)
+    pd.DataFrame({"id": all_to_download}).to_csv(FRED_LIST_FILE, index=False)
     print(f"Saved series list to: {FRED_LIST_FILE}")
     
     if not force_refresh and len(existing) > 5000:
-        print("Many files already exist. Use --force-refresh to re-download all.")
-        print("Skipping download step.")
+        # Only download missing required series
+        missing_required = [s for s in REQUIRED_SERIES if not (RAW_DIR / f"{s}.csv").exists()]
+        if missing_required:
+            print(f"Downloading {len(missing_required)} missing required series: {missing_required}")
+            for sid in tqdm(missing_required, desc="Downloading required"):
+                df = download_single_series(sid)
+                if df is not None and len(df) > 0:
+                    df.to_csv(RAW_DIR / f"{sid}.csv", index=False)
+                time.sleep(0.1)
+        else:
+            print("All required series present. Skipping download.")
         return
     
-    # Download missing series
+    # Download all missing series
     new_downloads = 0
-    for sid in tqdm(series_ids, desc="Downloading FRED series"):
+    for sid in tqdm(all_to_download, desc="Downloading FRED series"):
         csv_path = RAW_DIR / f"{sid}.csv"
-        
-        # Skip if already exists (unless force refresh)
         if csv_path.exists() and not force_refresh:
             continue
         
-        df = download_series(sid, "2000-01-01", "2024-12-31")
+        df = download_single_series(sid)
         if df is not None and len(df) > 0:
             df.to_csv(csv_path, index=False)
             new_downloads += 1
-        
-        # Rate limiting
         time.sleep(0.02)
     
     print(f"New downloads: {new_downloads:,}")
-    
-    # Final count
     final_count = len(list(RAW_DIR.glob("*.csv")))
     print(f"Total files in {RAW_DIR}: {final_count:,}")
 
@@ -271,7 +293,6 @@ def download_all_series(force_refresh: bool = False) -> None:
 def delete_incomplete_series() -> tuple[int, int]:
     """
     Scan ALL CSV files, delete those that don't cover 2000-01-01 to 2024-12-31.
-    Returns: (kept_count, deleted_count)
     """
     print(f"\n{'=' * 60}")
     print("SCANNING & DELETING SERIES OUTSIDE 2000-2024 RANGE")
@@ -280,33 +301,33 @@ def delete_incomplete_series() -> tuple[int, int]:
     csv_files = sorted(RAW_DIR.glob("*.csv"))
     kept = 0
     deleted = 0
-    trash_dir = RAW_DIR.parent / "deleted_incomplete"
+    trash_dir = DATA_PATH / "deleted_incomplete"
     trash_dir.mkdir(exist_ok=True)
     
     for csv_path in tqdm(csv_files, desc="Checking date ranges"):
         try:
-            df = pd.read_csv(csv_path, nrows=5)
+            # Read just the date column
+            df = pd.read_csv(csv_path)
             date_col = None
             for col in df.columns:
                 if "date" in col.lower():
                     date_col = col
                     break
             if date_col is None:
-                date_col = df.columns[0]
-            
-            # Read full file to check actual min/max dates
-            df_full = pd.read_csv(csv_path, usecols=[date_col])
-            df_full[date_col] = pd.to_datetime(df_full[date_col], errors="coerce")
-            df_full = df_full.dropna(subset=[date_col])
-            
-            if df_full.empty:
-                # Move to trash
                 shutil.move(str(csv_path), str(trash_dir / csv_path.name))
                 deleted += 1
                 continue
             
-            actual_start = df_full[date_col].min()
-            actual_end = df_full[date_col].max()
+            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+            df = df.dropna(subset=[date_col])
+            
+            if df.empty:
+                shutil.move(str(csv_path), str(trash_dir / csv_path.name))
+                deleted += 1
+                continue
+            
+            actual_start = df[date_col].min()
+            actual_end = df[date_col].max()
             
             starts_ok = actual_start <= TARGET_START + pd.Timedelta(days=15)
             ends_ok = actual_end >= TARGET_END
@@ -317,13 +338,12 @@ def delete_incomplete_series() -> tuple[int, int]:
                 shutil.move(str(csv_path), str(trash_dir / csv_path.name))
                 deleted += 1
         
-        except Exception as e:
+        except Exception:
             shutil.move(str(csv_path), str(trash_dir / csv_path.name))
             deleted += 1
     
     print(f"\nKept (2000-2024): {kept}")
     print(f"Deleted (moved to {trash_dir}): {deleted}")
-    
     return kept, deleted
 
 
@@ -353,7 +373,6 @@ def filter_useful_series() -> list[str]:
     print(f"Excluded (redundant/granular): {len(excluded_series)}")
     
     if DEBUG_MODE:
-        print(f"\n[DEBUG] Excluded: {', '.join(sorted(excluded_series))}")
         print(f"\n[DEBUG] Kept: {', '.join(sorted(kept_series))}")
     
     return kept_series
@@ -370,11 +389,13 @@ def build_grand_table(series_ids: list[str]) -> pd.DataFrame:
     
     loaded = 0
     failed = 0
+    missing_files = []
     
     for sid in tqdm(series_ids, desc="Building grand table"):
         csv_path = RAW_DIR / f"{sid}.csv"
         
         if not csv_path.exists():
+            missing_files.append(sid)
             failed += 1
             continue
         
@@ -387,17 +408,28 @@ def build_grand_table(series_ids: list[str]) -> pd.DataFrame:
                 if "date" in col.lower():
                     date_col = col
                     break
+            
             if date_col is None:
-                date_col = df.columns[0]
+                failed += 1
+                continue
             
-            # Find value column (the other one)
-            val_col = [c for c in df.columns if c != date_col][0]
+            # The value column is whatever is NOT the date column
+            val_cols = [c for c in df.columns if c != date_col]
+            if not val_cols:
+                failed += 1
+                continue
+            val_col = val_cols[0]
             
+            # Rename value column to series ID for clarity
+            df = df.rename(columns={val_col: sid})
             df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
             df = df.dropna(subset=[date_col])
-            df = df.rename(columns={val_col: sid})
             
-            grand = grand.merge(df[[date_col, sid]], on=date_col, how="left")
+            # Keep only date and value
+            df = df[[date_col, sid]]
+            
+            # Merge into grand table
+            grand = grand.merge(df, on=date_col, how="left")
             loaded += 1
         
         except Exception as e:
@@ -406,7 +438,10 @@ def build_grand_table(series_ids: list[str]) -> pd.DataFrame:
             failed += 1
     
     grand = grand.set_index("date")
+    
     print(f"\nLoaded: {loaded} | Failed: {failed}")
+    if missing_files:
+        print(f"Missing files: {missing_files}")
     print(f"Grand table shape: {grand.shape}")
     
     return grand
@@ -417,17 +452,20 @@ def build_grand_table(series_ids: list[str]) -> pd.DataFrame:
 # ============================================================
 
 def smart_fill(df: pd.DataFrame) -> pd.DataFrame:
-    """Forward-fill weekly/monthly series with limits."""
+    """Forward-fill with limits based on series frequency."""
     result = df.copy()
     
-    weekly_series = ["ICSA", "MORTGAGE30US"]
-    monthly_series = ["DFF", "DPRIME"]
-    
+    # Determine fill limit by counting non-NaN values
     for col in df.columns:
-        if col in weekly_series:
+        n_valid = df[col].count()
+        total_days = len(df)
+        ratio = n_valid / total_days
+        
+        if ratio < 0.05:   # ~300 values over 25 years = monthly
+            result[col] = df[col].ffill(limit=90)
+        elif ratio < 0.15:  # ~1300 values = weekly
             result[col] = df[col].ffill(limit=7)
-        elif col in monthly_series:
-            result[col] = df[col].ffill(limit=31)
+        # Daily (>15% coverage): no fill needed
     
     return result
 
@@ -459,13 +497,11 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
             roll_std = df["VIXCLS"].rolling(w).std().replace(0, np.nan)
             feats[f"vix_z_{w}d"] = (df["VIXCLS"] - roll_mean) / roll_std
     
-    # Dollar/Yen Changes
+    # Dollar/Yen/Oil Changes
     if "DEXUSEU" in df.columns:
         feats["dollar_chg_20d"] = df["DEXUSEU"].pct_change(20) * 100
     if "DEXJPUS" in df.columns:
         feats["yen_chg_20d"] = df["DEXJPUS"].pct_change(20) * 100
-    
-    # Oil Changes
     if "DCOILWTICO" in df.columns:
         feats["oil_chg_20d"] = df["DCOILWTICO"].pct_change(20) * 100
     
@@ -506,18 +542,31 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 
 def final_clean(df: pd.DataFrame) -> pd.DataFrame:
     """Drop columns with >60% missing, forward-fill, truncate start."""
+    if df.empty:
+        print("ERROR: Empty DataFrame. Cannot clean.")
+        return df
+    
     missing_pct = df.isna().mean()
     cols_to_drop = missing_pct[missing_pct > 0.60].index.tolist()
     
     if DEBUG_MODE and cols_to_drop:
         print(f"[DEBUG]: Dropping {len(cols_to_drop)} columns (>60% missing)")
     
-    df = df.drop(columns=cols_to_drop)
+    df = df.drop(columns=cols_to_drop, errors='ignore')
+    
+    if df.empty:
+        print("ERROR: All columns dropped. Check your data.")
+        return df
+    
     df = df.ffill()
     
     completeness = df.notna().mean(axis=1)
-    valid_start = completeness[completeness > 0.3].index[0]
-    df = df[df.index >= valid_start]
+    valid_mask = completeness > 0.3
+    
+    if valid_mask.any():
+        valid_start = completeness[valid_mask].index[0]
+        df = df[df.index >= valid_start]
+    
     df = df.dropna()
     
     if DEBUG_MODE:
@@ -546,23 +595,22 @@ def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
     # ── Step 0: Download ──
-    if args.download or args.force_refresh:
-        print("\n[Step 0/6] Downloading FRED daily series...")
-        t0 = now_ts()
-        download_all_series(force_refresh=args.force_refresh)
-        print(f"  Done in {fmt_elapsed(now_ts() - t0)}")
-    else:
-        existing = len(list(RAW_DIR.glob("*.csv")))
-        print(f"\n[Step 0/6] Skipping download. {existing:,} files already exist.")
-        print("  Use --download to download missing series.")
-        print("  Use --force-refresh to re-download all.")
+#    if args.download or args.force_refresh:
+#        print("\n[Step 0/6] Downloading FRED daily series...")
+#        t0 = now_ts()
+#        download_all_series(force_refresh=args.force_refresh)
+#        print(f"  Done in {fmt_elapsed(now_ts() - t0)}")
+#    else:
+#        existing = len(list(RAW_DIR.glob("*.csv")))
+#        print(f"\n[Step 0/6] Skipping download. {existing:,} files already exist.")
+#        print("  Use --download to download missing series.")
     
-    # ── Step 1: Delete incomplete ──
-    print("\n[Step 1/6] Deleting series outside 2000-2024 range...")
-    t0 = now_ts()
-    kept, deleted = delete_incomplete_series()
-    print(f"  Kept: {kept} | Deleted: {deleted}")
-    print(f"  Done in {fmt_elapsed(now_ts() - t0)}")
+    # # ── Step 1: Delete incomplete ──
+    # print("\n[Step 1/6] Deleting series outside 2000-2024 range...")
+    # t0 = now_ts()
+    # kept, deleted = delete_incomplete_series()
+    # print(f"  Kept: {kept} | Deleted: {deleted}")
+    # print(f"  Done in {fmt_elapsed(now_ts() - t0)}")
     
     # ── Step 2: Filter useful ──
     print("\n[Step 2/6] Filtering to interpretable series...")
@@ -579,6 +627,13 @@ def main():
     t0 = now_ts()
     grand = build_grand_table(useful_series)
     print(f"  Done in {fmt_elapsed(now_ts() - t0)}")
+    
+    if grand.empty or grand.shape[1] == 0:
+        print("ERROR: Grand table is empty. Cannot proceed.")
+        return
+    
+    # Save raw grand table
+    grand.to_csv(OUTPUT_DIR / "grand_table_raw.csv")
     
     # ── Step 4: Smart fill ──
     print("\n[Step 4/6] Smart forward-filling...")
@@ -598,10 +653,15 @@ def main():
     print("\n[Step 6/6] Final cleaning...")
     t0 = now_ts()
     clean = final_clean(all_features)
-    clean.to_csv(OUTPUT_DIR / "daily_macro_features_clean.csv")
-    print(f"  Final shape: {clean.shape}")
-    print(f"  Date range: {clean.index[0].strftime('%Y-%m-%d')} → {clean.index[-1].strftime('%Y-%m-%d')}")
-    print(f"  Done in {fmt_elapsed(now_ts() - t0)}")
+    
+    # if clean.empty:
+    #     print("ERROR: Final DataFrame is empty after cleaning.")
+    #     return
+    
+    # clean.to_csv(OUTPUT_DIR / "daily_macro_features_clean.csv")
+    # print(f"  Final shape: {clean.shape}")
+    # print(f"  Date range: {clean.index[0].strftime('%Y-%m-%d')} → {clean.index[-1].strftime('%Y-%m-%d')}")
+    # print(f"  Done in {fmt_elapsed(now_ts() - t0)}")
     
     # ── Summary ──
     total_elapsed = now_ts() - overall_start
@@ -618,8 +678,8 @@ def main():
     metadata = {
         "date_range": [str(clean.index[0]), str(clean.index[-1])],
         "n_series_kept": len(useful_series),
-        "n_features_final": clean.shape[1],
-        "n_rows": clean.shape[0],
+        "n_features_final": int(clean.shape[1]),
+        "n_rows": int(clean.shape[0]),
         "series_list": sorted(useful_series),
         "feature_names": list(clean.columns),
     }
@@ -635,11 +695,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-# # First time: download everything
-# python data/fred_grand_pipeline.py --download
-
-# # If already have files, just process
-# python data/fred_grand_pipeline.py
-
-# # Force re-download everything
-# python data/fred_grand_pipeline.py --force-refresh

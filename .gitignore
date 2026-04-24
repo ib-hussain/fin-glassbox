@@ -28,9 +28,15 @@ data/FRED_data/raw/
 data/yFinance/raw/
 data/yFinance/*.zip
 data/yFinance/raw_metadata/
-data/yFinance/processed/
+# data/yFinance/processed/
+data/yFinance/processed/benchmark_relative.csv
+data/yFinance/processed/features.csv
+data/yFinance/processed/ohlcv_panel_oldVersion.csv
+data/yFinance/processed/ohlcv_panel_ExtractedFromparquetFileversion.csv
+data/yFinance/processed/returns_panel.csv
 data/yFinance/_CON - Copy.json
 data/yFinance/_CON - Copy.parquet
+prd*/
 
 # ── OS & editor noise ───────────────────────────────────
 .DS_Store
@@ -52,9 +58,13 @@ None/
 cython_debug/
 jawwad_bhai.pem
 
-# ── Virtual environments ─────────────────────────────────
+
+# ── Virtual environments & Secrets & config ─────────────────────────────────
+# *.env
+# Keep .toml tracked (pyproject.toml etc.) – add specific
+# secret toml names below if needed:
+# secrets.toml
 .Python
-.env
 .envrc
 .venv
 env/
@@ -130,12 +140,6 @@ assignment2work/paper-metric-reporter/**/*.ini
 .streamlit/
 ignore/
 *ignore*.*
-
-# ── Secrets & config ─────────────────────────────────────
-*.env
-# Keep .toml tracked (pyproject.toml etc.) – add specific
-# secret toml names below if needed:
-# secrets.toml
 
 # ── Misc ─────────────────────────────────────────────────
 *.tmp

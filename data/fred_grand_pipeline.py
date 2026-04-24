@@ -44,10 +44,11 @@ if not API_KEY:
 # PATHS
 # ============================================================
 
-DATA_PATH = Path("data/FRED_data")
-RAW_DIR = DATA_PATH / "raw"
-OUTPUT_DIR = DATA_PATH / "outputs"
-FRED_LIST_FILE = DATA_PATH / "fred_daily_series_list.csv"
+# DATA_PATH = Path.home() / "remoteRepo" / "data" / "FRED_data"
+DATA_PATH1 = Path("data/FRED_data")
+RAW_DIR = DATA_PATH1 / "raw"
+OUTPUT_DIR = DATA_PATH1 / "outputs"
+FRED_LIST_FILE = DATA_PATH1 / "fred_daily_series_list.csv"
 
 # ============================================================
 # DATE RANGE (STRICT)
@@ -385,7 +386,7 @@ def filter_useful_series() -> list[str]:
 def build_grand_table(series_ids: list[str]) -> pd.DataFrame:
     """Load kept series and merge into a single daily table."""
     daily_cal = pd.date_range(start="2000-01-01", end="2024-12-31", freq="D")
-    grand = pd.DataFrame({"date": daily_cal})
+    grand = pd.DataFrame({"observation_date": daily_cal})  # <-- FIX: use observation_date
     
     loaded = 0
     failed = 0
@@ -402,34 +403,28 @@ def build_grand_table(series_ids: list[str]) -> pd.DataFrame:
         try:
             df = pd.read_csv(csv_path)
             
-            # Find date column
-            date_col = None
-            for col in df.columns:
-                if "date" in col.lower():
-                    date_col = col
-                    break
+            # Standardize: the date column is always "observation_date"
+            date_col = "observation_date"
             
-            if date_col is None:
+            if date_col not in df.columns:
                 failed += 1
                 continue
             
-            # The value column is whatever is NOT the date column
+            # The other column is the value
             val_cols = [c for c in df.columns if c != date_col]
             if not val_cols:
                 failed += 1
                 continue
-            val_col = val_cols[0]
             
-            # Rename value column to series ID for clarity
-            df = df.rename(columns={val_col: sid})
-            df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-            df = df.dropna(subset=[date_col])
+            # Keep only the two columns we need
+            df = df[[date_col, val_cols[0]]].copy()
+            df.columns = ["observation_date", sid]  # Rename to standard
             
-            # Keep only date and value
-            df = df[[date_col, sid]]
+            df["observation_date"] = pd.to_datetime(df["observation_date"], errors="coerce")
+            df = df.dropna(subset=["observation_date"])
             
-            # Merge into grand table
-            grand = grand.merge(df, on=date_col, how="left")
+            # Merge
+            grand = grand.merge(df, on="observation_date", how="left")
             loaded += 1
         
         except Exception as e:
@@ -437,7 +432,8 @@ def build_grand_table(series_ids: list[str]) -> pd.DataFrame:
                 print(f"[DEBUG]: Error loading {sid}: {e}")
             failed += 1
     
-    grand = grand.set_index("date")
+    grand = grand.set_index("observation_date")
+    grand.index.name = "date"
     
     print(f"\nLoaded: {loaded} | Failed: {failed}")
     if missing_files:
@@ -445,7 +441,6 @@ def build_grand_table(series_ids: list[str]) -> pd.DataFrame:
     print(f"Grand table shape: {grand.shape}")
     
     return grand
-
 
 # ============================================================
 # STEP 4: SMART FORWARD-FILL

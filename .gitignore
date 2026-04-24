@@ -24,19 +24,24 @@ data/sec_edgar/raw/
 data/sec_edgar/processed/companyfacts/
 data/sec_edgar/processed/submissions/
 data/sec_edgar/processed/manifests/
+
 data/FRED_data/raw/
+
 data/yFinance/raw/
 data/yFinance/*.zip
 data/yFinance/raw_metadata/
 # data/yFinance/processed/
 data/yFinance/processed/benchmark_relative.csv
 data/yFinance/processed/features.csv
-data/yFinance/processed/ohlcv_panel_oldVersion.csv
-data/yFinance/processed/ohlcv_panel_ExtractedFromparquetFileversion.csv
+data/yFinance/processed/ohlcv_panel.csv
 data/yFinance/processed/returns_panel.csv
 data/yFinance/_CON - Copy.json
 data/yFinance/_CON - Copy.parquet
+
 prd*/
+data/sec_edgar/existing_23y/
+data/sec_edgar/processed/filings_text/
+
 
 # ── OS & editor noise ───────────────────────────────────
 .DS_Store
@@ -60,7 +65,8 @@ jawwad_bhai.pem
 
 
 # ── Virtual environments & Secrets & config ─────────────────────────────────
-# *.env
+.env
+*.env
 # Keep .toml tracked (pyproject.toml etc.) – add specific
 # secret toml names below if needed:
 # secrets.toml
@@ -153,8 +159,4 @@ ignore/
 *.pyc
 *.pyo
 *.pyd
-marimo/_static/
-marimo/_lsp/
-__marimo__/
-docs/_build/
-/site
+

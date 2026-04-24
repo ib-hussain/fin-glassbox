@@ -160,3 +160,5 @@ ignore/
 *.pyo
 *.pyd
 
+final/
+transfer_artifacts/

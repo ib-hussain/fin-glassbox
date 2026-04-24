@@ -3,7 +3,6 @@
 # Git LFS: track large binary & data files only.
 # Python source, notebooks, configs → stay in regular Git.
 # -------------------------------------------------------
-
 # ── Datasets & serialised model weights ─────────────────
 *.csv                                           filter=lfs diff=lfs merge=lfs -text
 *results*.txt                                   filter=lfs diff=lfs merge=lfs -text
@@ -20,20 +19,16 @@
 *.safetensors                                   filter=lfs diff=lfs merge=lfs -text
 data/sec_edgar/processed/manifests/*.csv        filter=lfs diff=lfs merge=lfs -text
 *.parquet                                       filter=lfs diff=lfs merge=lfs -text
-
 # ── Compressed archives ──────────────────────────────────
 data/*.zip          filter=lfs diff=lfs merge=lfs -text
 *.tar.gz            filter=lfs diff=lfs merge=lfs -text
 *.tar.bz2           filter=lfs diff=lfs merge=lfs -text
 *.gz                filter=lfs diff=lfs merge=lfs -text
-
-
 # ── Figures & media ──────────────────────────────────────
 assignment2work/**/*.png           filter=lfs diff=lfs merge=lfs -text
 assignment2work/**/*.jpg           filter=lfs diff=lfs merge=lfs -text
 assignment2work/**/*.jpeg          filter=lfs diff=lfs merge=lfs -text
 assignment2work/**/*.svg           filter=lfs diff=lfs merge=lfs -text
-
 # ── Line-ending normalisation for text files ────────────
 *.py    text eol=lf
 *.md    text eol=lf
@@ -45,3 +40,4 @@ assignment2work/**/*.svg           filter=lfs diff=lfs merge=lfs -text
 *.sh    text eol=lf
 *.ipynb text eol=lf
 .parquet    text eol=lf
+transfer_artifacts/*.tar.zst filter=lfs diff=lfs merge=lfs -text

@@ -37,6 +37,10 @@ data/yFinance/processed/ohlcv_panel.csv
 data/yFinance/processed/returns_panel.csv
 data/yFinance/_CON - Copy.json
 data/yFinance/_CON - Copy.parquet
+data/yFinance/Huge_Market_Dataset/
+data/yFinance/d_us_txt/
+data/yFinance/nasdaq-nyse-nyse-a-otc-daily-stock-1962-2024/
+data/yFinance/coverage/
 
 prd*/
 data/sec_edgar/existing_23y/
@@ -62,7 +66,7 @@ None/
 *.so
 cython_debug/
 jawwad_bhai.pem
-
+irrelevant/
 
 # ── Virtual environments & Secrets & config ─────────────────────────────────
 .env

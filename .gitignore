@@ -46,26 +46,24 @@ data/yFinance/processed/sb_returns_panel.csv
 
 **/hpo/
 outputs/models/**/hpo/
-*768.npy
 outputs/codeResults/**/hpo/
+outputs/results/**/hpo/
+outputs/codeResults/**/hpo/
+outputs/models/**/latest_checkpoint.pt
+outputs/models/**/**/latest_checkpoint.pt
+outputs/models/**/**/best_checkpoint.pt
+outputs/models/**/**/epoch_*.pt
+outputs/codeResults/**/*.log
 
 prd*/
 data/sec_edgar/existing_23y/
 data/sec_edgar/processed/filings_text/
 
 # FinBERT non-deliverable heavy artefacts
-outputs/models/FinBERT/hpo/
-outputs/models/FinBERT/latest_checkpoint.pt
-outputs/models/FinBERT/**/latest_checkpoint.pt
-outputs/models/FinBERT/**/best_checkpoint.pt
-outputs/models/FinBERT/**/epoch_*.pt
 outputs/embeddings/FinBERT/*embeddings768.npy
 outputs/embeddings/FinBERT/*manifest768.json
 outputs/embeddings/FinBERT/*pca_768_to_256.pkl
 outputs/embeddings/FinBERT/*pca_manifest.json
-outputs/codeResults/FinBERT/hpo/
-outputs/codeResults/FinBERT/*.log
-outputs/results/FinBERT/
 
 # ── Project-specific: misc tool artefacts ────────────────
 assignment2work/LSTM/test_prediction/

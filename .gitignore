@@ -185,3 +185,4 @@ ipython_config.py
 *.pyo
 *.pyd
 
+data/yFinance/processed/features_temporal.csv

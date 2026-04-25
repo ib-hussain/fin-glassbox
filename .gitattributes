@@ -19,6 +19,9 @@
 *.safetensors                                   filter=lfs diff=lfs merge=lfs -text
 data/sec_edgar/processed/manifests/*.csv        filter=lfs diff=lfs merge=lfs -text
 *.parquet                                       filter=lfs diff=lfs merge=lfs -text
+outputs/models/**/**/*.bin                      filter=lfs diff=lfs merge=lfs -text
+
+
 # ── Compressed archives ──────────────────────────────────
 data/*.zip          filter=lfs diff=lfs merge=lfs -text
 *.tar.gz            filter=lfs diff=lfs merge=lfs -text

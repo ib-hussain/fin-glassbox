@@ -31,27 +31,53 @@ outputs/models/*/hpo/
 data/yFinance/raw/
 data/yFinance/*.zip
 data/yFinance/raw_metadata/
-# data/yFinance/processed/
-data/yFinance/processed/benchmark_relative.csv
-data/yFinance/processed/features.csv
-data/yFinance/processed/ohlcv_panel.csv
-data/yFinance/processed/returns_panel.csv
+data/yFinance/processed/sabeels_genertated_ohlcv_panel.csv
+data/yFinance/processed/ohlcv_original.csv
 data/yFinance/_CON - Copy.json
 data/yFinance/_CON - Copy.parquet
 data/yFinance/Huge_Market_Dataset/
 data/yFinance/d_us_txt/
 data/yFinance/nasdaq-nyse-nyse-a-otc-daily-stock-1962-2024/
 data/yFinance/coverage/
+data/yFinance/merged/
+data/yFinance/processed/sb_benchmark_relative.csv
+data/yFinance/processed/sb_features.csv
+data/yFinance/processed/sb_returns_panel.csv
 
 **/hpo/
 outputs/models/**/hpo/
 *768.npy
 outputs/codeResults/**/hpo/
 
-
 prd*/
 data/sec_edgar/existing_23y/
 data/sec_edgar/processed/filings_text/
+
+# FinBERT non-deliverable heavy artefacts
+outputs/models/FinBERT/hpo/
+outputs/models/FinBERT/latest_checkpoint.pt
+outputs/models/FinBERT/**/latest_checkpoint.pt
+outputs/models/FinBERT/**/best_checkpoint.pt
+outputs/models/FinBERT/**/epoch_*.pt
+outputs/embeddings/FinBERT/*embeddings768.npy
+outputs/embeddings/FinBERT/*manifest768.json
+outputs/embeddings/FinBERT/*pca_768_to_256.pkl
+outputs/embeddings/FinBERT/*pca_manifest.json
+outputs/codeResults/FinBERT/hpo/
+outputs/codeResults/FinBERT/*.log
+outputs/results/FinBERT/
+
+# ── Project-specific: misc tool artefacts ────────────────
+assignment2work/LSTM/test_prediction/
+assignment2work/ticker-collector/.ipynb_checkpoints/
+assignment2work/paper-metric-reporter/.spyproject/
+assignment2work/paper-metric-reporter/**/*.ini
+.spyproject/
+.streamlit/
+ignore/
+*ignore*.*
+final/
+transfer_artifacts/
 
 
 # ── OS & editor noise ───────────────────────────────────
@@ -148,16 +174,6 @@ dmypy.json
 profile_default/
 ipython_config.py
 
-# ── Project-specific: misc tool artefacts ────────────────
-assignment2work/LSTM/test_prediction/
-assignment2work/ticker-collector/.ipynb_checkpoints/
-assignment2work/paper-metric-reporter/.spyproject/
-assignment2work/paper-metric-reporter/**/*.ini
-.spyproject/
-.streamlit/
-ignore/
-*ignore*.*
-
 # ── Misc ─────────────────────────────────────────────────
 *.tmp
 *.log
@@ -171,19 +187,3 @@ ignore/
 *.pyo
 *.pyd
 
-final/
-transfer_artifacts/
-
-# FinBERT non-deliverable heavy artefacts
-outputs/models/FinBERT/hpo/
-outputs/models/FinBERT/latest_checkpoint.pt
-outputs/models/FinBERT/**/latest_checkpoint.pt
-outputs/models/FinBERT/**/best_checkpoint.pt
-outputs/models/FinBERT/**/epoch_*.pt
-outputs/embeddings/FinBERT/*embeddings768.npy
-outputs/embeddings/FinBERT/*manifest768.json
-outputs/embeddings/FinBERT/*pca_768_to_256.pkl
-outputs/embeddings/FinBERT/*pca_manifest.json
-outputs/codeResults/FinBERT/hpo/
-outputs/codeResults/FinBERT/*.log
-outputs/results/FinBERT/

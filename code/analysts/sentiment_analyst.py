@@ -978,6 +978,154 @@ def run_prediction_export(cfg: SentimentConfig, split: str, checkpoint: str = "b
 
     del repr_out
 
+
+    # ══════════════════════════════════════════════════════════
+    # XAI: Gradient-based feature importance (default, fast)
+    # or full SHAP (opt-in with --xai-method shap, slow)
+    # ══════════════════════════════════════════════════════════
+    xai_method = getattr(cfg, 'xai_method', 'gradient')
+    xai_rows_sample = getattr(cfg, 'xai_sample_size', 1000)
+    
+    xai_feature_names = [f"finbert_dim_{i}" for i in range(cfg.input_dim)]
+    if preprocessor.feature_dim > 0:
+        xai_feature_names += [f"meta_{i}" for i in range(preprocessor.feature_dim)]
+    
+    xai_importance = np.full((n_rows, len(xai_feature_names)), np.nan, dtype=np.float32)
+    xai_explanations: List[Dict] = []
+    
+    if xai_method == 'shap':
+        # ── Option A: Full SHAP (slow but complete) ──────
+        try:
+            import shap
+            print(f"[xai] Computing SHAP on {xai_rows_sample} sample rows (this may take several minutes)...")
+            
+            # Get background data from a subset of rows
+            bg_indices = row_indices[:min(100, len(row_indices))]
+            background = []
+            for idx in bg_indices:
+                emb = np.asarray(embeddings[int(idx)], dtype=np.float32)
+                mt = np.asarray(meta[int(idx)], dtype=np.float32)
+                background.append(np.concatenate([emb, mt]))
+            background = np.stack(background)
+            
+            # Get sample for explanation
+            sample_indices = row_indices[:min(xai_rows_sample, len(row_indices))]
+            sample_data = []
+            for idx in sample_indices:
+                emb = np.asarray(embeddings[int(idx)], dtype=np.float32)
+                mt = np.asarray(meta[int(idx)], dtype=np.float32)
+                sample_data.append(np.concatenate([emb, mt]))
+            sample_data = np.stack(sample_data)
+            
+            # SHAP DeepExplainer
+            explainer = shap.DeepExplainer(
+                model, 
+                torch.from_numpy(background).to(device)
+            )
+            shap_values = explainer.shap_values(
+                torch.from_numpy(sample_data).to(device)
+            )
+            
+            # shap_values shape: (n_samples, n_features) for regression
+            if isinstance(shap_values, list):
+                shap_values = shap_values[0]  # take first output head
+            
+            for i, sample_idx in enumerate(sample_indices):
+                pos = row_to_output_pos[int(sample_idx)]
+                xai_importance[pos, :] = shap_values[i].astype(np.float32)
+                
+                # Build explanation dict per XAI spec
+                top_pos_idx = np.argsort(shap_values[i])[-5:][::-1]
+                top_neg_idx = np.argsort(shap_values[i])[:5]
+                
+                xai_explanations.append({
+                    "row_index": int(sample_idx),
+                    "predicted_score": float(pred_score[pos]),
+                    "top_positive_factors": [
+                        {"factor": xai_feature_names[j], "weight": float(shap_values[i][j]), 
+                         "direction": "positive"}
+                        for j in top_pos_idx if shap_values[i][j] > 0
+                    ],
+                    "top_negative_factors": [
+                        {"factor": xai_feature_names[j], "weight": float(abs(shap_values[i][j])), 
+                         "direction": "negative"}
+                        for j in top_neg_idx if shap_values[i][j] < 0
+                    ],
+                })
+            
+            print(f"[xai] SHAP complete — {len(xai_explanations)} explanations generated")
+        except ImportError:
+            print("[xai] shap not installed — falling back to gradient-based importance. pip install shap")
+            xai_method = 'gradient'
+        except Exception as e:
+            print(f"[xai] SHAP failed: {e} — falling back to gradient-based importance")
+            xai_method = 'gradient'
+    
+    if xai_method == 'gradient':
+        # ── Option C: Gradient-based importance (fast, default) ──
+        print(f"[xai] Computing gradient-based feature importance on {xai_rows_sample} sample rows...")
+        
+        sample_indices = row_indices[:min(xai_rows_sample, len(row_indices))]
+        model.eval()
+        
+        for idx in sample_indices:
+            emb = np.asarray(embeddings[int(idx)], dtype=np.float32)
+            mt = np.asarray(meta[int(idx)], dtype=np.float32)
+            x = np.concatenate([emb, mt])
+            x_tensor = torch.from_numpy(x).unsqueeze(0).to(device)
+            x_tensor.requires_grad_(True)
+            
+            with torch.enable_grad():
+                outputs = model(x_tensor)
+                score = outputs["sentiment_score"]
+                score.backward()
+            
+            grads = x_tensor.grad.cpu().numpy().flatten()
+            importance = np.abs(grads).astype(np.float32)
+            
+            pos = row_to_output_pos[int(idx)]
+            xai_importance[pos, :] = importance
+            
+            top_idx = np.argsort(importance)[-5:][::-1]
+            xai_explanations.append({
+                "row_index": int(idx),
+                "predicted_score": float(pred_score[pos]),
+                "top_positive_factors": [
+                    {"factor": xai_feature_names[j], "weight": float(importance[j]),
+                     "direction": "positive"}
+                    for j in top_idx if grads[j] > 0
+                ],
+                "top_negative_factors": [
+                    {"factor": xai_feature_names[j], "weight": float(importance[j]),
+                     "direction": "negative"}
+                    for j in top_idx if grads[j] < 0
+                ],
+            })
+            
+            x_tensor.grad = None
+        
+        print(f"[xai] Gradient importance complete — {len(xai_explanations)} explanations generated")
+    
+    # Save XAI outputs
+    xai_dir = cfg.results_dir / "xai"
+    ensure_dir(xai_dir)
+    
+    xai_importance_path = xai_dir / f"chunk{cfg.chunk_id}_{split}_feature_importance.npy"
+    np.save(str(xai_importance_path), xai_importance)
+    
+    xai_explanations_path = xai_dir / f"chunk{cfg.chunk_id}_{split}_explanations.json"
+    with open(xai_explanations_path, "w") as f:
+        json.dump({
+            "xai_method": xai_method,
+            "n_samples": len(xai_explanations),
+            "feature_names": xai_feature_names,
+            "explanations": xai_explanations,
+        }, f, indent=2, default=str)
+    
+    print(f"[xai] Saved: {xai_importance_path}")
+    print(f"[xai] Saved: {xai_explanations_path}")
+
+
     if max_rows is None:
         out_df = labels.copy()
     else:
@@ -1305,7 +1453,11 @@ def parse_args() -> argparse.Namespace:
         sp.add_argument("--resume", action="store_true")
         sp.add_argument("--max-train-rows", type=int, default=None)
         sp.add_argument("--max-val-rows", type=int, default=None)
-        sp.add_argument("--max-test-rows", type=int, default=None)
+        sp.add_argument("--max-test-rows", type=int, default=None)    
+        sp.add_argument("--xai-method", default="gradient", choices=["gradient", "shap"],
+                        help="XAI method: gradient (fast) or shap (slow but complete)")
+        sp.add_argument("--xai-sample-size", type=int, default=1000,
+                        help="Number of rows to explain (more = slower)")
 
     def add_hpo(sp: argparse.ArgumentParser) -> None:
         sp.add_argument("--trials", type=int, default=30)
@@ -1424,6 +1576,14 @@ def main() -> None:
         inspect_labels(cfg)
     elif args.command == "predict":
         cfg = build_cfg_from_args(args)
+        if getattr(cfg, 'xai_method', 'gradient') == 'shap':
+            print("=" * 60)
+            print("   FULL SHAP SELECTED")
+            print("=" * 60)
+            print(f"SHAP DeepExplainer will process {cfg.xai_sample_size} rows.")
+            print("This may take 10-30+ minutes depending on sample size.")
+            print("For faster results, use --xai-method gradient (default).")
+            print("=" * 60)
         max_rows = {"train": cfg.max_train_rows, "val": cfg.max_val_rows, "test": cfg.max_test_rows}[args.split]
         metrics = run_prediction_export(cfg, split=args.split, checkpoint=args.checkpoint, max_rows=max_rows)
         print(json.dumps(metrics, indent=2, default=str))
@@ -1431,6 +1591,15 @@ def main() -> None:
         outputs = []
         for chunk_id in parse_int_list(args.chunks):
             cfg = build_cfg_from_args(args, chunk_id=chunk_id)
+            
+            if getattr(cfg, 'xai_method', 'gradient') == 'shap':
+                print("=" * 60)
+                print("   FULL SHAP SELECTED")
+                print("=" * 60)
+                print(f"SHAP DeepExplainer will process {cfg.xai_sample_size} rows.")
+                print("This may take 10-30+ minutes depending on sample size.")
+                print("For faster results, use --xai-method gradient (default).")
+                print("=" * 60)
             for split in parse_split_list(args.splits):
                 max_rows = {"train": cfg.max_train_rows, "val": cfg.max_val_rows, "test": cfg.max_test_rows}[split]
                 outputs.append(run_prediction_export(cfg, split=split, checkpoint=args.checkpoint, max_rows=max_rows))

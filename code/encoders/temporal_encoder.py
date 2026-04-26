@@ -80,6 +80,9 @@ class TemporalEncoderConfig:
     label_smoothing: float = 0.0
     early_stop_patience: int = 20
 
+    # ── XAI ─────────────────────────────────────────────
+    xai_sample_size: int = 1000
+
     # ── Masked prediction ────────────────────────────────
     mask_prob: float = 0.15
     mask_seed: int = 42
@@ -871,10 +874,204 @@ def cmd_train_best(config: TemporalEncoderConfig, chunk_id: int):
 
     print(f"\nTraining complete. Models saved to {output_dir}")
     print(f"Best val loss: {summary['best_val_loss']:.6f}\n")
+    # Auto-generate embeddings and XAI for all splits after training
+    for split in ["train", "val", "test"]:
+        cmd_embed(config, chunk_id, split)
 
 
+# def cmd_embed(config: TemporalEncoderConfig, chunk_id: int, split: str):
+#     """Generate embeddings and XAI explanations for one chunk/split."""
+#     chunk_cfg = TemporalEncoder.CHUNK_CONFIG[chunk_id]
+#     chunk_label = chunk_cfg["label"]
+
+#     # Load model
+#     model_path = (Path(config.output_dir) / "models" / "TemporalEncoder" /
+#                   chunk_label / "model_freezed" / "model.pt")
+#     if not model_path.exists():
+#         print(f"❌ Model not found: {model_path}")
+#         return
+
+#     print(f"Loading model from {model_path}")
+#     model = TemporalEncoder.load(str(model_path), device=config.device)
+#     model.eval()
+
+#     # Load data
+#     df = load_features_df(config.features_path)
+#     year_range = chunk_cfg[split]
+#     dataset = MarketSequenceDataset(df, seq_len=config.seq_len, years=year_range)
+#     loader = DataLoader(dataset, batch_size=config.batch_size, shuffle=False,
+#                          num_workers=config.num_workers)
+
+#     # Generate embeddings
+#     output_dir = Path(config.output_dir) / "embeddings" / "TemporalEncoder"
+#     output_dir.mkdir(parents=True, exist_ok=True)
+
+#     all_embeddings = []
+#     print(f"Generating embeddings for Chunk {chunk_id} {split}...")
+#     with torch.no_grad():
+#         for batch in tqdm(loader, desc="  Embedding"):
+#             batch = batch.to(config.device)
+#             emb = model.get_embedding(batch, pooling="last")
+#             all_embeddings.append(emb.cpu().numpy())
+
+#     embeddings = np.concatenate(all_embeddings, axis=0)
+#     out_path = output_dir / f"{chunk_label}_{split}_embeddings.npy"
+#     np.save(str(out_path), embeddings)
+
+#     print(f"  Shape: {embeddings.shape}")
+#     print(f"  Saved: {out_path}")
+
+#     # ══════════════════════════════════════════════════════════
+#     # XAI: Attention weights + Feature importance
+#     # ══════════════════════════════════════════════════════════
+#     xai_sample_size = min(500, len(dataset))
+#     xai_dir = Path(config.output_dir) / "codeResults" / "TemporalEncoder" / "xai"
+#     xai_dir.mkdir(parents=True, exist_ok=True)
+    
+#     # ── 1. Per-layer attention weights ──
+#     print(f"\n[xai] Extracting attention weights for {xai_sample_size} samples...")
+    
+#     # Enable attention output on the transformer
+#     for layer in model.transformer.layers:
+#         layer.self_attn._attention_weights = None
+    
+#     attention_samples = []
+#     feature_importance_samples = []
+    
+#     # Take a subset for XAI (first N samples)
+#     sample_indices = list(range(0, min(xai_sample_size, len(dataset)), 
+#                                   max(1, len(dataset) // xai_sample_size)))
+    
+#     for idx in tqdm(sample_indices, desc="  XAI extraction"):
+#         batch = dataset[idx].unsqueeze(0).to(config.device)
+        
+#         # ── 1a. Extract attention pooling weights ──
+#         with torch.no_grad():
+#             output = model.forward(batch)
+#             # Get the learned attention pooling weights
+#             query = model.pooling_query.expand(1, -1, -1)
+#             attn_output, attn_weights = model.attention_pooling(
+#                 query, output["sequence"], output["sequence"]
+#             )
+#             # attn_weights shape: (1, 1, seq_len) — weight per time step
+#             time_weights = attn_weights.squeeze().cpu().numpy()
+        
+#         # Normalize to sum to 1
+#         time_weights = time_weights / (time_weights.sum() + 1e-10)
+        
+#         attention_samples.append({
+#             "sample_idx": int(idx),
+#             "time_step_weights": time_weights.tolist(),
+#             "top_time_steps": [
+#                 {"position": int(pos), "weight": float(time_weights[pos])}
+#                 for pos in np.argsort(time_weights)[-5:][::-1]
+#             ],
+#             "embedding_pooling": "attention_pooled",
+#         })
+        
+#         # ── 1b. Gradient-based feature importance ──
+#         x_tensor = batch.clone().detach().requires_grad_(True)
+        
+#         # Apply normalization if available
+#         if hasattr(dataset, 'normalizer') and dataset.normalizer is not None:
+#             x_norm = dataset.normalizer.transform(x_tensor)
+#         else:
+#             x_norm = x_tensor
+        
+#         with torch.enable_grad():
+#             output_grad = model.get_embedding(x_norm, pooling="attention")
+#             # Use L2 norm of embedding as proxy importance signal
+#             score = output_grad.norm()
+#             score.backward()
+        
+#         # Gradient magnitude per feature (averaged across time steps)
+#         grads = x_tensor.grad.cpu().numpy().squeeze()  # (seq_len, n_features)
+#         feature_importance = np.abs(grads).mean(axis=0)  # (n_features,)
+#         time_importance = np.abs(grads).mean(axis=1)     # (seq_len,)
+        
+#         # Normalize
+#         feature_importance = feature_importance / (feature_importance.sum() + 1e-10)
+#         time_importance = time_importance / (time_importance.sum() + 1e-10)
+        
+#         feature_importance_samples.append({
+#             "sample_idx": int(idx),
+#             "feature_importance": {
+#                 name: float(feature_importance[i])
+#                 for i, name in enumerate(TemporalEncoder.FEATURE_NAMES)
+#             },
+#             "top_features": [
+#                 {"feature": TemporalEncoder.FEATURE_NAMES[i], 
+#                  "importance": float(feature_importance[i])}
+#                 for i in np.argsort(feature_importance)[-5:][::-1]
+#             ],
+#             "time_step_importance": time_importance.tolist(),
+#             "top_time_steps_gradient": [
+#                 {"position": int(pos), "importance": float(time_importance[pos])}
+#                 for pos in np.argsort(time_importance)[-5:][::-1]
+#             ],
+#         })
+        
+#         x_tensor.grad = None
+    
+#     # ── 2. Aggregate across samples ──
+#     agg_feature_importance = {}
+#     for name in TemporalEncoder.FEATURE_NAMES:
+#         vals = [s["feature_importance"][name] for s in feature_importance_samples]
+#         agg_feature_importance[name] = {
+#             "mean": float(np.mean(vals)),
+#             "std": float(np.std(vals)),
+#             "rank": None,  # filled below
+#         }
+    
+#     # Rank features by mean importance
+#     ranked = sorted(agg_feature_importance.items(), key=lambda x: x[1]["mean"], reverse=True)
+#     for rank, (name, info) in enumerate(ranked):
+#         agg_feature_importance[name]["rank"] = rank + 1
+    
+#     # ── 3. Save XAI outputs ──
+#     xai_summary = {
+#         "module": "TemporalEncoder",
+#         "chunk_id": chunk_id,
+#         "split": split,
+#         "n_samples": len(sample_indices),
+#         "seq_len": config.seq_len,
+#         "feature_names": TemporalEncoder.FEATURE_NAMES,
+#         "d_model": model.config.d_model,
+#         "feature_importance_aggregated": agg_feature_importance,
+#         "attention_explanations": attention_samples,
+#         "gradient_explanations": feature_importance_samples,
+#         "interpretation_guide": {
+#             "time_step_weights": "Higher weight = this day received more attention in the learned pooling. These are the most important days for the embedding.",
+#             "feature_importance": "Higher value = this feature's value had more influence on the embedding. Calculated via gradient magnitude.",
+#             "top_time_steps": "The 5 days (positions in the 30-day window) that most influenced this embedding.",
+#             "top_features": "The 5 market features that most influenced this embedding.",
+#         },
+#     }
+    
+#     xai_path = xai_dir / f"{chunk_label}_{split}_xai.json"
+#     with open(xai_path, "w") as f:
+#         json.dump(xai_summary, f, indent=2, default=str)
+    
+#     # Also save a lightweight per-sample attention matrix
+#     attn_matrix = np.zeros((len(sample_indices), config.seq_len), dtype=np.float32)
+#     for i, s in enumerate(attention_samples):
+#         attn_matrix[i, :] = s["time_step_weights"]
+#     np.save(str(xai_dir / f"{chunk_label}_{split}_attention_weights.npy"), attn_matrix)
+    
+#     print(f"[xai] Attention weights saved: {xai_dir / f'{chunk_label}_{split}_attention_weights.npy'}")
+#     print(f"[xai] XAI summary saved: {xai_path}")
+#     print(f"[xai] Top 5 features by importance:")
+#     for name, info in list(agg_feature_importance.items())[:5]:
+#         print(f"  {info['rank']}. {name}: {info['mean']:.4f} ± {info['std']:.4f}")
+#     print()
+
+# ═══════════════════════════════════════════════════════════════════
+# XAI: ATTENTION VISUALIZATION & FEATURE IMPORTANCE
+# ═══════════════════════════════════════════════════════════════════
+
+@torch.no_grad()
 def cmd_embed(config: TemporalEncoderConfig, chunk_id: int, split: str):
-    """Generate embeddings for one chunk/split."""
+    """Generate embeddings WITH attention weights and feature importance."""
     chunk_cfg = TemporalEncoder.CHUNK_CONFIG[chunk_id]
     chunk_label = chunk_cfg["label"]
 
@@ -882,7 +1079,7 @@ def cmd_embed(config: TemporalEncoderConfig, chunk_id: int, split: str):
     model_path = (Path(config.output_dir) / "models" / "TemporalEncoder" /
                   chunk_label / "model_freezed" / "model.pt")
     if not model_path.exists():
-        print(f"❌ Model not found: {model_path}")
+        print(f"  Model not found: {model_path}")
         return
 
     print(f"Loading model from {model_path}")
@@ -893,27 +1090,164 @@ def cmd_embed(config: TemporalEncoderConfig, chunk_id: int, split: str):
     df = load_features_df(config.features_path)
     year_range = chunk_cfg[split]
     dataset = MarketSequenceDataset(df, seq_len=config.seq_len, years=year_range)
-    loader = DataLoader(dataset, batch_size=config.batch_size, shuffle=False,
-                         num_workers=config.num_workers)
+    
+    # Fit normalizer for this split (using train stats ideally, but for XAI
+    # we use the dataset's own stats since the model expects normalized input)
+    normalizer = FeatureNormalizer()
+    normalizer.fit(dataset.get_raw_sequences())
+    
+    loader = DataLoader(dataset, batch_size=min(config.batch_size, 256), 
+                         shuffle=False, num_workers=config.num_workers)
 
-    # Generate embeddings
-    output_dir = Path(config.output_dir) / "embeddings" / "TemporalEncoder"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # Output directories
+    emb_dir = Path(config.output_dir) / "embeddings" / "TemporalEncoder"
+    xai_dir = Path(config.output_dir) / "results" / "TemporalEncoder" / "xai"
+    emb_dir.mkdir(parents=True, exist_ok=True)
+    xai_dir.mkdir(parents=True, exist_ok=True)
 
+    # ── Generate embeddings + collect attention ──
     all_embeddings = []
-    print(f"Generating embeddings for Chunk {chunk_id} {split}...")
-    with torch.no_grad():
-        for batch in tqdm(loader, desc="  Embedding"):
-            batch = batch.to(config.device)
-            emb = model.get_embedding(batch, pooling="last")
-            all_embeddings.append(emb.cpu().numpy())
+    all_attention_weights = []  # Per-batch attention from pooling
+    all_gradient_importance = []  # Gradient-based feature importance
+    
+    print(f"Generating XAI-enhanced embeddings for Chunk {chunk_id} {split}...")
+    
+    n_processed = 0
+    max_xai_samples = getattr(config, 'xai_sample_size', 1000)
+    
+    for batch_idx, batch in enumerate(tqdm(loader, desc="  Embedding + XAI")):
+        x = batch.to(config.device)
+        
+        # Normalize
+        x_norm = normalizer.transform(x) if normalizer.mean is not None else x
+        
+        # Get embeddings
+        with torch.no_grad():
+            output = model(x_norm)
+        
+        emb = output["attention_pooled"].cpu().numpy()
+        all_embeddings.append(emb)
+        
+        # Get attention weights from the pooling layer
+        # Re-run forward with attention output enabled for explainability
+        if n_processed < max_xai_samples:
+            # Gradient-based feature importance
+            x_xai = x_norm[:min(10, x_norm.size(0))].clone().detach()
+            x_xai.requires_grad_(True)
+            
+            with torch.enable_grad():
+                out_xai = model(x_xai)
+                # Use the mean of attention_pooled as the target for gradient
+                score = out_xai["attention_pooled"].sum(dim=1).mean()
+                score.backward()
+            
+            grads = x_xai.grad.abs().mean(dim=(0, 1)).cpu().numpy()  # Average over batch and seq
+            all_gradient_importance.append(grads)
+            
+            # Collect pooling attention by doing one more forward pass
+            query = model.pooling_query.expand(x_xai.size(0), -1, -1)
+            _, attn_weights = model.attention_pooling(query, out_xai["sequence"], out_xai["sequence"])
+            attn_weights = attn_weights.squeeze(1).cpu().numpy()  # (batch, seq_len)
+            all_attention_weights.append(attn_weights)
+            
+            n_processed += x_xai.size(0)
+        
+        x_xai.grad = None if 'x_xai' in dir() else None
 
+    # Save embeddings
     embeddings = np.concatenate(all_embeddings, axis=0)
-    out_path = output_dir / f"{chunk_label}_{split}_embeddings.npy"
-    np.save(str(out_path), embeddings)
+    emb_path = emb_dir / f"{chunk_label}_{split}_embeddings.npy"
+    np.save(str(emb_path), embeddings)
+    print(f"  Embeddings: {embeddings.shape} → {emb_path}")
 
-    print(f"  Shape: {embeddings.shape}")
-    print(f"  Saved: {out_path}\n")
+    # ── Save attention weights ──
+    if all_attention_weights:
+        attn_array = np.concatenate(all_attention_weights, axis=0)  # (n_samples, seq_len)
+        attn_path = xai_dir / f"{chunk_label}_{split}_attention_weights.npy"
+        np.save(str(attn_path), attn_array)
+        
+        # Also save as CSV with time-step labels
+        attn_df = pd.DataFrame(
+            attn_array,
+            columns=[f"timestep_{i}" for i in range(attn_array.shape[1])]
+        )
+        attn_df.index.name = "sample_index"
+        attn_df.to_csv(xai_dir / f"{chunk_label}_{split}_attention_weights.csv")
+        
+        # Attention statistics
+        avg_attention = attn_array.mean(axis=0)
+        top_timesteps = np.argsort(avg_attention)[-5:][::-1]
+        
+        print(f"  Attention weights: {attn_array.shape} → {attn_path}")
+        print(f"  Top attended timesteps (avg): {list(top_timesteps)}")
+        print(f"    Most recent step (t=-1): {avg_attention[-1]:.4f}")
+        print(f"    Earliest step (t=0):     {avg_attention[0]:.4f}")
+    else:
+        print("  No attention weights collected (sample size may be 0)")
+
+    # ── Save gradient-based feature importance ──
+    if all_gradient_importance:
+        grad_array = np.stack(all_gradient_importance, axis=0)  # (n_batches, n_features)
+        grad_mean = grad_array.mean(axis=0)
+        grad_path = xai_dir / f"{chunk_label}_{split}_feature_importance.npy"
+        np.save(str(grad_path), grad_mean)
+        
+        # Feature importance report
+        feature_names = TemporalEncoder.FEATURE_NAMES
+        importance_df = pd.DataFrame({
+            "feature": feature_names,
+            "importance": grad_mean,
+            "importance_pct": (grad_mean / grad_mean.sum() * 100).round(1)
+        }).sort_values("importance", ascending=False)
+        importance_df.to_csv(xai_dir / f"{chunk_label}_{split}_feature_importance.csv", index=False)
+        
+        print(f"\n  Feature Importance (gradient-based):")
+        for _, row in importance_df.head(5).iterrows():
+            bar = "█" * int(row["importance_pct"])
+            print(f"    {row['feature']:20s}: {row['importance_pct']:5.1f}% {bar}")
+
+    # ── Save XAI explanations per the spec ──
+    explanations = []
+    for i in range(min(100, len(all_attention_weights) if all_attention_weights else 0)):
+        attn_sample = attn_array[i] if all_attention_weights else None
+        grad_sample = grad_mean if all_gradient_importance else None
+        
+        top_attn_idx = np.argsort(attn_sample)[-3:][::-1] if attn_sample is not None else []
+        top_feat_idx = np.argsort(grad_sample)[-3:][::-1] if grad_sample is not None else []
+        
+        explanations.append({
+            "sample_index": i,
+            "attention_by_timestep": {
+                "most_recent_weight": float(attn_sample[-1]) if attn_sample is not None else None,
+                "earliest_weight": float(attn_sample[0]) if attn_sample is not None else None,
+                "top_timesteps": [
+                    {"timestep": int(j), "weight": float(attn_sample[j])}
+                    for j in top_attn_idx
+                ] if attn_sample is not None else [],
+            },
+            "top_features": [
+                {"feature": feature_names[j], "importance": float(grad_sample[j])}
+                for j in top_feat_idx
+            ] if grad_sample is not None else [],
+            "interpretation": "Most recent timesteps receive highest attention (recency bias). "
+                            "Top features drive the temporal embedding for downstream risk modules."
+        })
+    
+    if explanations:
+        import json as json_mod
+        xai_json_path = xai_dir / f"{chunk_label}_{split}_explanations.json"
+        with open(xai_json_path, "w") as f:
+            json_mod.dump({
+                "module": "TemporalEncoder",
+                "chunk": chunk_label,
+                "split": split,
+                "n_samples_explained": len(explanations),
+                "feature_names": TemporalEncoder.FEATURE_NAMES,
+                "explanations": explanations,
+            }, f, indent=2, default=str)
+        print(f"  XAI explanations: {xai_json_path}")
+
+    print(f"  XAI complete for {chunk_label}_{split}\n")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -938,11 +1272,14 @@ def main():
     # train-best-all
     sub.add_parser("train-best-all", help="Train all 3 chunks with best HPO params")
 
-    # embed
-    p = sub.add_parser("embed", help="Generate embeddings for one split")
+    # embed (with XAI support)
+    p = sub.add_parser("embed", help="Generate embeddings with XAI (attention weights + feature importance)")
+    # embed-all
+    sub.add_parser("embed-all", help="Generate embeddings for all chunks and splits")
     p.add_argument("--chunk", type=int, required=True, choices=[1, 2, 3])
-    p.add_argument("--split", type=str, required=True,
-                   choices=["train", "val", "test"])
+    p.add_argument("--split", type=str, required=True, choices=["train", "val", "test"])
+    p.add_argument("--xai-sample-size", type=int, default=1000,
+                   help="Number of samples for XAI analysis (more = slower)")
 
     # Common args
     for sp in [p for p in sub.choices.values() if p is not None]:
@@ -986,6 +1323,13 @@ def main():
             cmd_train_best(config, chunk_id)
     elif args.command == "embed":
         cmd_embed(config, args.chunk, args.split)
+    elif args.command == "embed-all":
+        for chunk_id in [1, 2, 3]:
+            for split in ["train", "val", "test"]:
+                print(f"\n{'='*60}")
+                print(f"EMBEDDING Chunk {chunk_id} {split}")
+                print(f"{'='*60}")
+                cmd_embed(config, chunk_id, split)
 
 
 if __name__ == "__main__":

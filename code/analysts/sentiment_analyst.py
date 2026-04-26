@@ -817,6 +817,9 @@ def load_model_for_inference(cfg: SentimentConfig, checkpoint: str, device: torc
     model.load_state_dict(state["model_state"])
     model.to(device)
     model.eval()
+    # Update config to match actual model dims (HPO may have changed them)
+    cfg.representation_dim = model.representation_dim
+    cfg.hidden_dims = model.hidden_dims
     return model
 
 
@@ -946,11 +949,13 @@ def run_prediction_export(cfg: SentimentConfig, split: str, checkpoint: str = "b
 
     n_rows = len(labels) if max_rows is None else len(row_indices)
     row_to_output_pos = {int(row): i for i, row in enumerate(row_indices.tolist())}
+    # Use model's actual representation_dim (HPO may have changed it)
+    actual_repr_dim = model.representation_dim
     repr_out = np.lib.format.open_memmap(
         analyst_embedding_path(cfg, split),
         mode="w+",
         dtype=np.float32,
-        shape=(n_rows, cfg.representation_dim),
+        shape=(n_rows, actual_repr_dim),
     )
 
     pred_score = np.full(n_rows, np.nan, dtype=np.float32)

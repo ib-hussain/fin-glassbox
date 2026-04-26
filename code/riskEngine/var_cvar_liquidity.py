@@ -24,6 +24,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import json
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -161,6 +162,7 @@ def build_var_cvar(returns_long_path: Path, dates_file: Path, workers: int) -> p
             print(f"  VaR {label}% mean: {result[var_col].mean():.4f}")
             print(f"  CVaR {label}% mean: {result[cvar_col].mean():.4f}")
     
+    generate_var_cvar_xai(result)
     return result
 
 
@@ -258,9 +260,299 @@ def build_liquidity(liquidity_path: Path) -> pd.DataFrame:
     print(f"  Tradable: {(result['tradable'] == 1).mean() * 100:.1f}%")
     print(f"  Median slippage estimate: {result['slippage_estimate_pct'].median():.6f}")
     
+    generate_liquidity_xai(result)
     return result
 
+# ══════════════════════════════════════════════════════════════
+#  XAI: RULE TRACE & HISTORICAL CONTEXT
+# ══════════════════════════════════════════════════════════════
 
+def generate_var_cvar_xai(var_cvar_df: pd.DataFrame) -> None:
+    """Generate XAI explanations for VaR/CVaR module."""
+    print("\n=== XAI: VaR/CVaR Explanations ===")
+    xai_dir = OUT_DIR / "xai"
+    xai_dir.mkdir(parents=True, exist_ok=True)
+    
+    # ── Per-ticker historical context ──
+    # For each ticker, compute historical percentiles of VaR/CVaR
+    explanations = []
+    
+    for ticker in tqdm(var_cvar_df["ticker"].unique(), desc="  Generating VaR/CVaR XAI"):
+        sub = var_cvar_df[var_cvar_df["ticker"] == ticker].sort_values("date")
+        if len(sub) < 100:
+            continue
+        
+        # Use the most recent date's values
+        latest = sub.iloc[-1]
+        
+        # Compute historical percentiles
+        var_95_hist = sub["var_95"].dropna()
+        var_99_hist = sub["var_99"].dropna()
+        cvar_95_hist = sub["cvar_95"].dropna()
+        cvar_99_hist = sub["cvar_99"].dropna()
+        
+        explanation = {
+            "module_name": "HistoricalVaRCVaR",
+            "ticker": ticker,
+            "date": str(latest["date"])[:10],
+            "primary_score": float(round(abs(latest.get("var_95", np.nan)), 4)),
+            "raw_value": {
+                "var_95": float(round(latest.get("var_95", np.nan), 6)),
+                "var_99": float(round(latest.get("var_99", np.nan), 6)),
+                "cvar_95": float(round(latest.get("cvar_95", np.nan), 6)),
+                "cvar_99": float(round(latest.get("cvar_99", np.nan), 6)),
+                "tail_ratio_95": float(round(latest.get("tail_ratio_95", np.nan), 4)),
+                "tail_ratio_99": float(round(latest.get("tail_ratio_99", np.nan), 4)),
+            },
+            "explanation": {
+                "percentile_vs_history": {
+                    "var_95_percentile": float(round(
+                        (var_95_hist <= latest["var_95"]).mean() * 100, 1
+                    )) if len(var_95_hist) > 0 else None,
+                    "var_99_percentile": float(round(
+                        (var_99_hist <= latest["var_99"]).mean() * 100, 1
+                    )) if len(var_99_hist) > 0 else None,
+                    "cvar_95_percentile": float(round(
+                        (cvar_95_hist <= latest["cvar_95"]).mean() * 100, 1
+                    )) if len(cvar_95_hist) > 0 else None,
+                    "cvar_99_percentile": float(round(
+                        (cvar_99_hist <= latest["cvar_99"]).mean() * 100, 1
+                    )) if len(cvar_99_hist) > 0 else None,
+                },
+                "trend": _compute_trend(sub["var_95"].dropna().tail(60)),
+                "thresholds_exceeded": _check_var_thresholds(latest),
+                "top_positive_factors": [
+                    {"factor": "2-year rolling window (504 trading days)", 
+                     "weight": 1.0, "direction": "neutral"},
+                    {"factor": "Non-parametric empirical distribution", 
+                     "weight": 1.0, "direction": "neutral"},
+                ],
+                "top_negative_factors": [],
+                "historical_range": {
+                    "var_95_min": float(var_95_hist.min()) if len(var_95_hist) > 0 else None,
+                    "var_95_max": float(var_95_hist.max()) if len(var_95_hist) > 0 else None,
+                    "var_95_mean": float(var_95_hist.mean()) if len(var_95_hist) > 0 else None,
+                    "current_var_95": float(latest.get("var_95", np.nan)),
+                    "current_var_95_label": _var_severity_label(latest.get("var_95", np.nan), var_95_hist),
+                },
+            },
+            "metadata": {
+                "model_version": "non_parametric_historical",
+                "window_size": VAR_WINDOW,
+                "confidence_levels": VAR_LEVELS,
+            },
+        }
+        explanations.append(explanation)
+    
+    # Save
+    xai_path = xai_dir / "var_cvar_explanations.json"
+    with open(xai_path, "w") as f:
+        json.dump({
+            "module": "HistoricalVaRCVaR",
+            "method": "historical_empirical_distribution",
+            "n_tickers": len(explanations),
+            "window_size": VAR_WINDOW,
+            "confidence_levels": VAR_LEVELS,
+            "explanations": explanations,
+        }, f, indent=2, default=str)
+    
+    print(f"  Saved: {xai_path}")
+
+
+def generate_liquidity_xai(liquidity_df: pd.DataFrame) -> None:
+    """Generate XAI explanations for Liquidity Risk module."""
+    print("\n=== XAI: Liquidity Risk Explanations ===")
+    xai_dir = OUT_DIR / "xai"
+    xai_dir.mkdir(parents=True, exist_ok=True)
+    
+    explanations = []
+    
+    for ticker in tqdm(liquidity_df["ticker"].unique()[:500], desc="  Generating Liquidity XAI"):
+        sub = liquidity_df[liquidity_df["ticker"] == ticker].sort_values("date")
+        if len(sub) < 100:
+            continue
+        
+        latest = sub.iloc[-1]
+        liq_hist = sub["liquidity_score"].dropna()
+        dv_hist = sub["dv_score"].dropna()
+        
+        # Rule trace — which components contributed
+        rule_trace = []
+        if latest["dv_score"] < 0.3:
+            rule_trace.append({
+                "rule": "low_dollar_volume",
+                "condition": f"dv_score={latest['dv_score']:.3f} < 0.3",
+                "severity": "critical" if latest["dv_score"] < 0.1 else "warning",
+                "detail": f"Dollar volume score is low — median daily trading value may be insufficient"
+            })
+        if latest["vr_score"] < 0.3:
+            rule_trace.append({
+                "rule": "low_volume_ratio",
+                "condition": f"vr_score={latest['vr_score']:.3f} < 0.3",
+                "severity": "warning",
+                "detail": "Volume relative to 21-day average is low"
+            })
+        if latest["days_to_liquidate_1M"] > DAYS_TO_LIQUIDATE_MAX:
+            rule_trace.append({
+                "rule": "slow_liquidation",
+                "condition": f"days_to_liquidate={latest['days_to_liquidate_1M']:.1f} > {DAYS_TO_LIQUIDATE_MAX}",
+                "severity": "warning",
+                "detail": f"Would take {latest['days_to_liquidate_1M']:.1f} days to trade $1M"
+            })
+        if not latest["tradable"]:
+            rule_trace.append({
+                "rule": "untradeable",
+                "condition": f"liquidity_score={latest['liquidity_score']:.3f} < 0.3",
+                "severity": "critical",
+                "detail": "Composite liquidity score below tradable threshold"
+            })
+        
+        explanation = {
+            "module_name": "LiquidityRisk",
+            "ticker": ticker,
+            "date": str(latest["date"])[:10],
+            "primary_score": float(latest["liquidity_score"]),
+            "confidence": 1.0,  # Rule-based = fully confident in the calculation
+            "raw_value": {
+                "liquidity_score": float(latest["liquidity_score"]),
+                "slippage_estimate_pct": float(latest["slippage_estimate_pct"]),
+                "days_to_liquidate_1M": float(latest["days_to_liquidate_1M"]),
+                "tradable": bool(latest["tradable"]),
+                "component_scores": {
+                    "dollar_volume_score": float(latest["dv_score"]),
+                    "volume_ratio_score": float(latest["vr_score"]),
+                    "turnover_score": float(latest["to_score"]),
+                },
+            },
+            "explanation": {
+                "rule_trace": rule_trace,
+                "percentile_vs_history": float(round(
+                    (liq_hist <= latest["liquidity_score"]).mean() * 100, 1
+                )) if len(liq_hist) > 0 else None,
+                "thresholds_exceeded": [
+                    {"threshold": "tradable_minimum", "current_value": float(latest["liquidity_score"]), 
+                     "limit": 0.3, "severity": "critical" if latest["liquidity_score"] < 0.3 else "ok"}
+                ],
+                "top_positive_factors": [
+                    {"factor": f"dollar_volume_score", "weight": float(latest["dv_score"]), 
+                     "direction": "positive"}
+                ] if latest["dv_score"] > 0.5 else [],
+                "top_negative_factors": [
+                    {"factor": f"dollar_volume_score", "weight": float(1 - latest["dv_score"]), 
+                     "direction": "negative"}
+                ] if latest["dv_score"] < 0.5 else [],
+                "trend": _compute_trend(liq_hist.tail(60)),
+                "component_breakdown": {
+                    "dv_score_weight": 0.4,
+                    "vr_score_weight": 0.3,
+                    "to_score_weight": 0.3,
+                },
+            },
+            "metadata": {
+                "model_version": "rule_based",
+                "scoring_formula": "0.4 * dv_score + 0.3 * vr_score + 0.3 * to_score",
+            },
+        }
+        explanations.append(explanation)
+    
+    # Save
+    xai_path = xai_dir / "liquidity_explanations.json"
+    with open(xai_path, "w") as f:
+        json.dump({
+            "module": "LiquidityRisk",
+            "method": "rule_based_composite_score",
+            "n_tickers": len(explanations),
+            "scoring_weights": {"dv_score": 0.4, "vr_score": 0.3, "to_score": 0.3},
+            "explanations": explanations,
+        }, f, indent=2, default=str)
+    
+    print(f"  Saved: {xai_path}")
+
+
+def _compute_trend(series: pd.Series) -> dict:
+    """Compute trend direction and strength from a series."""
+    if len(series) < 10:
+        return {"direction": "stable", "strength": 0.0}
+    
+    # Simple linear regression on last N points
+    x = np.arange(len(series))
+    y = series.values
+    mask = ~np.isnan(y)
+    if mask.sum() < 5:
+        return {"direction": "stable", "strength": 0.0}
+    
+    x_clean = x[mask]
+    y_clean = y[mask]
+    
+    if len(x_clean) < 2 or np.std(y_clean) < 1e-10:
+        return {"direction": "stable", "strength": 0.0}
+    
+    coeffs = np.polyfit(x_clean, y_clean, 1)
+    slope = coeffs[0]
+    
+    # Normalize slope by the series std for strength
+    strength = min(1.0, abs(slope * len(x_clean)) / (np.std(y_clean) + 1e-10))
+    
+    if abs(slope) < 1e-8:
+        direction = "stable"
+    elif slope > 0:
+        direction = "increasing" if strength > 0.3 else "stable"
+    else:
+        direction = "decreasing" if strength > 0.3 else "stable"
+    
+    return {"direction": direction, "strength": round(float(strength), 3)}
+
+
+def _check_var_thresholds(latest: pd.Series) -> list:
+    """Check VaR values against warning thresholds."""
+    thresholds = []
+    var_95 = latest.get("var_95", np.nan)
+    var_99 = latest.get("var_99", np.nan)
+    tail_95 = latest.get("tail_ratio_95", np.nan)
+    
+    if not np.isnan(var_95) and var_95 < -0.05:
+        thresholds.append({
+            "threshold": "var_95_severe",
+            "current_value": float(round(var_95, 4)),
+            "limit": -0.05,
+            "severity": "critical",
+        })
+    elif not np.isnan(var_95) and var_95 < -0.03:
+        thresholds.append({
+            "threshold": "var_95_elevated",
+            "current_value": float(round(var_95, 4)),
+            "limit": -0.03,
+            "severity": "warning",
+        })
+    
+    if not np.isnan(tail_95) and tail_95 > 1.5:
+        thresholds.append({
+            "threshold": "fat_tail_risk",
+            "current_value": float(round(tail_95, 2)),
+            "limit": 1.5,
+            "severity": "warning",
+        })
+    
+    return thresholds
+
+
+def _var_severity_label(current_var: float, var_history: pd.Series) -> str:
+    """Label the current VaR relative to history."""
+    if np.isnan(current_var) or len(var_history) < 50:
+        return "unknown"
+    
+    pct = (var_history <= current_var).mean()
+    if pct > 0.9:
+        return "extremely_high_risk"
+    elif pct > 0.75:
+        return "high_risk"
+    elif pct > 0.5:
+        return "elevated_risk"
+    elif pct > 0.25:
+        return "moderate_risk"
+    else:
+        return "low_risk"
+    
 # ══════════════════════════════════════════════════════════════
 #  MAIN
 # ══════════════════════════════════════════════════════════════

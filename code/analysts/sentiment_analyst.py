@@ -529,7 +529,9 @@ class SentimentAnalystMLP(nn.Module):
         rep = self.trunk(x)
         polarity = torch.tanh(self.polarity_head(rep)).squeeze(-1)
         class_logits = self.class_head(rep)
-        magnitude = torch.sigmoid(self.magnitude_head(rep)).squeeze(-1)
+        # magnitude = self.magnitude_head(rep).squeeze(-1)
+        magnitude = self.magnitude_head(rep).squeeze(-1)
+
         return {
             "sentiment_embedding": rep,
             "sentiment_score": polarity,
@@ -601,8 +603,9 @@ def compute_loss(outputs: Dict[str, torch.Tensor], batch: Dict[str, torch.Tensor
 
     polarity_loss = F.mse_loss(outputs["sentiment_score"], target_score)
     class_loss = F.cross_entropy(outputs["class_logits"], target_class)
-    magnitude_loss = F.binary_cross_entropy(outputs["magnitude"], target_magnitude)
-
+    # magnitude_loss = F.binary_cross_entropy_with_logits(outputs["magnitude"], target_magnitude)
+    magnitude_loss = F.binary_cross_entropy_with_logits(outputs["magnitude"], target_magnitude)
+    
     loss = (
         cfg.polarity_loss_weight * polarity_loss
         + cfg.class_loss_weight * class_loss
@@ -965,7 +968,7 @@ def run_prediction_export(cfg: SentimentConfig, split: str, checkpoint: str = "b
         scores = outputs["sentiment_score"].float().cpu().numpy()
         classes = torch.argmax(probs, dim=1).long().cpu().numpy()
         conf = torch.max(probs, dim=1).values.float().cpu().numpy()
-        mag = outputs["magnitude"].float().cpu().numpy()
+        mag = torch.sigmoid(outputs["magnitude"]).float().cpu().numpy()
         rep = outputs["sentiment_embedding"].float().cpu().numpy().astype(np.float32)
 
         for j, row in enumerate(rows):

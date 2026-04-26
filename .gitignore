@@ -54,6 +54,7 @@ outputs/models/**/**/latest_checkpoint.pt
 outputs/models/**/**/best_checkpoint.pt
 outputs/models/**/**/epoch_*.pt
 outputs/codeResults/**/*.log
+*latest_model.pt
 
 prd*/
 data/sec_edgar/existing_23y/

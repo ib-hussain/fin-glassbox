@@ -761,7 +761,7 @@ def main():
     sub.add_parser("inspect")
     p = sub.add_parser("hpo")
     p.add_argument("--chunk", type=int, required=True, choices=[1, 2, 3])
-    p.add_argument("--train-best")
+    p = sub.add_parser("train-best")
     p.add_argument("--chunk", type=int, required=True, choices=[1, 2, 3])
     sub.add_parser("train-best-all")
     p = sub.add_parser("embed")

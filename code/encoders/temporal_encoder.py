@@ -232,8 +232,8 @@ class TemporalEncoder(nn.Module):
         torch.save({"model_state_dict": self.state_dict(), "config": asdict(self.config)}, path)
 
     @classmethod
-    def load(cls, path: str | Path, device: str = "cpu") -> "TemporalEncoder":
-        checkpoint = torch.load(path, map_location=device, weights_only=False)
+    def load(cls, path: str | Path, device: str = "cpu") -> "TemporalEncoder":        
+        checkpoint = torch.load(path, map_location=device, weights_only=False)        
         config = TemporalEncoderConfig(**checkpoint["config"])
         model = cls(config)
         model.load_state_dict(checkpoint["model_state_dict"])
@@ -317,7 +317,7 @@ class MarketSequenceDataset(Dataset):
 
         if max_rows > 0 and len(self.sequences) > max_rows:
             rng = np.random.RandomState(42)
-            indices = rng.choice(len(self.sequences), max_rows, replace=False)
+            indices = rng.choice(len(self.sequences), max_rows, replace=False)            
             self.sequences = [self.sequences[i] for i in indices]
 
     def get_raw_sequences(self) -> list[np.ndarray]:
@@ -424,6 +424,55 @@ def create_optimizer_and_scheduler(model, total_steps):
     return optimizer, scheduler
 
 
+# def train_model(model, train_loader, val_loader, chunk_id, output_dir):
+#     config = model.config
+#     device = config.device
+#     total_steps = len(train_loader) * config.epochs
+#     optimizer, scheduler = create_optimizer_and_scheduler(model, total_steps)
+
+#     scaler = torch.cuda.amp.GradScaler() if (config.mixed_precision and device == "cuda") else None
+
+#     best_val_loss = float("inf")
+#     no_improve = 0
+#     history = {"train_loss": [], "val_loss": [], "lr": []}
+#     best_path = output_dir / "best_model.pt"
+#     latest_path = output_dir / "latest_model.pt"
+#     chunk_label = TemporalEncoder.CHUNK_CONFIG[chunk_id]["label"]
+
+#     for epoch in range(1, config.epochs + 1):
+#         train_loss = train_epoch(model, train_loader, optimizer, scaler, device)
+#         val_loss = validate(model, val_loader, device)
+#         current_lr = optimizer.param_groups[0]["lr"]
+
+#         history["train_loss"].append(train_loss)
+#         history["val_loss"].append(val_loss)
+#         history["lr"].append(current_lr)
+
+#         tqdm.write(f"  [{chunk_label}] Epoch {epoch:3d}/{config.epochs} | "
+#                     f"Train: {train_loss:.4f} | Val: {val_loss:.4f} | LR: {current_lr:.2e}")
+
+#         model.save(str(latest_path))
+#         if val_loss < best_val_loss:
+#             best_val_loss = val_loss
+#             no_improve = 0
+#             model.save(str(best_path))
+#         else:
+#             no_improve += 1
+
+#         if no_improve >= config.early_stop_patience:
+#             tqdm.write(f"  Early stopping at epoch {epoch}")
+#             break
+#         scheduler.step()
+
+#     pd.DataFrame(history).to_csv(output_dir / "training_history.csv", index=False)
+#     summary = {"chunk": chunk_label, "best_val_loss": float(best_val_loss),
+#                "epochs_trained": epoch, "config": asdict(config)}
+#     with open(output_dir / "training_summary.json", "w") as f:
+#         json.dump(summary, f, indent=2)
+#     return summary
+# Fix 1: In train_model(), add resume logic BEFORE the training loop
+# Replace the function starting from line ~450 with this updated version
+
 def train_model(model, train_loader, val_loader, chunk_id, output_dir):
     config = model.config
     device = config.device
@@ -434,12 +483,47 @@ def train_model(model, train_loader, val_loader, chunk_id, output_dir):
 
     best_val_loss = float("inf")
     no_improve = 0
+    start_epoch = 1
     history = {"train_loss": [], "val_loss": [], "lr": []}
     best_path = output_dir / "best_model.pt"
     latest_path = output_dir / "latest_model.pt"
+    history_path = output_dir / "training_history.csv"
     chunk_label = TemporalEncoder.CHUNK_CONFIG[chunk_id]["label"]
 
-    for epoch in range(1, config.epochs + 1):
+    # ── RESUME SUPPORT ──
+    if latest_path.exists():
+        print(f"  Found existing checkpoint at {latest_path}")
+        # Load previous training history if it exists
+        if history_path.exists():
+            prev_history = pd.read_csv(history_path)
+            if len(prev_history) > 0:
+                history["train_loss"] = prev_history["train_loss"].tolist()
+                history["val_loss"] = prev_history["val_loss"].tolist()
+                history["lr"] = prev_history["lr"].tolist()
+                start_epoch = len(prev_history) + 1
+                
+                # Find best val loss from history
+                best_val_loss = min(prev_history["val_loss"])
+                # Count consecutive epochs without improvement from the end
+                best_idx = prev_history["val_loss"].idxmin()
+                no_improve = len(prev_history) - best_idx - 1
+                
+                print(f"  Resuming from epoch {start_epoch} "
+                      f"(best val loss so far: {best_val_loss:.6f}, "
+                      f"no_improve: {no_improve})")
+        
+        # Load model weights
+        checkpoint = torch.load(latest_path, map_location=device, weights_only=False)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        
+        # Reconstruct optimizer with same LR that was at the end
+        # Rebuild scheduler from scratch based on completed epochs
+        for _ in range(start_epoch - 1):
+            scheduler.step()
+    else:
+        print(f"  Starting fresh training")
+
+    for epoch in range(start_epoch, config.epochs + 1):
         train_loss = train_epoch(model, train_loader, optimizer, scaler, device)
         val_loss = validate(model, val_loader, device)
         current_lr = optimizer.param_groups[0]["lr"]
@@ -447,6 +531,9 @@ def train_model(model, train_loader, val_loader, chunk_id, output_dir):
         history["train_loss"].append(train_loss)
         history["val_loss"].append(val_loss)
         history["lr"].append(current_lr)
+
+        # Save history incrementally (not just at end)
+        pd.DataFrame(history).to_csv(history_path, index=False)
 
         tqdm.write(f"  [{chunk_label}] Epoch {epoch:3d}/{config.epochs} | "
                     f"Train: {train_loss:.4f} | Val: {val_loss:.4f} | LR: {current_lr:.2e}")
@@ -464,13 +551,11 @@ def train_model(model, train_loader, val_loader, chunk_id, output_dir):
             break
         scheduler.step()
 
-    pd.DataFrame(history).to_csv(output_dir / "training_history.csv", index=False)
     summary = {"chunk": chunk_label, "best_val_loss": float(best_val_loss),
                "epochs_trained": epoch, "config": asdict(config)}
     with open(output_dir / "training_summary.json", "w") as f:
         json.dump(summary, f, indent=2)
     return summary
-
 
 # ═══════════════════════════════════════════════════════════════════
 # DATA LOADING
@@ -500,7 +585,7 @@ def cmd_inspect(config):
     if missing:
         print(f"❌ Missing features: {missing}")
     else:
-        print(f"✅ All {len(TemporalEncoder.FEATURE_NAMES)} features present")
+        print(f"✅ All {len(TemporalEncoder.FEATURE_NAMES)} features present")    
     print("\nNaN rates:")
     for f in TemporalEncoder.FEATURE_NAMES:
         rate = df[f].isna().mean() * 100
@@ -628,8 +713,7 @@ def cmd_train_best(config, chunk_id):
     val_dataset.normalizer = normalizer
 
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True,
-                               num_workers=config.num_workers, drop_last=True,
-                               pin_memory=True, prefetch_factor=config.prefetch_factor,
+                               num_workers=config.num_workers, drop_last=True,                               pin_memory=True, prefetch_factor=config.prefetch_factor,
                                persistent_workers=True)
     val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False,
                              num_workers=config.num_workers, pin_memory=True,
@@ -700,7 +784,6 @@ def cmd_embed(config, chunk_id, split):
     for batch in tqdm(loader, desc="  Embedding + XAI"):
         x = batch.to(config.device, non_blocking=True)
         x_norm = normalizer.transform(x) if normalizer.mean is not None else x
-
         with torch.no_grad():
             output = model(x_norm)
         emb = output["attention_pooled"].cpu().numpy()
@@ -726,6 +809,14 @@ def cmd_embed(config, chunk_id, split):
     emb_path = emb_dir / f"{chunk_label}_{split}_embeddings.npy"
     np.save(str(emb_path), embeddings)
     print(f"  Embeddings: {embeddings.shape} → {emb_path}")
+
+    manifest_path = emb_dir / f"{chunk_label}_{split}_manifest.csv"
+    # Rebuild manifest from the dataset ordering
+    manifest_records = []
+    for idx in range(len(dataset)):
+        seq = dataset.sequences_array[idx]
+        # Get ticker and date from the original dataframe at this index
+        pass
 
     if all_attention_weights:
         attn_array = np.concatenate(all_attention_weights, axis=0)
@@ -822,4 +913,4 @@ if __name__ == "__main__":
 # python code/encoders/temporal_encoder.py inspect
 # python code/encoders/temporal_encoder.py train-best --chunk 1 --device cuda
 # python code/encoders/temporal_encoder.py train-best-all --device cuda
-# python code/encoders/temporal_encoder.py embed-all --device cuda
+# python code/encoders/temporal_encoder.py embed-all --device cuda 

@@ -16,7 +16,7 @@ Output from Model.forward:
 """
 
 from __future__ import annotations
-
+from contextlib import nullcontext
 from typing import Tuple
 
 import torch
@@ -70,32 +70,88 @@ class StockBlockLayer(nn.Module):
             self.GLUs.append(GLU(in_features, out_features))
             self.GLUs.append(GLU(in_features, out_features))
 
+    # def spe_seq_cell(self, input_tensor: torch.Tensor) -> torch.Tensor:
+    #     """Frequency-domain temporal cell.
+
+    #     FFT is forced to float32 for stability and compatibility with AMP. Some
+    #     CUDA FFT paths do not support half precision for arbitrary lengths.
+    #     """
+    #     batch_size, k, input_channel, node_cnt, time_step = input_tensor.size()
+    #     original_dtype = input_tensor.dtype
+
+    #     x = input_tensor.reshape(batch_size, -1, node_cnt, time_step).float()
+    #     ffted = torch.view_as_real(torch.fft.fft(x, dim=1))
+
+    #     real = ffted[..., 0].permute(0, 2, 1, 3).contiguous().reshape(batch_size, node_cnt, -1)
+    #     imag = ffted[..., 1].permute(0, 2, 1, 3).contiguous().reshape(batch_size, node_cnt, -1)
+
+    #     for i in range(3):
+    #         real = self.GLUs[i * 2](real)
+    #         imag = self.GLUs[i * 2 + 1](imag)
+
+    #     real = real.reshape(batch_size, node_cnt, 4, -1).permute(0, 2, 1, 3).contiguous()
+    #     imag = imag.reshape(batch_size, node_cnt, 4, -1).permute(0, 2, 1, 3).contiguous()
+
+    #     complex_tensor = torch.view_as_complex(torch.stack((real, imag), dim=-1).contiguous())
+    #     iffted = torch.fft.irfft(complex_tensor, n=complex_tensor.shape[1], dim=1)
+    #     return iffted.to(dtype=original_dtype)
     def spe_seq_cell(self, input_tensor: torch.Tensor) -> torch.Tensor:
         """Frequency-domain temporal cell.
 
-        FFT is forced to float32 for stability and compatibility with AMP. Some
-        CUDA FFT paths do not support half precision for arbitrary lengths.
+        FFT and the GLU frequency block are forced to float32. This avoids CUDA
+        ComplexHalf warnings and unstable half-precision FFT behaviour when the
+        outer training loop uses AMP. The result is cast back to the caller dtype
+        at the end so the rest of the model can still benefit from mixed precision.
         """
         batch_size, k, input_channel, node_cnt, time_step = input_tensor.size()
         original_dtype = input_tensor.dtype
 
-        x = input_tensor.reshape(batch_size, -1, node_cnt, time_step).float()
-        ffted = torch.view_as_real(torch.fft.fft(x, dim=1))
+        autocast_ctx = (
+            torch.autocast(device_type="cuda", enabled=False)
+            if input_tensor.is_cuda
+            else nullcontext()
+        )
 
-        real = ffted[..., 0].permute(0, 2, 1, 3).contiguous().reshape(batch_size, node_cnt, -1)
-        imag = ffted[..., 1].permute(0, 2, 1, 3).contiguous().reshape(batch_size, node_cnt, -1)
+        with autocast_ctx:
+            x = input_tensor.reshape(batch_size, -1, node_cnt, time_step).float()
+            ffted = torch.view_as_real(torch.fft.fft(x, dim=1))
 
-        for i in range(3):
-            real = self.GLUs[i * 2](real)
-            imag = self.GLUs[i * 2 + 1](imag)
+            real = (
+                ffted[..., 0]
+                .permute(0, 2, 1, 3)
+                .contiguous()
+                .reshape(batch_size, node_cnt, -1)
+                .float()
+            )
+            imag = (
+                ffted[..., 1]
+                .permute(0, 2, 1, 3)
+                .contiguous()
+                .reshape(batch_size, node_cnt, -1)
+                .float()
+            )
 
-        real = real.reshape(batch_size, node_cnt, 4, -1).permute(0, 2, 1, 3).contiguous()
-        imag = imag.reshape(batch_size, node_cnt, 4, -1).permute(0, 2, 1, 3).contiguous()
+            for i in range(3):
+                real = self.GLUs[i * 2](real).float()
+                imag = self.GLUs[i * 2 + 1](imag).float()
 
-        complex_tensor = torch.view_as_complex(torch.stack((real, imag), dim=-1).contiguous())
-        iffted = torch.fft.irfft(complex_tensor, n=complex_tensor.shape[1], dim=1)
+            real = (
+                real.reshape(batch_size, node_cnt, 4, -1)
+                .permute(0, 2, 1, 3)
+                .contiguous()
+                .float()
+            )
+            imag = (
+                imag.reshape(batch_size, node_cnt, 4, -1)
+                .permute(0, 2, 1, 3)
+                .contiguous()
+                .float()
+            )
+
+            complex_tensor = torch.view_as_complex(torch.stack((real, imag), dim=-1).contiguous())
+            iffted = torch.fft.irfft(complex_tensor, n=complex_tensor.shape[1], dim=1)
+
         return iffted.to(dtype=original_dtype)
-
     def forward(self, x: torch.Tensor, mul_l: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor | None]:
         # x: [B, 1, N, T]
         # mul_l: [4, N, N]

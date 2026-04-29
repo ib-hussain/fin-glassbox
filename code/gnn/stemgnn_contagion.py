@@ -39,6 +39,7 @@ import random
 import shutil
 import sys
 import time
+import traceback
 import warnings
 from contextlib import nullcontext
 from dataclasses import asdict, dataclass, field, fields as dataclass_fields
@@ -237,7 +238,7 @@ class ContagionConfig:
     # XAI
     xai_sample_size: int = 32
     xai_top_influencers: int = 10
-    enable_gnnexplainer: bool = False
+    enable_gnnexplainer: bool = True
     gnnexplainer_epochs: int = 50
     save_xai_to_disk: bool = True
 
@@ -274,6 +275,9 @@ CHUNK_CONFIG = {
     2: {"train": (2007, 2014), "val": (2015, 2015), "test": (2016, 2016), "label": "chunk2"},
     3: {"train": (2017, 2022), "val": (2023, 2023), "test": (2024, 2024), "label": "chunk3"},
 }
+# Optuna RDB/SQLite storage should never receive inf/nan objective values.
+# Failed HPO trials must return a large finite penalty instead.
+HPO_FAILURE_VALUE = 1_000_000_000.0
 
 ARCHITECTURE_KEYS = ("window_size", "multi_layer", "stack_cnt", "contagion_horizons")
 
@@ -892,13 +896,25 @@ def train_contagion_model(
         last_epoch = start_epoch
         for epoch in range(start_epoch + 1, int(config.epochs) + 1):
             epoch_start = time.time()
-            train_loss = train_epoch(model, train_loader, optimizer, loss_fn, device, config, scaler)
-            if epoch % int(config.validate_freq) == 0:
-                val_metrics = validate_epoch(model, val_loader, loss_fn, device)
-                val_loss = float(val_metrics["loss"])
-            else:
-                val_metrics = {"loss": float("nan")}
-                val_loss = float("nan")
+            train_loss = train_epoch(nn.Module(model), train_loader, optimizer, loss_fn, device, config, scaler)
+            # if epoch % int(config.validate_freq) == 0:
+            #     val_metrics = validate_epoch(model, val_loader, loss_fn, device)
+            #     val_loss = float(val_metrics["loss"])
+            # else:
+            #     val_metrics = {"loss": float("nan")}
+            #     val_loss = float("nan")
+            val_metrics = validate_epoch(nn.Module(model), val_loader, loss_fn, device)
+            val_loss = val_metrics["loss"]
+            if not np.isfinite(float(train_loss)):
+                raise RuntimeError(
+                    f"Non-finite StemGNN training loss detected at epoch {epoch}: train_loss={train_loss}. "
+                    f"This trial/run is numerically unstable and must be rejected."
+                )
+            if not np.isfinite(float(val_loss)):
+                raise RuntimeError(
+                    f"Non-finite StemGNN validation loss detected at epoch {epoch}: val_loss={val_loss}. "
+                    f"This trial/run is numerically unstable and must be rejected."
+                )
 
             row = {
                 "epoch": int(epoch),
@@ -1313,45 +1329,115 @@ def generate_contagion_predictions(model: ContagionStemGNN, dataset: ContagionDa
 # HPO
 # =============================================================================
 
-def _run_hpo_objective(trial: Any, base_config: ContagionConfig, chunk_id: int, df: pd.DataFrame) -> float:
-    trial_config = ContagionConfig.from_dict_safe(base_config.to_dict())
-    trial_config.window_size = trial.suggest_categorical("window_size", [15, 30, 60])
-    trial_config.multi_layer = trial.suggest_categorical("multi_layer", [5, 8, 13])
-    trial_config.dropout_rate = trial.suggest_categorical("dropout_rate", [0.5, 0.6, 0.75])
-    trial_config.batch_size = trial.suggest_categorical("batch_size", [4, 8])
-    trial_config.learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True)
-    trial_config.decay_rate = trial.suggest_categorical("decay_rate", [0.5, 0.7, 0.9])
-    trial_config.exponential_decay_step = trial.suggest_categorical("exponential_decay_step", [5, 8, 13])
-    trial_config.optimizer = trial.suggest_categorical("optimizer", ["RMSProp", "AdamW"])
+# def _run_hpo_objective(trial: Any, base_config: ContagionConfig, chunk_id: int, df: pd.DataFrame) -> float:
+#     trial_config = ContagionConfig.from_dict_safe(base_config.to_dict())
+#     trial_config.window_size = trial.suggest_categorical("window_size", [15, 30, 60])
+#     trial_config.multi_layer = trial.suggest_categorical("multi_layer", [5, 8, 13])
+#     trial_config.dropout_rate = trial.suggest_categorical("dropout_rate", [0.5, 0.6, 0.75])
+#     trial_config.batch_size = trial.suggest_categorical("batch_size", [4, 8])
+#     trial_config.learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True)
+#     trial_config.decay_rate = trial.suggest_categorical("decay_rate", [0.5, 0.7, 0.9])
+#     trial_config.exponential_decay_step = trial.suggest_categorical("exponential_decay_step", [5, 8, 13])
+#     trial_config.optimizer = trial.suggest_categorical("optimizer", ["RMSProp", "AdamW"])
 
-    # HPO must not leave worker processes or chunk-level training checkpoints behind.
-    trial_config.epochs = int(base_config.hpo_epochs)
-    trial_config.max_train_windows = int(base_config.max_train_windows or base_config.hpo_max_train_windows)
-    trial_config.max_eval_windows = int(base_config.max_eval_windows or base_config.hpo_max_eval_windows)
-    trial_config.num_workers = int(base_config.hpo_num_workers)
-    trial_config.persistent_workers = False
-    trial_config.compile_model = False
-    trial_config.enable_gnnexplainer = False
-    trial_config.save_xai_to_disk = False
-    trial_config.early_stop_patience = min(5, int(base_config.early_stop_patience))
+#     # HPO must not leave worker processes or chunk-level training checkpoints behind.
+#     trial_config.epochs = int(base_config.hpo_epochs)
+#     trial_config.max_train_windows = int(base_config.max_train_windows or base_config.hpo_max_train_windows)
+#     trial_config.max_eval_windows = int(base_config.max_eval_windows or base_config.hpo_max_eval_windows)
+#     trial_config.num_workers = int(base_config.hpo_num_workers)
+#     trial_config.persistent_workers = False
+#     trial_config.compile_model = False
+#     trial_config.enable_gnnexplainer = False
+#     trial_config.save_xai_to_disk = False
+#     trial_config.early_stop_patience = min(5, int(base_config.early_stop_patience))
 
-    model = None
+#     model = None
+#     try:
+#         model, val_loss, _ = train_contagion_model(
+#             trial_config,
+#             chunk_id,
+#             df,
+#             resume=False,
+#             save_checkpoints=False,
+#             run_tag=f"hpo_{CHUNK_CONFIG[int(chunk_id)]['label']}_trial_{trial.number}",
+#         )
+#         return float(val_loss)
+#     finally:
+#         del model
+#         cleanup_cuda()
+def _run_hpo_objective(
+    trial,
+    base_config: ContagionConfig,
+    chunk_id: int,
+    df: pd.DataFrame,
+) -> float:
+    """Optuna objective function for StemGNN HPO.
+
+    Important:
+        This function must never return inf/nan. Optuna SQLite/RDB storage can
+        crash during commit when non-finite values are recorded. Failed trials
+        therefore return HPO_FAILURE_VALUE, a large finite penalty.
+    """
     try:
-        model, val_loss, _ = train_contagion_model(
+        trial_config = ContagionConfig(**base_config.to_dict())
+
+        # Search space for chunk1 atleast :
+        # trial_config.window_size = trial.suggest_categorical("window_size", [15, 30, 60])
+        # trial_config.multi_layer = trial.suggest_categorical("multi_layer", [5, 8, 13])
+        # Search space for chunk 2 only:
+        trial_config.window_size = trial.suggest_categorical("window_size", [30, 60])
+        trial_config.multi_layer = trial.suggest_categorical("multi_layer", [8, 13])
+
+        trial_config.dropout_rate = trial.suggest_categorical("dropout_rate", [0.5, 0.6, 0.75])
+        trial_config.batch_size = trial.suggest_categorical("batch_size", [4, 8])
+
+        # trial_config.learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True)
+        trial_config.learning_rate = trial.suggest_float("learning_rate", 5e-5, 8e-4, log=True)
+
+        trial_config.decay_rate = trial.suggest_categorical("decay_rate", [0.5, 0.7, 0.9])
+        trial_config.exponential_decay_step = trial.suggest_categorical("exponential_decay_step", [5, 8, 13])
+
+        # Short training for HPO
+        trial_config.epochs = int(base_config.hpo_epochs)
+        trial_config.max_train_windows = int(base_config.max_train_windows or 500)
+        trial_config.max_eval_windows = int(base_config.max_eval_windows or 150)
+        trial_config.early_stop_patience = 5
+
+        # Critical for HPO stability:
+        # HPO repeatedly creates datasets/loaders, so avoid multiprocessing
+        # worker accumulation and file-handle leaks.
+        trial_config.num_workers = 0
+        trial_config.persistent_workers = False
+        trial_config.compile_model = False
+
+        # HPO trials must not resume from or overwrite production checkpoints.
+        trial_config.run_tag = f"hpo_trial_{trial.number:04d}"
+        trial_config.save_checkpoints = False
+
+        _, val_loss, summary = train_contagion_model(
             trial_config,
             chunk_id,
             df,
             resume=False,
+            run_tag=trial_config.run_tag,
             save_checkpoints=False,
-            run_tag=f"hpo_{CHUNK_CONFIG[int(chunk_id)]['label']}_trial_{trial.number}",
         )
-        return float(val_loss)
-    finally:
-        del model
-        cleanup_cuda()
 
+        value = float(val_loss)
+
+        if not np.isfinite(value):
+            print(f"  Trial {trial.number} produced non-finite val_loss={value}. Returning finite penalty.")
+            return HPO_FAILURE_VALUE
+
+        return value
+
+    except Exception as exc:
+        print(f"  Trial {trial.number} failed safely: {exc}")
+        cleanup_cuda()
+        return HPO_FAILURE_VALUE
 
 def run_hpo(config: ContagionConfig, chunk_id: int, n_trials: int, fresh: bool = False) -> Dict[str, Any]:
+
     """Run Optuna TPE HPO. Returns and saves the best params."""
     if not HAS_OPTUNA:
         raise ImportError("Optuna is required for HPO. Install with: pip install optuna")
@@ -1360,12 +1446,17 @@ def run_hpo(config: ContagionConfig, chunk_id: int, n_trials: int, fresh: bool =
     label = CHUNK_CONFIG[int(chunk_id)]["label"]
     storage_dir = Path(config.output_dir) / "codeResults" / "StemGNN"
     storage_dir.mkdir(parents=True, exist_ok=True)
-    db_path = storage_dir / "hpo.db"
-    study_name = f"stemgnn_contagion_{label}"
+    # db_path = storage_dir / "hpo.db"
+    # study_name = f"stemgnn_contagion_{label}"
+    db_path = storage_dir / f"hpo_{label}.db"
+    study_name = f"stemgnn_contagion_{label}"   
 
+    # if fresh and db_path.exists():
+    #     db_path.unlink()
+    #     print("  Deleted existing HPO database for fresh start.")
     if fresh and db_path.exists():
         db_path.unlink()
-        print("  Deleted existing HPO database for fresh start.")
+        print(f"  Deleted existing HPO database for fresh start: {db_path}")
 
     study = optuna.create_study(
         direction="minimize",
@@ -1375,16 +1466,44 @@ def run_hpo(config: ContagionConfig, chunk_id: int, n_trials: int, fresh: bool =
         study_name=study_name,
         load_if_exists=True,
     )
-    study.optimize(lambda trial: _run_hpo_objective(trial, config, chunk_id, df), n_trials=int(n_trials), show_progress_bar=True)
+    study.optimize(
+        lambda trial: _run_hpo_objective(trial, config, chunk_id, df),
+        n_trials=int(n_trials),
+        show_progress_bar=True,
+    )
 
-    result = {"params": study.best_params, "value": float(study.best_value), "study_name": study_name}
+    usable_trials = [
+        t for t in study.trials
+        if t.value is not None
+        and np.isfinite(float(t.value))
+        and float(t.value) < HPO_FAILURE_VALUE
+    ]
+
+    if not usable_trials:
+        raise RuntimeError(
+            "All StemGNN HPO trials failed or produced non-finite validation losses. "
+            "No usable best params saved. Check the printed trial failure messages above."
+        )
+
+    best_trial = min(usable_trials, key=lambda t: float(t.value))
+    best_params = dict(best_trial.params)
+    best_value = float(best_trial.value)
+
+    if (not np.isfinite(best_value)) or best_value >= HPO_FAILURE_VALUE:
+        raise RuntimeError(
+            "Best StemGNN HPO value is invalid or only reflects failed penalty trials. "
+            "Refusing to save invalid HPO params."
+        )
+
     params_path = storage_dir / f"best_params_{label}.json"
-    with open(params_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=2)
-    print(f"\n  Best params ({label}): {study.best_params}")
-    print(f"  Best val loss: {study.best_value:.6f}")
+    with open(params_path, "w") as f:
+        json.dump({"params": best_params, "value": best_value}, f, indent=2)
+
+    print(f"\n  Best params ({label}): {best_params}")
+    print(f"  Best val loss: {best_value:.6f}")
     print(f"  Saved to: {params_path}")
-    return result
+
+    return {"params": best_params, "value": best_value}
 
 
 # =============================================================================

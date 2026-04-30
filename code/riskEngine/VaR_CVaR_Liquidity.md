@@ -46,3 +46,128 @@ python code/riskEngine/var_cvar_liquidity.py --workers 4
 | `outputs/results/risk/liquidity.csv` | Per ticker per day: liquidity_score (0-1), slippage_estimate_pct, days_to_liquidate_1M, tradable (bool), component scores |
 
 These feed directly into the **Position Sizing Engine** later. No training — they're ready immediately.
+
+THE OUTPUT:
+```bash
+(venv3.12.7) fin-glassbox$ python code/riskEngine/var_cvar_liquidity.py --workers 4 --chunk 1 && python code/riskEngine/var_cvar_liquidity.py --workers thon code/riskEngine/var_cvar_liquidity.py --workers 4 --chunk 3
+============================================================
+RISK ENGINE: VaR, CVaR & Liquidity
+============================================================
+Non-parametric / rule-based — no training required
+
+
+=== HISTORICAL VaR & CVaR ===
+Loading returns from data/yFinance/processed/returns_long.csv...
+  Tickers: 2,500
+  Computing VaR/CVaR:  62%|████████████████▎                                              | 1551/2500 [46:09<24:39,  
+  Computing VaR/CVaR:  76%|████████████▉                              | 1888/2500 [55:03<14:31,
+  Computing VaR/CVaR:  95%|███████████████▏     | 2380/2500 [1:08:07<02:19,  1.44s/it]  
+  Computing VaR/CVaR: 100%|█| 2500/2500 [1:11:13<00:00,  1.71s/it]  
+  Saved: outputs/results/risk/var_cvar.csv (15,712,457 rows)
+  Columns: ['var_95', 'var_99', 'cvar_95', 'cvar_99', 'tail_ratio_95', 'tail_ratio_99', 'date', 'ticker', 'window_size']
+  VaR 95% mean: -0.0432
+  CVaR 95% mean: -0.0649
+  VaR 99% mean: -0.0759
+  CVaR 99% mean: -0.1015
+
+=== XAI: VaR/CVaR Explanations ===
+  Generating VaR/CVaR XAI:  18%|█                                                                                                 | 457/2500 [04:18<18:56,  1.80it/s]  
+  Generating VaR/CVaR XAI: 100%|██████████████████| 2500/2500 [25:11<00:00,  1.65it/s]  
+  Saved: outputs/results/risk/xai/var_cvar_explanations.json
+
+=== LIQUIDITY RISK ===
+Loading liquidity features from data/yFinance/processed/liquidity_features.csv...
+  Rows: 15,715,000
+  Computing liquidity scores...
+  Saved: outputs/results/risk/liquidity.csv (15,715,000 rows)
+  Columns: ['date', 'ticker', 'liquidity_score', 'slippage_estimate_pct', 'days_to_liquidate_1M', 'tradable', 'dv_score', 'vr_score', 'to_score']
+
+  Liquidity score distribution:
+    ≥ 0.9: 2.5%
+    ≥ 0.7: 17.6%
+    ≥ 0.5: 66.9%
+    ≥ 0.3: 95.2%
+    ≥ 0.1: 99.9%
+  Tradable: 95.2%
+  Median slippage estimate: 0.005889
+
+=== XAI: Liquidity Risk Explanations ===
+  Generating Liquidity XAI: 100%|███████████████████| 500/500 [04:52<00:00,  1.71it/s]  
+  Saved: outputs/results/risk/xai/liquidity_explanations.json
+
+============================================================
+COMPLETE
+============================================================
+  outputs/results/risk/var_cvar.csv
+  outputs/results/risk/liquidity.csv
+============================================================
+RISK ENGINE: VaR, CVaR & Liquidity
+============================================================
+Non-parametric / rule-based — no training required
+
+
+=== HISTORICAL VaR & CVaR ===
+Loading returns from data/yFinance/processed/returns_long.csv...
+  Tickers: 2,500
+  Computing VaR/CVaR: 100%|███████████████████| 2500/2500 [1:07:21<00:00,  1.62s/it]  
+  Saved: outputs/results/risk/var_cvar.csv (15,712,457 rows)
+  Columns: ['var_95', 'var_99', 'cvar_95', 'cvar_99', 'tail_ratio_95', 'tail_ratio_99', 'date', 'ticker', 'window_size']
+  VaR 95% mean: -0.0432
+  CVaR 95% mean: -0.0649
+  VaR 99% mean: -0.0759
+  CVaR 99% mean: -0.1015
+
+=== XAI: VaR/CVaR Explanations ===
+  Generating VaR/CVaR XAI:  52%|█████████████████████████████████████████████████████████████▉                                                        | 1312/2500 [12:39<11:35,  1.71it/s]
+  Generating VaR/CVaR XAI: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2500/2500 [25:13<00:00,  1.65it/s]  Saved: outputs/results/risk/xai/var_cvar_explanations.json
+
+=== LIQUIDITY RISK ===
+Loading liquidity features from data/yFinance/processed/liquidity_features.csv...
+  Rows: 15,715,000
+  Computing liquidity scores...
+  Saved: outputs/results/risk/liquidity.csv (15,715,000 rows)
+  Columns: ['date', 'ticker', 'liquidity_score', 'slippage_estimate_pct', 'days_to_liquidate_1M', 'tradable', 'dv_score', 'vr_score', 'to_score']
+
+  Liquidity score distribution:
+    ≥ 0.9: 2.5%
+    ≥ 0.7: 17.6%
+    ≥ 0.5: 66.9%
+    ≥ 0.3: 95.2%
+    ≥ 0.1: 99.9%
+  Tradable: 95.2%
+  Median slippage estimate: 0.005889
+
+=== XAI: Liquidity Risk Explanations ===
+  Generating Liquidity XAI: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 500/500 [05:28<00:00,  1.52it/s]  Saved: outputs/results/risk/xai/liquidity_explanations.json
+
+============================================================
+COMPLETE
+============================================================
+  outputs/results/risk/var_cvar.csv
+  outputs/results/risk/liquidity.csv
+============================================================
+RISK ENGINE: VaR, CVaR & Liquidity
+============================================================
+Non-parametric / rule-based — no training required
+
+
+=== HISTORICAL VaR & CVaR ===
+Loading returns from data/yFinance/processed/returns_long.csv...
+  Tickers: 2,500
+  Computing VaR/CVaR: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2500/2500 [1:07:17<00:00,  1.62s/it]  Saved: outputs/results/risk/var_cvar.csv (15,712,457 rows)
+  Columns: ['var_95', 'var_99', 'cvar_95', 'cvar_99', 'tail_ratio_95', 'tail_ratio_99', 'date', 'ticker', 'window_size']
+  VaR 95% mean: -0.0432
+  CVaR 95% mean: -0.0649
+  VaR 99% mean: -0.0759
+  CVaR 99% mean: -0.1015
+
+=== XAI: VaR/CVaR Explanations ===
+  Generating VaR/CVaR XAI: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2500/2500 [23:54<00:00,  1.74it/s]  Saved: outputs/results/risk/xai/var_cvar_explanations.json
+
+=== LIQUIDITY RISK ===
+Loading liquidity features from data/yFinance/processed/liquidity_features.csv...
+  Rows: 15,715,000
+  Computing liquidity scores...
+
+
+```

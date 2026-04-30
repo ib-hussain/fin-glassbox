@@ -118,44 +118,6 @@ training_chunks:
 
 ---
 
-### 2C. Fundamental Encoder
-
-#### XGBoost Component
-
-| Parameter | Value | Search Range | Notes |
-|-----------|-------|-------------|-------|
-| `max_depth` | 4 | [3, 4, 5, 6] | Tree depth |
-| `learning_rate` | 0.01 | `loguniform(0.005, 0.05)` | Step size |
-| `n_estimators` | 500 | [300, 500, 700, 1000] | Number of trees |
-| `subsample` | 0.7 | [0.6, 0.7, 0.8, 0.9] | Row sampling |
-| `colsample_bytree` | 0.7 | [0.6, 0.7, 0.8] | Column sampling |
-| `reg_alpha` | 0.1 | `loguniform(0.01, 1.0)` | L1 regularization |
-| `reg_lambda` | 1.0 | `loguniform(0.1, 10.0)` | L2 regularization |
-| `min_child_weight` | 5 | [1, 3, 5, 10] | Min sum of instance weight |
-| `early_stopping_rounds` | 50 | [20, 50, 100] | Rounds without improvement |
-| `objective` | `"reg:squarederror"` | - | Regression task |
-| `tree_method` | `"hist"` | - | Fast histogram-based |
-
-**Grid Search:** 27 combinations (coarse) → **TPE Fine-tuning:** 30 trials
-
-#### MLP Projection Component
-
-| Parameter | Value | Search Range (TPE) | Notes |
-|-----------|-------|-------------------|-------|
-| `input_dim` | 70 | - | Fundamental features |
-| `hidden_dims` | [256] | [[128], [256], [256, 128]] | Hidden layer sizes |
-| `output_dim` | 128 | - | Embedding dimension |
-| `dropout` | 0.2 | [0.1, 0.2, 0.3] | Regularization |
-| `activation` | `"relu"` | - | ReLU activation |
-| `use_layer_norm` | `True` | - | Stabilize training |
-| `batch_size` | 128 | [64, 128, 256] | Per GPU |
-| `epochs` | 50 | [30, 50, 75] | With early stopping |
-| `learning_rate` | 1e-3 | `loguniform(5e-4, 5e-3)` | Adam LR |
-| `weight_decay` | 1e-5 | `loguniform(5e-6, 5e-5)` | L2 regularization |
-| `early_stop_patience` | 15 | [10, 15, 20] | Epochs without improvement |
-| `optimizer` | `"Adam"` | - | Adam optimizer |
-
----
 
 ## 3. Analyst Layer
 
@@ -227,30 +189,6 @@ training_chunks:
 
 ---
 
-### 3D. Fundamental Analyst (LightGBM)
-
-| Parameter | Value | Search Range | Notes |
-|-----------|-------|-------------|-------|
-| `input_dim` | 128 | - | Fundamental embedding size |
-| `objective` | `"multiclass"` | - | 3-class (value, quality, growth tiers) |
-| `num_class` | 3 | - | Number of output classes |
-| `boosting_type` | `"gbdt"` | - | Gradient boosting decision tree |
-| `num_leaves` | 31 | [15, 31, 63, 127] | Max leaves per tree |
-| `learning_rate` | 0.01 | `loguniform(0.005, 0.05)` | Step size |
-| `n_estimators` | 500 | [300, 500, 700, 1000] | Number of trees |
-| `subsample` | 0.7 | [0.6, 0.7, 0.8] | Row sampling |
-| `colsample_bytree` | 0.7 | [0.6, 0.7, 0.8] | Column sampling |
-| `reg_alpha` | 0.1 | `loguniform(0.01, 1.0)` | L1 regularization |
-| `reg_lambda` | 1.0 | `loguniform(0.1, 10.0)` | L2 regularization |
-| `min_child_samples` | 20 | [10, 20, 50] | Min data in leaf |
-| `min_child_weight` | 0.001 | [0.001, 0.01, 0.1] | Min sum hessian in leaf |
-| `early_stopping_rounds` | 50 | [20, 50, 100] | Rounds without improvement |
-| `num_iterations` | 500 | - | Max iterations (early stop applies) |
-| `verbosity` | -1 | - | Silent mode |
-
-**Grid Search:** 27 combinations → **Optuna Fine-tuning:** 30 trials
-
----
 
 ## 4. Risk Engine
 

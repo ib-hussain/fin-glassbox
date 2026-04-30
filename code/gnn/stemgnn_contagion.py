@@ -718,6 +718,45 @@ def build_optimizer(model: nn.Module, config: ContagionConfig) -> torch.optim.Op
     return torch.optim.AdamW(model.parameters(), lr=float(config.learning_rate), weight_decay=max(float(config.weight_decay), 1e-5))
 
 
+# def train_epoch(
+#     model: nn.Module,
+#     loader: DataLoader,
+#     optimizer: torch.optim.Optimizer,
+#     loss_fn: nn.Module,
+#     device: torch.device,
+#     config: ContagionConfig,
+#     scaler: Optional[torch.cuda.amp.GradScaler] = None,
+# ) -> float:
+#     model.train()
+#     total_loss = 0.0
+#     n_batches = 0
+#     use_amp = scaler is not None and device.type == "cuda" and bool(config.amp)
+
+#     for batch in loader:
+#         x = batch["x"].to(device, non_blocking=True)
+#         target = batch["target"].to(device, non_blocking=True).float()
+#         optimizer.zero_grad(set_to_none=True)
+
+#         if use_amp:
+#             with torch.autocast(device_type="cuda", dtype=torch.float16):
+#                 output = model(x)
+#                 loss = loss_fn(output["contagion_logits"], target)
+#             scaler.scale(loss).backward()
+#             scaler.unscale_(optimizer)
+#             torch.nn.utils.clip_grad_norm_(model.parameters(), float(config.gradient_clip))
+#             scaler.step(optimizer)
+#             scaler.update()
+#         else:
+#             output = model(x)
+#             loss = loss_fn(output["contagion_logits"], target)
+#             loss.backward()
+#             torch.nn.utils.clip_grad_norm_(model.parameters(), float(config.gradient_clip))
+#             optimizer.step()
+
+#         total_loss += float(loss.detach().cpu())
+#         n_batches += 1
+
+#     return total_loss / max(n_batches, 1)
 def train_epoch(
     model: nn.Module,
     loader: DataLoader,
@@ -727,40 +766,110 @@ def train_epoch(
     config: ContagionConfig,
     scaler: Optional[torch.cuda.amp.GradScaler] = None,
 ) -> float:
+    """Train one epoch.
+
+    This version has strict finite-loss checks so unstable StemGNN trials fail
+    immediately instead of producing train=nan for several epochs.
+    """
     model.train()
     total_loss = 0.0
     n_batches = 0
-    use_amp = scaler is not None and device.type == "cuda" and bool(config.amp)
+    use_amp = scaler is not None and device.type == "cuda"
 
-    for batch in loader:
+    train_bar = tqdm(
+        loader,
+        desc=f"    train bs={loader.batch_size}",
+        leave=False,
+        unit="batch",
+    )
+
+    for batch in train_bar:
         x = batch["x"].to(device, non_blocking=True)
         target = batch["target"].to(device, non_blocking=True).float()
+
+        if not torch.isfinite(x).all():
+            raise RuntimeError("Non-finite values detected in StemGNN input batch.")
+        if not torch.isfinite(target).all():
+            raise RuntimeError("Non-finite values detected in StemGNN target batch.")
+
         optimizer.zero_grad(set_to_none=True)
 
         if use_amp:
-            with torch.autocast(device_type="cuda", dtype=torch.float16):
+            with torch.cuda.amp.autocast(enabled=True):
                 output = model(x)
                 loss = loss_fn(output["contagion_logits"], target)
+
+            if not torch.isfinite(loss):
+                raise RuntimeError(f"Non-finite StemGNN training loss detected: {float(loss.detach().cpu())}")
+
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(model.parameters(), float(config.gradient_clip))
             scaler.step(optimizer)
             scaler.update()
+
         else:
             output = model(x)
             loss = loss_fn(output["contagion_logits"], target)
+
+            if not torch.isfinite(loss):
+                raise RuntimeError(f"Non-finite StemGNN training loss detected: {float(loss.detach().cpu())}")
+
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), float(config.gradient_clip))
             optimizer.step()
 
-        total_loss += float(loss.detach().cpu())
+        batch_loss = float(loss.detach().cpu())
+        total_loss += batch_loss
         n_batches += 1
+        train_bar.set_postfix(loss=f"{batch_loss:.5f}", lr=f"{optimizer.param_groups[0]['lr']:.2e}")
+
+        del x, target, output, loss
 
     return total_loss / max(n_batches, 1)
 
+# @torch.no_grad()
+# def validate_epoch(model: nn.Module, loader: DataLoader, loss_fn: nn.Module, device: torch.device) -> Dict[str, float]:
+#     model.eval()
+#     total_loss = 0.0
+#     n_batches = 0
+#     pred_sum = None
+#     target_sum = None
+#     count = 0
 
+#     for batch in loader:
+#         x = batch["x"].to(device, non_blocking=True)
+#         target = batch["target"].to(device, non_blocking=True).float()
+#         output = model(x)
+#         logits = output["contagion_logits"]
+#         probs = torch.sigmoid(logits)
+#         loss = loss_fn(logits, target)
+
+#         total_loss += float(loss.detach().cpu())
+#         n_batches += 1
+
+#         batch_pred = probs.sum(dim=(0, 1)).detach().cpu()
+#         batch_target = target.sum(dim=(0, 1)).detach().cpu()
+#         pred_sum = batch_pred if pred_sum is None else pred_sum + batch_pred
+#         target_sum = batch_target if target_sum is None else target_sum + batch_target
+#         count += int(probs.shape[0] * probs.shape[1])
+
+#     metrics = {"loss": total_loss / max(n_batches, 1)}
+#     if count > 0 and pred_sum is not None and target_sum is not None:
+#         pred_mean = (pred_sum / count).numpy()
+#         target_mean = (target_sum / count).numpy()
+#         for i, (p, t) in enumerate(zip(pred_mean, target_mean)):
+#             metrics[f"pred_mean_h{i}"] = float(p)
+#             metrics[f"target_rate_h{i}"] = float(t)
+#     return metrics
 @torch.no_grad()
-def validate_epoch(model: nn.Module, loader: DataLoader, loss_fn: nn.Module, device: torch.device) -> Dict[str, float]:
+def validate_epoch(
+    model: nn.Module,
+    loader: DataLoader,
+    loss_fn: nn.Module,
+    device: torch.device,
+) -> Dict[str, float]:
+    """Validate one epoch with finite-loss checks."""
     model.eval()
     total_loss = 0.0
     n_batches = 0
@@ -768,32 +877,56 @@ def validate_epoch(model: nn.Module, loader: DataLoader, loss_fn: nn.Module, dev
     target_sum = None
     count = 0
 
-    for batch in loader:
+    val_bar = tqdm(
+        loader,
+        desc=f"    val   bs={loader.batch_size}",
+        leave=False,
+        unit="batch",
+    )
+
+    for batch in val_bar:
         x = batch["x"].to(device, non_blocking=True)
         target = batch["target"].to(device, non_blocking=True).float()
+
+        if not torch.isfinite(x).all():
+            raise RuntimeError("Non-finite values detected in StemGNN validation input batch.")
+        if not torch.isfinite(target).all():
+            raise RuntimeError("Non-finite values detected in StemGNN validation target batch.")
+
         output = model(x)
         logits = output["contagion_logits"]
         probs = torch.sigmoid(logits)
         loss = loss_fn(logits, target)
 
-        total_loss += float(loss.detach().cpu())
+        if not torch.isfinite(loss):
+            raise RuntimeError(f"Non-finite StemGNN validation loss detected: {float(loss.detach().cpu())}")
+
+        batch_loss = float(loss.detach().cpu())
+        total_loss += batch_loss
         n_batches += 1
 
-        batch_pred = probs.sum(dim=(0, 1)).detach().cpu()
-        batch_target = target.sum(dim=(0, 1)).detach().cpu()
+        reduce_dims = (0, 1)
+        batch_pred = probs.sum(dim=reduce_dims).detach().cpu()
+        batch_target = target.sum(dim=reduce_dims).detach().cpu()
+
         pred_sum = batch_pred if pred_sum is None else pred_sum + batch_pred
         target_sum = batch_target if target_sum is None else target_sum + batch_target
-        count += int(probs.shape[0] * probs.shape[1])
+        count += probs.shape[0] * probs.shape[1]
+
+        val_bar.set_postfix(loss=f"{batch_loss:.5f}")
+
+        del x, target, output, logits, probs, loss
 
     metrics = {"loss": total_loss / max(n_batches, 1)}
+
     if count > 0 and pred_sum is not None and target_sum is not None:
         pred_mean = (pred_sum / count).numpy()
         target_mean = (target_sum / count).numpy()
-        for i, (p, t) in enumerate(zip(pred_mean, target_mean)):
-            metrics[f"pred_mean_h{i}"] = float(p)
-            metrics[f"target_rate_h{i}"] = float(t)
-    return metrics
+        for i, (pred_value, target_value) in enumerate(zip(pred_mean, target_mean)):
+            metrics[f"pred_mean_h{i}"] = float(pred_value)
+            metrics[f"target_rate_h{i}"] = float(target_value)
 
+    return metrics
 
 def train_contagion_model(
     config: ContagionConfig,
@@ -867,7 +1000,10 @@ def train_contagion_model(
 
         optimizer = build_optimizer(model, config)
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=float(config.decay_rate))
-        scaler = torch.cuda.amp.GradScaler(enabled=(bool(config.amp) and device.type == "cuda"))
+        # scaler = torch.cuda.amp.GradScaler(enabled=(bool(config.amp) and device.type == "cuda"))
+        scaler = None
+        if bool(config.amp) and device.type == "cuda":
+            scaler = torch.cuda.amp.GradScaler(enabled=True)
 
         if checkpoint is not None:
             if "optimizer_state_dict" in checkpoint:
@@ -896,14 +1032,14 @@ def train_contagion_model(
         last_epoch = start_epoch
         for epoch in range(start_epoch + 1, int(config.epochs) + 1):
             epoch_start = time.time()
-            train_loss = train_epoch(nn.Module(model), train_loader, optimizer, loss_fn, device, config, scaler)
+            train_loss = train_epoch(model, train_loader, optimizer, loss_fn, device, config, scaler)
             # if epoch % int(config.validate_freq) == 0:
             #     val_metrics = validate_epoch(model, val_loader, loss_fn, device)
             #     val_loss = float(val_metrics["loss"])
             # else:
             #     val_metrics = {"loss": float("nan")}
             #     val_loss = float("nan")
-            val_metrics = validate_epoch(nn.Module(model), val_loader, loss_fn, device)
+            val_metrics = validate_epoch(model, val_loader, loss_fn, device)
             val_loss = val_metrics["loss"]
             if not np.isfinite(float(train_loss)):
                 raise RuntimeError(
@@ -1431,8 +1567,14 @@ def _run_hpo_objective(
 
         return value
 
+    # except Exception as exc:
+    #     print(f"  Trial {trial.number} failed safely: {exc}")
+    #     cleanup_cuda()
+    #     return HPO_FAILURE_VALUE
     except Exception as exc:
-        print(f"  Trial {trial.number} failed safely: {exc}")
+        print(f"\n  Trial {trial.number} failed safely: {exc}")
+        print("  Full traceback for this failed trial:")
+        traceback.print_exc()
         cleanup_cuda()
         return HPO_FAILURE_VALUE
 

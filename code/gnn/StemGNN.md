@@ -1,10 +1,8 @@
-# StemGNN Contagion Risk Module — Documentation
+# StemGNN Contagion Risk Module 
 
 **Project:** Explainable Distributed Deep Learning Framework for Financial Risk Management  
 **Module:** GNN Contagion Risk (StemGNN)  
 **File:** `code/gnn/stemgnn_contagion.py`  
-**Status:** ✅ Implemented, Verified, Ready for GPU Training  
-**Date:** 26 April 2026
 
 ---
 
@@ -613,6 +611,4 @@ fin-glassbox/
 ---
 
 **Document Version:** 1.0  
-**Status:** Ready for GPU Training  
-**Author:** fin-glassbox team  
 **Last Updated:** 26 April 2026

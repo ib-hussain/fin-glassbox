@@ -1518,11 +1518,11 @@ def _run_hpo_objective(
         trial_config = ContagionConfig(**base_config.to_dict())
 
         # Search space for chunk1 atleast :
-        # trial_config.window_size = trial.suggest_categorical("window_size", [15, 30, 60])
-        # trial_config.multi_layer = trial.suggest_categorical("multi_layer", [5, 8, 13])
+        trial_config.window_size = trial.suggest_categorical("window_size", [15, 30, 60])
+        trial_config.multi_layer = trial.suggest_categorical("multi_layer", [5, 8, 13])
         # Search space for chunk 2 only:
-        trial_config.window_size = trial.suggest_categorical("window_size", [30, 60])
-        trial_config.multi_layer = trial.suggest_categorical("multi_layer", [8, 13])
+        # trial_config.window_size = trial.suggest_categorical("window_size", [30, 60])
+        # trial_config.multi_layer = trial.suggest_categorical("multi_layer", [8, 13])
 
         trial_config.dropout_rate = trial.suggest_categorical("dropout_rate", [0.5, 0.6, 0.75])
         trial_config.batch_size = trial.suggest_categorical("batch_size", [4, 8])

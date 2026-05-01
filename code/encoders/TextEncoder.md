@@ -1,4 +1,4 @@
-# FinBERT Text Encoder Specification
+# FinBERT Text Encoder
 
 **Project:** `fin-glassbox` — Explainable Distributed Deep Learning Framework for Financial Risk Management  
 **Module:** Text Encoder / SEC Filing Encoder  

@@ -1345,7 +1345,23 @@ def build_config_from_args(args: argparse.Namespace) -> FinBERTConfig:
 
     if args.lr is not None:
         cfg.learning_rate = args.lr
+    if args.base_model_name is not None:
+        cfg.base_model_name = args.base_model_name
 
+    if args.weight_decay is not None:
+        cfg.weight_decay = args.weight_decay
+
+    if args.warmup_ratio is not None:
+        cfg.warmup_ratio = args.warmup_ratio
+
+    if args.mlm_probability is not None:
+        cfg.mlm_probability = args.mlm_probability
+
+    if args.gradient_accumulation_steps is not None:
+        cfg.gradient_accumulation_steps = args.gradient_accumulation_steps
+
+    if args.early_stop_patience is not None:
+        cfg.early_stop_patience = args.early_stop_patience
     if args.max_rows is not None:
         cfg.max_rows = args.max_rows
 
@@ -1396,10 +1412,20 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--chunk", type=int, choices=[1, 2, 3], default=1)
     p.add_argument("--split", choices=["train", "val", "test"], default="train")
 
+    # p.add_argument("--batch-size", type=int, default=None)
+    # p.add_argument("--eval-batch-size", type=int, default=None)
+    # p.add_argument("--epochs", type=int, default=None)
+    # p.add_argument("--lr", type=float, default=None)
     p.add_argument("--batch-size", type=int, default=None)
     p.add_argument("--eval-batch-size", type=int, default=None)
     p.add_argument("--epochs", type=int, default=None)
     p.add_argument("--lr", type=float, default=None)
+    p.add_argument("--base-model-name", type=str, default=None)
+    p.add_argument("--weight-decay", type=float, default=None)
+    p.add_argument("--warmup-ratio", type=float, default=None)
+    p.add_argument("--mlm-probability", type=float, default=None)
+    p.add_argument("--gradient-accumulation-steps", type=int, default=None)
+    p.add_argument("--early-stop-patience", type=int, default=None)
 
     p.add_argument("--max-rows", type=int, default=None)
     p.add_argument("--sample-frac", type=float, default=None)
@@ -1512,3 +1538,22 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+'''
+
+Inside tmux run:
+cd ~/fin-glassbox && python code/encoders/finbert_encoder.py train-mlm --repo-root . --chunk 2 --base-model-name outputs/models/FinBERT/chunk2/model_unfreezed --epochs 15 --batch-size 16 --eval-batch-size 64 --workers 6 --lr 2.5e-5 --weight-decay 0.0003 --warmup-ratio 0.03 --mlm-probability 0.14 --gradient-accumulation-steps 1 --early-stop-patience 2 --no-resume
+After it finishes:
+cd ~/fin-glassbox && python code/encoders/finbert_encoder.py freeze --repo-root . --chunk 2
+Then regenerate Chunk 2 embeddings:
+cd ~/fin-glassbox && python code/encoders/finbert_encoder.py embed768 --repo-root . --chunk 2 --split train --eval-batch-size 64 --workers 6 --overwrite && python code/encoders/finbert_encoder.py embed768 --repo-root . --chunk 2 --split val --eval-batch-size 64 --workers 6 --overwrite && python code/encoders/finbert_encoder.py embed768 --repo-root . --chunk 2 --split test --eval-batch-size 64 --workers 6 --overwrite && python code/encoders/finbert_encoder.py fit-pca --repo-root . --chunk 2 --pca-batch-size 4096 --overwrite && python code/encoders/finbert_encoder.py project-pca --repo-root . --chunk 2 --split train --pca-batch-size 4096 --overwrite && python code/encoders/finbert_encoder.py project-pca --repo-root . --chunk 2 --split val --pca-batch-size 4096 --overwrite && python code/encoders/finbert_encoder.py project-pca --repo-root . --chunk 2 --split test --pca-batch-size 4096 --overwrite
+
+Inside tmux run:
+cd ~/fin-glassbox && python code/encoders/finbert_encoder.py train-mlm --repo-root . --chunk 3 --base-model-name outputs/models/FinBERT/chunk3/model_unfreezed --epochs 10 --batch-size 16 --eval-batch-size 64 --workers 6 --lr 2.959475667731825e-05 --weight-decay 0.0003438172512115178 --warmup-ratio 0.030662654054832286 --mlm-probability 0.13584657285442728 --gradient-accumulation-steps 1 --early-stop-patience 2 --no-resume
+Then:
+cd ~/fin-glassbox && python code/encoders/finbert_encoder.py freeze --repo-root . --chunk 3
+Regenerate Chunk 3 embeddings:
+cd ~/fin-glassbox && python code/encoders/finbert_encoder.py embed768 --repo-root . --chunk 3 --split train --eval-batch-size 64 --workers 6 --overwrite && python code/encoders/finbert_encoder.py embed768 --repo-root . --chunk 3 --split val --eval-batch-size 64 --workers 6 --overwrite && python code/encoders/finbert_encoder.py embed768 --repo-root . --chunk 3 --split test --eval-batch-size 64 --workers 6 --overwrite && python code/encoders/finbert_encoder.py fit-pca --repo-root . --chunk 3 --pca-batch-size 4096 --overwrite && python code/encoders/finbert_encoder.py project-pca --repo-root . --chunk 3 --split train --pca-batch-size 4096 --overwrite && python code/encoders/finbert_encoder.py project-pca --repo-root . --chunk 3 --split val --pca-batch-size 4096 --overwrite && python code/encoders/finbert_encoder.py project-pca --repo-root . --chunk 3 --split test --pca-batch-size 4096 --overwrite
+
+'''

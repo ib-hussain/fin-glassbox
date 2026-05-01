@@ -46,8 +46,14 @@ if __name__ == "__main__":
     main()
 
 '''
-    python code/riskEngine/regime_gnn.py hpo --repo-root . --chunk 1 --trials 30 --device cuda <--fresh> --node-limit 2500
-    python code/riskEngine/regime_gnn.py train-best --repo-root . --chunk 1 --device cuda <--fresh> --node-limit 2500
+    python code/riskEngine/regime_gnn.py hpo --repo-root . --chunk 1 --trials 30 --device cuda --fresh --node-limit 2500
+    python code/riskEngine/regime_gnn.py train-best --repo-root . --chunk 1 --device cuda --fresh --node-limit 2500
     python code/riskEngine/regime_gnn.py predict --repo-root . --chunk 1 --split val --device cuda --node-limit 2500
     python code/riskEngine/regime_gnn.py predict --repo-root . --chunk 1 --split test --device cuda --node-limit 2500
+
+    python code/riskEngine/regime_gnn.py train-best --repo-root . --chunk 1 --device cuda --fresh  --node-limit 2500 && python code/riskEngine/regime_gnn.py predict --repo-root . --chunk 1 --split val --device cuda --node-limit 2500 && python code/riskEngine/regime_gnn.py predict --repo-root . --chunk 1 --split test --device cuda --node-limit 2500 
+
+    python code/riskEngine/regime_gnn.py train-best --repo-root . --chunk 2 --device cuda --fresh  --node-limit 2500 && python code/riskEngine/regime_gnn.py predict --repo-root . --chunk 2 --split val --device cuda --node-limit 2500 && python code/riskEngine/regime_gnn.py predict --repo-root . --chunk 2 --split test --device cuda --node-limit 2500 
+    
+    python code/riskEngine/regime_gnn.py train-best --repo-root . --chunk 3 --device cuda --fresh  --node-limit 2500 && python code/riskEngine/regime_gnn.py predict --repo-root . --chunk 3 --split val --device cuda --node-limit 2500 && python code/riskEngine/regime_gnn.py predict --repo-root . --chunk 3 --split test --device cuda --node-limit 2500 
 '''

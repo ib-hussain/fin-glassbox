@@ -1,4 +1,4 @@
-# FinBERT Encoder
+# FinBERT Financial Text Encoder
 
 **Project:** An Explainable Distributed Deep Learning Framework for Financial Risk Management  
 **Module:** FinBERT Financial Text Encoder  

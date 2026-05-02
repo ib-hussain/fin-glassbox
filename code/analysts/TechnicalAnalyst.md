@@ -1,4 +1,4 @@
-# Technical Analyst
+# Technical Analysis Module
 ## 1. Module identity
 
 **File:** `code/analysts/technical_analyst.py`  

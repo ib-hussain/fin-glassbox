@@ -1,4 +1,4 @@
-# Quantitative Analyst 
+# Quantitative Synthesis Layer Analyst 
 
 ## 1. Module identity
 

@@ -1,4 +1,4 @@
-# Sentiment Analyst 
+# Sentiment Analyst Module
 
 ## 1. Module identity
 

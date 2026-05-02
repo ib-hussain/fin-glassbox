@@ -1,4 +1,4 @@
-# News Analyst
+# News Analyst Module
 
 ## 1. Module identity
 

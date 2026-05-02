@@ -1,4 +1,4 @@
-# Historical VaR, CVaR, and Liquidity Risk 
+# Historical VaR Module, CVaR Tail Risk Module, & Liquidity Risk Module
 
 ## 1. Document Purpose
 

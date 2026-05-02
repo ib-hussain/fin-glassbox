@@ -587,5 +587,3 @@ print(f'Tickers: {len(df.columns) - 1}')
 
 **Version:** 1.0  
 **Date:** 26 April 2026  
-**Status:** Complete  
-**Author:** Market Data Pipeline Team  

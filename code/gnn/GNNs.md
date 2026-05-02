@@ -713,18 +713,5 @@ The MTGNN graph builder may need to aggregate sparse FinBERT text context. Missi
 
 ---
 
-## 16. Final status summary
-
-The `code/gnn/` folder currently supports:
-
-```text
-Cross-asset graph data construction       ✅
-StemGNN contagion risk modelling          ✅
-MTGNN-style graph learning for regime     ✅
-Graph XAI and graph summaries             ✅
-Integration into Position Sizing          ✅
-Integration into Quantitative Analyst     ✅
-Future integration into Fusion Engine     ⏳
-```
 
 The folder is therefore a completed core graph layer for the current project scope, while still allowing future extension into more advanced graph fusion, graph regularisation, or graph-aware portfolio construction.

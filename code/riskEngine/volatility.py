@@ -4,7 +4,7 @@ code/riskEngine/volatility.py
 
 Volatility Estimation Model — GARCH(1,1) + MLP Hybrid
 =====================================================
-Project: fin-glassbox — Explainable Distributed Deep Learning Framework
+Project: fin-glassbox — Explainable Multimodal Neural Framework
 
 This file is designed to work both as:
     1. an importable module for the integrated fin-glassbox system, and

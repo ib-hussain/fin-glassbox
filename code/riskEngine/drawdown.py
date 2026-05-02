@@ -6,7 +6,7 @@ Drawdown Risk Model — Continuous Dual-Horizon Downside Path Risk
 ================================================================
 
 Project:
-    fin-glassbox — Explainable Distributed Deep Learning Framework for Financial Risk Management
+    fin-glassbox — Explainable Multimodal Neural Framework for Financial Risk Management
 
 Purpose:
     Estimate future downside path risk from Temporal Encoder embeddings.

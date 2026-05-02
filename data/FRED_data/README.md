@@ -1,12 +1,4 @@
-This is a **critical architectural question** and I'm glad you're asking it now, before we start coding the modules.
-
----
-
-## The Answer: FRED Data Flows Through the Regime Detection Module's SECOND Input
-
-Let me trace exactly how FRED macro data enters the system.
-
----
+# FRED Data 
 
 ## The Two GNNs and Their Inputs
 

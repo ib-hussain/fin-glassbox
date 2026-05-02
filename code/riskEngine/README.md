@@ -10,7 +10,7 @@ code/riskEngine/
 
 inside the `fin-glassbox` project:
 
-**An Explainable Distributed Deep Learning Framework for Financial Risk Management**
+**An Explainable Multimodal Neural Framework for Financial Risk Management**
 
 It documents the role of the Risk Engine directory, the files inside it, the execution order, the input/output contracts, the XAI design, and how this directory connects to the rest of the system.
 

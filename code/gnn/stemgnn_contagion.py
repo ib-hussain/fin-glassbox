@@ -2,7 +2,7 @@
 """
 StemGNN Contagion Risk Module — resource-safe, resume-safe implementation.
 
-Project: fin-glassbox — Explainable Distributed Deep Learning Framework for Financial Risk Management
+Project: fin-glassbox — Explainable Multimodal Neural Framework for Financial Risk Management
 File:    code/gnn/stemgnn_contagion.py
 
 This module implements the StemGNN-based contagion risk component with:

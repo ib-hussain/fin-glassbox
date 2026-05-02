@@ -1,6 +1,6 @@
 # FinBERT Text Encoder
 
-**Project:** `fin-glassbox` — Explainable Distributed Deep Learning Framework for Financial Risk Management  
+**Project:** `fin-glassbox` — Explainable Multimodal Neural Framework for Financial Risk Management  
 **Module:** Text Encoder / SEC Filing Encoder  
 **Encoder family:** FinBERT, domain-adaptive fine-tuned with Masked Language Modelling  
 **Final embedding dimensionality:** 256  

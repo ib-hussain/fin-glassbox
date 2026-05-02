@@ -1,6 +1,6 @@
 # StemGNN Contagion Risk Module 
 
-**Project:** Explainable Distributed Deep Learning Framework for Financial Risk Management  
+**Project:** Explainable Multimodal Neural Framework for Financial Risk Management  
 **Module:** GNN Contagion Risk (StemGNN)  
 **File:** `code/gnn/stemgnn_contagion.py`  
 

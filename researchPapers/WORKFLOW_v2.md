@@ -1,4 +1,4 @@
-# Explainable Distributed Deep Learning Framework for Financial Risk Management
+# Explainable Multimodal Neural Framework for Financial Risk Management
 
 ## UPDATED ARCHITECTURE SPECIFICATION
 

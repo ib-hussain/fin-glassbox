@@ -1,6 +1,6 @@
 # Cross-Asset Relation Data Builder 
 
-**Project:** An Explainable Distributed Deep Learning Framework for Financial Risk Management  
+**Project:** An Explainable Multimodal Neural Framework for Financial Risk Management  
 **Module family:** Cross-Asset Relation Data  
 **Primary file:** `code/gnn/build_cross_asset_graph.py`  
 **Primary output root:** `data/graphs/`  

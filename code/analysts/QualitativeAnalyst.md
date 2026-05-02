@@ -4,7 +4,7 @@
 
 **File:** `code/analysts/qualitative_analyst.py`  
 **Module name:** Qualitative Analyst  
-**Project:** *An Explainable Distributed Deep Learning Framework for Financial Risk Management*  
+**Project:** *An Explainable Multimodal Neural Framework for Financial Risk Management*  
 **Layer:** Qualitative synthesis branch  
 **Status:** Trainable downstream analyst module  
 **Consumes:** Sentiment Analyst outputs + News Analyst outputs  

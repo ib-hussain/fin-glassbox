@@ -6,7 +6,7 @@ Trained Quantitative Analyst
 ============================
 
 Project:
-    fin-glassbox — Explainable Distributed Deep Learning Framework for Financial Risk Management
+    fin-glassbox — Explainable Multimodal Neural Framework for Financial Risk Management
 
 Purpose:
     Train a lightweight quantitative synthesis model that combines:

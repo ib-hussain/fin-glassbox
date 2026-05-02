@@ -6,7 +6,7 @@ Position Sizing Engine
 ======================
 
 Project:
-    fin-glassbox — Explainable Distributed Deep Learning Framework for Financial Risk Management
+    fin-glassbox — Explainable Multimodal Neural Framework for Financial Risk Management
 
 Purpose:
     Convert risk-engine outputs into an interpretable position-size recommendation.

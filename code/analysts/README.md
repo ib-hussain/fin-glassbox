@@ -5,7 +5,7 @@
 The `code/analysts/` folder contains the specialist analysis layer for the fin-glassbox project:
 
 ```text
-An Explainable Distributed Deep Learning Framework for Financial Risk Management
+An Explainable Multimodal Neural Framework for Financial Risk Management
 ```
 
 The analysts convert encoder outputs and risk-engine outputs into interpretable module-level and branch-level signals. They are not final trade approvers. They exist to preserve the project philosophy:

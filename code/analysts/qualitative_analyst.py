@@ -6,7 +6,7 @@ Qualitative Analyst
 ===================
 
 Project:
-    fin-glassbox — Explainable Distributed Deep Learning Framework for Financial Risk Management
+    fin-glassbox — An Explainable Multimodal Neural Framework for Financial Risk Management
 
 Purpose:
     Train a lightweight qualitative synthesis model that combines:

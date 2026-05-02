@@ -4,7 +4,7 @@
 
 This document is the replacement documentation for the **Regime Detection Module** in the `fin-glassbox` project:
 
-**An Explainable Distributed Deep Learning Framework for Financial Risk Management**
+**An Explainable Multimodal Neural Framework for Financial Risk Management**
 
 The Risk Engine entrypoint is implemented in:
 

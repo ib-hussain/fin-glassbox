@@ -1,6 +1,6 @@
 # FinBERT Financial Text Encoder
 
-**Project:** An Explainable Distributed Deep Learning Framework for Financial Risk Management  
+**Project:** An Explainable Multimodal Neural Framework for Financial Risk Management  
 **Module:** FinBERT Financial Text Encoder  
 **Primary implementation:** `code/encoders/finbert_encoder.py`  
 **Pipeline helpers:** `run_finbert_full_pipeline.py`, `run_finbert_resume_after_hpo.py`  

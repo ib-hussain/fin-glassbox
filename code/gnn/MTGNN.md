@@ -1,6 +1,6 @@
 # MTGNN Regime Detection Module
 
-**Project:** An Explainable Distributed Deep Learning Framework for Financial Risk Management  
+**Project:** An Explainable Multimodal Neural Framework for Financial Risk Management  
 **Component:** MTGNN-style learned graph builder  
 **Primary implementation context:** `code/gnn/mtgnn_regime.py`  
 **Scope of this document:** only the MTGNN graph-building usage inside the current project  

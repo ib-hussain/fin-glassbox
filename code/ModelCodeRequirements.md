@@ -1,6 +1,6 @@
 # Model Code Requirements Guide
 
-**Project:** `fin-glassbox` — Explainable Distributed Deep Learning Framework for Financial Risk Management  
+**Project:** `fin-glassbox` — Explainable Multimodal Neural Framework for Financial Risk Management  
 **Purpose:** This guide defines the specific things that must be present in every model-code file written for this project.
 
 ---

@@ -4,7 +4,7 @@
 
 This document is the **workflow specification** for the project:
 
-**An Explainable Distributed Deep Learning Framework for Financial Risk Management**
+**An Explainable Multimodal Neural Framework for Financial Risk Management**
 
 
 This file documents:
@@ -1226,7 +1226,7 @@ Remaining final-stage work:
 
 ## 19. Thesis-Defensible System Description
 
-This project proposes an explainable distributed deep learning framework for financial risk management. Instead of relying on a monolithic black-box model, the system decomposes the decision process into specialised modules for market sequence understanding, textual analysis, risk estimation, graph-based contagion modelling, regime detection, position sizing, and final fusion. Each module produces interpretable intermediate outputs and explanation traces. A hybrid Fusion Engine combines learned evidence weighting with a user-controlled rule barrier, ensuring that the final decision remains risk-aware, auditable, and practically controllable. The architecture is evaluated using chronological train/validation/test chunks to reduce look-ahead bias and improve realism.
+This project proposes An Explainable Multimodal Neural Framework for Financial Risk Management. Instead of relying on a monolithic black-box model, the system decomposes the decision process into specialised modules for market sequence understanding, textual analysis, risk estimation, graph-based contagion modelling, regime detection, position sizing, and final fusion. Each module produces interpretable intermediate outputs and explanation traces. A hybrid Fusion Engine combines learned evidence weighting with a user-controlled rule barrier, ensuring that the final decision remains risk-aware, auditable, and practically controllable. The architecture is evaluated using chronological train/validation/test chunks to reduce look-ahead bias and improve realism.
 
 ---
 

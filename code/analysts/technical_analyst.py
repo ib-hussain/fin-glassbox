@@ -6,7 +6,7 @@ Technical Analyst — BiLSTM + Attention Pooling
 ==============================================
 
 Project:
-    fin-glassbox — Explainable Distributed Deep Learning Framework for Financial Risk Management
+    fin-glassbox — Explainable Multimodal Neural Framework for Financial Risk Management
 
 Purpose:
     The Technical Analyst consumes Temporal Encoder embeddings and produces:

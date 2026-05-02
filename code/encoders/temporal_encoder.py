@@ -3,7 +3,7 @@
 code/encoders/temporal_encoder.py
 
 Shared Temporal Attention Encoder for financial time series.
-Project: fin-glassbox — Explainable Distributed Deep Learning Framework
+Project: fin-glassbox — Explainable Multimodal Neural Framework
 
 Architecture:
   Transformer Encoder (HPO-optimized per chunk)

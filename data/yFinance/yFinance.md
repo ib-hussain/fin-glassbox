@@ -1,12 +1,5 @@
-# Market Data Pipeline — Complete Documentation
+# Market Data Pipeline   
 
-**Project:** Explainable Distributed Deep Learning Framework for Financial Risk Management  
-**Data Family:** #1 — Time-Series Market Data  
-**Status:** ✅ Complete  
-**Final Output:** 2,500 tickers × 6,285 trading days, fully filled, all features engineered  
-**Date:** 26 April 2026
-
----
 
 ## Table of Contents
 

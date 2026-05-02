@@ -2,7 +2,7 @@
 
 ## Document Purpose
 
-This document contains **all specifications, decisions, and requirements** for the Explainability (XAI) Layer of the **Explainable Distributed Deep Learning Framework for Financial Risk Management**.
+This document contains **all specifications, decisions, and requirements** for the Explainability (XAI) Layer of the **Explainable Multimodal Neural Framework for Financial Risk Management**.
 
 Explainability is one of the **core design pillars**. Every module in the system must produce human-interpretable explanations for its outputs. The XAI layer aggregates these explanations into a coherent, stakeholder-facing narrative.
 
@@ -643,4 +643,4 @@ For the most current overall architecture and model specifications, refer to:
 **Document Version:** 1.0  
 **Status:** Pre-Implementation Specification 
 **Last Updated:** 2026-04-26  
-**Prepared for:** Explainable Distributed Deep Learning Framework for Financial Risk Management
+**Prepared for:** Explainable Multimodal Neural Framework for Financial Risk Management

@@ -2,7 +2,7 @@
 
 ## Document Purpose
 
-This document contains **all hyperparameter configurations** for every model in the Explainable Distributed Deep Learning Framework for Financial Risk Management. These values are based on:
+This document contains **all hyperparameter configurations** for every model in the Explainable Multimodal Neural Framework for Financial Risk Management. These values are based on:
 
 - Baseline reproduction results (MTGNN, StemGNN, FourierGNN)
 - Industry standards for financial time series

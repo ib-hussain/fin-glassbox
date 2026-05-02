@@ -1,6 +1,6 @@
 # `code/gnn/` Folder Documentation
 
-**Project:** An Explainable Distributed Deep Learning Framework for Financial Risk Management  
+**Project:** An Explainable Multimodal Neural Framework for Financial Risk Management  
 **Folder:** `code/gnn/`  
 **Purpose:** Graph construction, graph neural network modelling, contagion-risk estimation, and regime graph-learning support  
 **Status:** Active production/research folder used by the downstream Risk Engine, Position Sizing Engine, Quantitative Analyst, and future Fusion Engine  

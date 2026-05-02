@@ -6,7 +6,7 @@ Hybrid Fusion Layer
 ===================
 
 Project:
-    fin-glassbox — Explainable Distributed Deep Learning Framework for Financial Risk Management
+    fin-glassbox — Explainable Multimodal Neural Framework for Financial Risk Management
 
 Purpose:
     Implements the reusable Fusion Engine internals.

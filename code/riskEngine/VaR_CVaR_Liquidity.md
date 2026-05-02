@@ -16,7 +16,7 @@ code/riskEngine/var_cvar_liquidity.py
 
 They belong to the **Risk Engine** of the `fin-glassbox` project:
 
-**An Explainable Distributed Deep Learning Framework for Financial Risk Management**
+**An Explainable Multimodal Neural Framework for Financial Risk Management**
 
 This document replaces the older VaR/CVaR/Liquidity notes and should be treated as the current reference for module purpose, methodology, outputs, XAI, integration, and validation.
 

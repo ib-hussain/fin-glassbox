@@ -6,7 +6,7 @@
 
 This document is the XAI specification for the project:
 
-**An Explainable Distributed Deep Learning Framework for Financial Risk Management**
+**An Explainable Multimodal Neural Framework for Financial Risk Management**
 
 
 The purpose of this document is to define:

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains the cleaned and production-ready versions of the SEC EDGAR processed datasets. These files are the result of a multi-stage data engineering pipeline that transformed raw SEC bulk archives into normalized, analysis-ready tabular data suitable for the **Explainable Distributed Deep Learning Framework for Financial Risk Management**.
+This directory contains the cleaned and production-ready versions of the SEC EDGAR processed datasets. These files are the result of a multi-stage data engineering pipeline that transformed raw SEC bulk archives into normalized, analysis-ready tabular data suitable for the **Explainable Multimodal Neural Framework for Financial Risk Management**.
 
 **All datasets are filtered to U.S. public companies listed on NYSE or Nasdaq.**
 

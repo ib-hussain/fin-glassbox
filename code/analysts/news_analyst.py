@@ -1808,6 +1808,8 @@ if __name__ == "__main__":
 
 # CPU-safe HPO smoke test using real embeddings and real labels, but only a subset:
 # python code/analysts/news_analyst.py hpo --repo-root ~/fin-glassbox --chunk 1 --device cpu --trials 3 --hpo-max-train-groups 5000 --hpo-max-val-groups 1500 --hpo-epochs-min 2 --hpo-epochs-max 5
+# python code/analysts/news_analyst.py hpo --repo-root ~/fin-glassbox --chunk 2 --device cpu --trials 3 --hpo-max-train-groups 5000 --hpo-max-val-groups 1500 --hpo-epochs-min 2 --hpo-epochs-max 5
+# python code/analysts/news_analyst.py hpo --repo-root ~/fin-glassbox --chunk 3 --device cpu --trials 3 --hpo-max-train-groups 5000 --hpo-max-val-groups 1500 --hpo-epochs-min 2 --hpo-epochs-max 5
 
 # Then train from the best HPO result:
 # python code/analysts/news_analyst.py train-best --repo-root ~/fin-glassbox --chunk 1 --device cpu

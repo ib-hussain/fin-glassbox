@@ -1636,9 +1636,9 @@ if __name__ == "__main__":
 
 # (this is the real code runner)
 # First Hyper Parameter finding:
-# python code/analysts/sentiment_analyst.py hpo-all --repo-root ~/fin-glassbox --chunks 1,2,3 --trials 30 --device # use "cuda" only if you are using gpu otherwise use "cpu" here
+# python code/analysts/sentiment_analyst.py hpo-all --repo-root ~/fin-glassbox --chunks 1,2,3 --trials 30 --device cuda
 # Then train final models using the saved best parameters:
-# python code/analysts/sentiment_analyst.py train-best-all --repo-root ~/fin-glassbox --chunks 1,2,3 --device # use "cuda" only if you are using gpu otherwise use "cpu" here
+# python code/analysts/sentiment_analyst.py train-best-all --repo-root ~/fin-glassbox --chunks 1,2,3 --device cuda
 # Then export predictions and 64-dim sentiment analyst embeddings:
-# python code/analysts/sentiment_analyst.py predict-all --repo-root ~/fin-glassbox --chunks 1,2,3 --splits train,val,test --checkpoint best --device # use "cuda" only if you are using gpu otherwise use "cpu" here
+# python code/analysts/sentiment_analyst.py predict-all --repo-root ~/fin-glassbox --chunks 1,2,3 --splits train,val,test --checkpoint best --device cuda
 

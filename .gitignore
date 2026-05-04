@@ -14,8 +14,80 @@ multivariate-time-series-data/
 # models*/
 runs*/
 # figs*/
-data/sec_edgar/
+# ── Project-specific: data files ─────────────────────────
+data/Huge Stock Market Dataset/
+data/TradingAgents/
+Data2/
+data/sec_edgar/logs/
+data/sec_edgar/raw/
+# !data/sec_edgar/processed/manifests/filings_manifest_2000_2024_merged.csv
+data/sec_edgar/processed/companyfacts/
+data/sec_edgar/processed/submissions/
+data/sec_edgar/processed/manifests/
 
+data/FRED_data/raw/
+outputs/models/*/hpo/
+
+data/yFinance/raw/
+data/yFinance/*.zip
+data/yFinance/raw_metadata/
+data/yFinance/processed/sabeels_genertated_ohlcv_panel.csv
+data/yFinance/processed/ohlcv_original.csv
+data/yFinance/_CON - Copy.json
+data/yFinance/_CON - Copy.parquet
+data/yFinance/Huge_Market_Dataset/
+data/yFinance/d_us_txt/
+data/yFinance/nasdaq-nyse-nyse-a-otc-daily-stock-1962-2024/
+data/yFinance/coverage/
+data/yFinance/merged/
+data/yFinance/processed/sb_benchmark_relative.csv
+data/yFinance/processed/sb_features.csv
+data/yFinance/processed/sb_returns_panel.csv
+
+**/hpo/
+outputs/models/**/hpo/
+outputs/codeResults/**/hpo/
+outputs/results/**/hpo/
+outputs/codeResults/**/hpo/
+outputs/models/**/latest_checkpoint.pt
+outputs/models/**/**/latest_checkpoint.pt
+outputs/models/**/**/best_checkpoint.pt
+outputs/models/**/**/epoch_*.pt
+outputs/codeResults/**/*.log
+*latest_model.pt
+
+prd*/
+data/sec_edgar/existing_23y/
+data/sec_edgar/processed/filings_text/
+
+# FinBERT non-deliverable heavy artefacts
+outputs/embeddings/FinBERT/*embeddings768.npy
+outputs/embeddings/FinBERT/*manifest768.json
+outputs/embeddings/FinBERT/*pca_768_to_256.pkl
+outputs/embeddings/FinBERT/*pca_manifest.json
+
+# ── Project-specific: misc tool artefacts ────────────────
+assignment2work/LSTM/test_prediction/
+assignment2work/ticker-collector/.ipynb_checkpoints/
+assignment2work/paper-metric-reporter/.spyproject/
+assignment2work/paper-metric-reporter/**/*.ini
+.spyproject/
+.streamlit/
+ignore/
+*ignore*.*
+final/
+transfer_artifacts/
+
+data/graphs/snapshots/
+data/graphs/combined/
+data/graphs/snapshots/
+data/graphs/static/
+data/FRED_data/outputs/grand_table_raw.csv
+data/FRED_data/outputs/macroeconomic_features.csv
+data/yFinance/Huge Stock Market Dataset.txt
+data/sec_edgar/processed/issuer_master/cik_ticker_map.csv
+data/sec_edgar/processed/issuer_master/issuer_master.csv
+!data/sec_edgar/processed/filings_text/final/finbert_25y_cap40000_metadata.json
 
 # ── OS & editor noise ───────────────────────────────────
 .DS_Store
@@ -36,10 +108,15 @@ None/
 *.so
 cython_debug/
 jawwad_bhai.pem
+irrelevant/
 
-# ── Virtual environments ─────────────────────────────────
-.Python
+# ── Virtual environments & Secrets & config ─────────────────────────────────
 .env
+*.env
+# Keep .toml tracked (pyproject.toml etc.) – add specific
+# secret toml names below if needed:
+# secrets.toml
+.Python
 .envrc
 .venv
 env/
@@ -106,28 +183,6 @@ dmypy.json
 profile_default/
 ipython_config.py
 
-# ── Project-specific: data files ─────────────────────────
-data/Huge Stock Market Dataset/
-data/data_FRED/
-data/TradingAgents/
-Data2/
-
-# ── Project-specific: misc tool artefacts ────────────────
-assignment2work/LSTM/test_prediction/
-assignment2work/ticker-collector/.ipynb_checkpoints/
-assignment2work/paper-metric-reporter/.spyproject/
-assignment2work/paper-metric-reporter/**/*.ini
-.spyproject/
-.streamlit/
-ignore/
-*ignore*.*
-
-# ── Secrets & config ─────────────────────────────────────
-*.env
-# Keep .toml tracked (pyproject.toml etc.) – add specific
-# secret toml names below if needed:
-# secrets.toml
-
 # ── Misc ─────────────────────────────────────────────────
 *.tmp
 *.log
@@ -140,8 +195,5 @@ ignore/
 *.pyc
 *.pyo
 *.pyd
-marimo/_static/
-marimo/_lsp/
-__marimo__/
-docs/_build/
-/site
+
+data/yFinance/processed/features_temporal.csv

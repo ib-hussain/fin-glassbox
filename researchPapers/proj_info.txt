@@ -1,12 +1,3 @@
-External Compute (Best for Real Training)
-For serious training, you connect GitHub with:
-
-Platform	            Purpose
-Google Colab	        cheap GPU training
-Kaggle	                GPU notebooks
-Paperspace	            ML cloud
-AWS / GCP / Azure	    production training
-RunPod / Lambda Labs	cheaper GPUs
 
 Explainable AI (XAI)
 • Apply SHAP values to identify which input features contributed most to each prediction.
@@ -16,10 +7,4 @@ Explainable AI (XAI)
 • Record for each prediction: which agent fired, which features mattered, confidence score.
 ##########################################################################################
 a separate feedback loop should be suggested in the conclusion section.
-##########################################################################################
-
-##########################################################################################
-
-
-
 ##########################################################################################

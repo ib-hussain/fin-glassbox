@@ -1,6 +1,6 @@
 # Clean Architecture Blueprint
 
-# 1. Final system idea
+# 1. System idea
 
 Your framework now has **three main intelligence streams**:
 
@@ -472,9 +472,7 @@ The user sees:
 
 ---
 
-# 10. Recommended block names for your final report
-
-Use these exact names if you want the architecture to look polished:
+# 10. Modules
 
 * **Shared Temporal Attention Encoder**
 * **FinBERT Financial Text Encoder**
@@ -493,7 +491,7 @@ Use these exact names if you want the architecture to look polished:
 * **Fusion Engine**
 * **Final Trade Approver**
 * **XAI Explanation Layer**
-* Only one thing I would strongly advise, describe the technical encoder as simply **“A shared temporal attention-based encoder for multivariate technical market representation.”**
+
 ---
 
 # 11. Final compact blueprint
@@ -546,5 +544,7 @@ OUTPUT
 ```
 
 
-<img src="final-workflow.png" alt="Final Architecture Diagram" width="600"/>
-Proposed architecture for an explainable distributed financial risk management framework integrating temporal market encoding, financial text understanding, fundamental analysis, multi-component risk estimation, fusion-based decision synthesis, and final explainability output.
+<br>
+
+### Proposed architecture for an explainable distributed financial risk management framework integrating temporal market encoding, financial text understanding, fundamental analysis, multi-component risk estimation, fusion-based decision synthesis, and final explainability output.<br>
+<img src="final-workflow.drawio.png" alt="Final Architecture Diagram" width="600"/>

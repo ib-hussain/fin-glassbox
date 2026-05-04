@@ -274,6 +274,7 @@ def quantitative_csv_path(root: Path, chunk: int, split: str) -> Path:
     return root / "outputs" / "results" / "QuantitativeAnalyst" / f"quantitative_analysis_chunk{chunk}_{split}.csv"
 
 
+<<<<<<< HEAD
 def technical_csv_path(root: Path, chunk: int, split: str) -> Path:
     return root / "outputs" / "results" / "TechnicalAnalyst" / f"predictions_chunk{chunk}_{split}.csv"
 
@@ -310,6 +311,8 @@ def news_csv_path(root: Path, chunk: int, split: str) -> Path:
     return root / "outputs" / "results" / "analysts" / "news" / f"chunk{chunk}_{split}_news_predictions.csv"
 
 
+=======
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
 # =============================================================================
 # EXPLANATION NARRATOR
 # =============================================================================
@@ -321,7 +324,11 @@ class ExplanationNarrator:
     into a more readable explanation.
     """
 
+<<<<<<< HEAD
     def __init__(self, model_name: str = "", device: str = "cpu", local_files_only: bool = True, max_new_tokens: int = 700) -> None:
+=======
+    def __init__(self, model_name: str = "", device: str = "cpu", local_files_only: bool = True, max_new_tokens: int = 220) -> None:
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
         self.model_name = str(model_name or "").strip()
         self.device = device
         self.local_files_only = bool(local_files_only)
@@ -329,7 +336,10 @@ class ExplanationNarrator:
         self.tokenizer = None
         self.model = None
         self.available = False
+<<<<<<< HEAD
         self.load_error = ""
+=======
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
 
     def load(self) -> bool:
         if not self.model_name:
@@ -352,6 +362,7 @@ class ExplanationNarrator:
             return False
 
     @staticmethod
+<<<<<<< HEAD
     def compact_context(payload: Dict[str, Any]) -> Dict[str, Any]:
         """Build a rich but bounded context for explanation."""
         if "decision" in payload:
@@ -437,6 +448,10 @@ class ExplanationNarrator:
         rec = summary.get("final_recommendation", "UNKNOWN")
         ticker = summary.get("ticker", "the selected ticker")
         date = summary.get("date", "the selected date")
+=======
+    def deterministic(summary: Dict[str, Any]) -> str:
+        rec = summary.get("final_recommendation", "UNKNOWN")
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
         conf = summary.get("final_fusion_confidence", summary.get("confidence", None))
         risk = summary.get("final_fusion_risk_score", summary.get("risk_score", None))
         pos = summary.get("final_position_pct", summary.get("position_pct", None))
@@ -453,6 +468,7 @@ class ExplanationNarrator:
             except Exception:
                 return "n/a"
 
+<<<<<<< HEAD
         risk_lines = []
         for label, key in [
             ("volatility", "volatility_risk_score"),
@@ -499,6 +515,28 @@ class ExplanationNarrator:
         try:
             assert self.tokenizer is not None and self.model is not None
             encoded = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=4096)
+=======
+        return (
+            f"The system recommends {rec}. The fused confidence is {fmt(conf)} and the fused risk score is {fmt(risk)}. "
+            f"The suggested position size is {fmt(pos, 2)}% of capital. The dominant quantitative risk driver is {top}. "
+            f"The learned fusion layer gave weight {fmt(q_weight)} to the quantitative branch and {fmt(qual_weight)} to the qualitative branch. "
+            f"Text evidence availability for this ticker-date is {text_avail}. Rule-barrier result: {rules}. "
+            f"This is a model-generated research output, not financial advice."
+        )
+
+    def narrate(self, summary: Dict[str, Any]) -> str:
+        if not self.available:
+            return self.deterministic(summary)
+        prompt = (
+            "You are explaining an output from an explainable financial risk model. "
+            "Do not change the recommendation. Do not invent data. Do not give financial advice. "
+            "Explain the decision, risk, confidence, position size, and rule-barrier result in plain language.\n\n"
+            f"MODEL_OUTPUT_JSON:\n{json.dumps(json_safe(summary), indent=2)}\n\nEXPLANATION:"
+        )
+        try:
+            assert self.tokenizer is not None and self.model is not None
+            encoded = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=2048)
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
             if torch is not None and self.device.startswith("cuda"):
                 encoded = {k: v.to(self.model.device) for k, v in encoded.items()}
             with torch.no_grad():
@@ -506,9 +544,15 @@ class ExplanationNarrator:
             text = self.tokenizer.decode(out[0], skip_special_tokens=True)
             if "EXPLANATION:" in text:
                 text = text.split("EXPLANATION:", 1)[-1].strip()
+<<<<<<< HEAD
             return text.strip() or self.deterministic(payload)
         except Exception:
             return self.deterministic(payload)
+=======
+            return text.strip() or self.deterministic(summary)
+        except Exception:
+            return self.deterministic(summary)
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
 
 
 # =============================================================================
@@ -585,6 +629,7 @@ class FinGlassboxInferenceEngine:
                 files.append(f"outputs/models/FusionEngine/chunk{c}/best_model.pt")
                 files.append(f"outputs/models/FusionEngine/chunk{c}/final_model.pt")
                 files.append(f"outputs/models/FusionEngine/chunk{c}/scaler.npz")
+<<<<<<< HEAD
                 files.append("outputs/models/Narrator/Qwen3-0.6B")
                 for s in splits:
                     files.append(f"outputs/results/PositionSizing/position_sizing_chunk{c}_{s}.csv")
@@ -598,6 +643,11 @@ class FinGlassboxInferenceEngine:
                     files.append(f"outputs/results/risk/chunks/liquidity_chunk{c}_{s}.csv")
                     files.append(f"outputs/results/analysts/sentiment/chunk{c}_{s}_predictions.csv")
                     files.append(f"outputs/results/analysts/news/chunk{c}_{s}_news_predictions.csv")
+=======
+                for s in splits:
+                    files.append(f"outputs/results/PositionSizing/position_sizing_chunk{c}_{s}.csv")
+                    files.append(f"outputs/results/QualitativeAnalyst/qualitative_daily_chunk{c}_{s}.csv")
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
         unique = list(dict.fromkeys(files))
         return {
             "mode": mode,
@@ -623,6 +673,7 @@ class FinGlassboxInferenceEngine:
         return result
 
     # ------------------------------------------------------------------
+<<<<<<< HEAD
     # Cached module-output collection
     # ------------------------------------------------------------------
 
@@ -695,6 +746,8 @@ class FinGlassboxInferenceEngine:
         return out
 
     # ------------------------------------------------------------------
+=======
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
     # Mode 2: frozen-cached inference
     # ------------------------------------------------------------------
 
@@ -723,6 +776,7 @@ class FinGlassboxInferenceEngine:
             "quantitative_model": str(self._chosen_model_path("QuantitativeAnalyst", chunk)),
             "fusion_model": str(self._chosen_model_path("FusionEngine", chunk)),
         }
+<<<<<<< HEAD
         modules = self.collect_module_outputs(ticker, selected_date, chunk, split)
         modules["quantitative_recomputed"] = row_dict_from_frame(quant_df)
         modules["qualitative_runtime"] = row_dict_from_frame(qual_df)
@@ -733,6 +787,12 @@ class FinGlassboxInferenceEngine:
             "modules": modules,
         }
         payload["human_explanation"] = ExplanationNarrator().narrate(payload)
+=======
+        payload["intermediate_outputs"] = {
+            "quantitative": row_dict_from_frame(quant_df),
+            "qualitative": row_dict_from_frame(qual_df),
+        }
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
         return payload
 
     # ------------------------------------------------------------------
@@ -766,6 +826,7 @@ class FinGlassboxInferenceEngine:
         row = row_dict_from_frame(fusion_df)
         payload = self._decision_payload(row, mode="manual", chunk=chunk, split=split)
         payload["manual_input"] = json_safe(input_payload)
+<<<<<<< HEAD
         modules = {
             "position_sizing_manual": row_dict_from_frame(pos_df),
             "qualitative_manual": row_dict_from_frame(qual_df),
@@ -778,6 +839,12 @@ class FinGlassboxInferenceEngine:
             "modules": modules,
         }
         payload["human_explanation"] = ExplanationNarrator().narrate(payload)
+=======
+        payload["intermediate_outputs"] = {
+            "quantitative": row_dict_from_frame(quant_df),
+            "qualitative": row_dict_from_frame(qual_df),
+        }
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
         return payload
 
     # ------------------------------------------------------------------
@@ -997,15 +1064,26 @@ class FinGlassboxInferenceEngine:
             "quantitative_xai_summary", "qualitative_xai_summary",
         ]
         summary = {k: row.get(k) for k in important if k in row}
+<<<<<<< HEAD
         payload = {
+=======
+        narrator = ExplanationNarrator()
+        return {
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
             "mode": mode,
             "chunk": int(chunk),
             "split": str(split),
             "decision": summary,
+<<<<<<< HEAD
             "full_row": row,
         }
         payload["human_explanation"] = ExplanationNarrator().narrate(payload)
         return payload
+=======
+            "human_explanation": narrator.narrate(summary),
+            "full_row": row,
+        }
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
 
 
 # =============================================================================
@@ -1086,9 +1164,16 @@ def main() -> None:
         if not args.input_json:
             raise SystemExit("--input-json is required")
         payload = json.loads(Path(args.input_json).read_text(encoding="utf-8"))
+<<<<<<< HEAD
         narrator = ExplanationNarrator(args.llm_model, device=cfg.device, local_files_only=not args.llm_allow_download, max_new_tokens=900)
         narrator.load()
         result = {"human_explanation": narrator.narrate(payload), "llm_loaded": narrator.available, "llm_error": getattr(narrator, "load_error", "")}
+=======
+        summary = payload.get("decision", payload)
+        narrator = ExplanationNarrator(args.llm_model, device=cfg.device, local_files_only=not args.llm_allow_download)
+        narrator.load()
+        result = {"human_explanation": narrator.narrate(summary), "llm_loaded": narrator.available}
+>>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
     else:  # pragma: no cover
         raise SystemExit(f"Unknown command: {args.command}")
 

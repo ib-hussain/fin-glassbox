@@ -146,6 +146,7 @@ data/sec_edgar/processed/issuer_master/issuer_master.csv
 !data/sec_edgar/processed/filings_text/final/finbert_25y_cap40000_metadata.json
 data/yFinance/move_to_processed_folder/
 outputs/
+*.qkdncr
 
 # ── OS & editor noise ───────────────────────────────────
 .DS_Store

@@ -9,7 +9,7 @@ device, chunk and split are supplied through CLI defaults, while the user intera
 with ticker/date, inference mode, risk profile and transparency panels.
 
 Run:
-    streamlit run code/deploy.py -- --repo-root . --device cuda --default-chunk 3 --default-split test
+    streamlit run code/deploy.py -- --repo-root . --device cpu --default-chunk 3 --default-split test
 
 Qwen narrator packaging:
     The app automatically looks for:
@@ -155,11 +155,11 @@ def render_progress(label: str, value: Any) -> None:
 def render_header() -> None:
     st.set_page_config(
         page_title="fin-glassbox",
-        page_icon="📊",
+        page_icon="🥀",
         layout="wide",
         initial_sidebar_state="expanded",
     )
-    st.title("fin-glassbox")
+    st.title("🥀fin-glassbox")
     st.caption("Explainable multimodal financial risk inference — research demonstration and decision-support interface, not personalised financial advice.")
 
 

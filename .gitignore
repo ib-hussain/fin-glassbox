@@ -75,7 +75,7 @@ data/graphs/snapshots/
 data/graphs/static/
 
 # ── Project-specific: Outputs Folder ────────────────
-outputs/
+# outputs/
 outputs/codeResults/**/hpo/
 outputs/results/**/hpo/
 outputs/codeResults/**/hpo/
@@ -91,6 +91,7 @@ outputs/results/**/*hpo*/*
 outputs/results/analysts/**/*hpo*/*
 outputs/results/analysts/**/chunk*/*hpo*/*
 outputs/embeddings/analysts/**/*hpo*/
+*hpo*.*
 
 # ── Project-specific: Output Embeddings ────────────────
 outputs/embeddings/FinBERT/*embeddings768.npy
@@ -98,6 +99,8 @@ outputs/embeddings/FinBERT/*pca_768_to_256.pkl
 # outputs/embeddings/FinBERT/*manifest768.json
 # outputs/embeddings/FinBERT/*pca_manifest.json
 # outputs/embeddings/analysts/**/*
+outputs/embeddings/analysts/**/*.npy
+outputs/embeddings/**/*.npy
 outputs/embeddings/TemporalEncoder/*.csv
 
 # ── Project-specific: Output Models ────────────────
@@ -107,6 +110,12 @@ outputs/models/**/**/best_checkpoint.pt
 outputs/models/**/**/epoch_*.pt
 *latest_model.pt
 outputs/models/**/chunk*/model_unfreezed/*
+outputs/models/**/chunk*/*.pt
+outputs/models/**/chunk*/*.pkl
+outputs/models/**/chunk*/*.npz
+training_history.csv
+outputs/results/analysts/**/xai/*.npy
+outputs/results/**/xai/*.npy
 
 # ── Project-specific: Remote Machine Files ────────────────
 jawwad_bhai.pem

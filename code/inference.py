@@ -1154,7 +1154,7 @@ def main() -> None:
     elif args.command == "manual":
         if not args.input_json:
             raise SystemExit("--input-json is required")
-        payload = json.loads(Path(args.input_json).read_text(encoding="utf-8"))
+        payload = json.loads(Path(args.input_json).read_text(encodingwsl="utf-8"))
         result = engine.manual(payload)
     elif args.command == "package-plan":
         chunks = _parse_int_list(args.chunks, [args.chunk])

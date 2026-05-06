@@ -13,141 +13,115 @@
 multivariate-time-series-data/
 # models*/
 runs*/
-# figs*/
-# ── Project-specific: data files ─────────────────────────
+
+# ── Project-specific: Assignment 2 Work ────────────────
+assignment2work/LSTM/test_prediction/
+assignment2work/ticker-collector/.ipynb_checkpoints/
+assignment2work/paper-metric-reporter/.spyproject/
+assignment2work/paper-metric-reporter/**/*.ini
+assignment2work/LSTM/test_prediction/
+assignment2work/ticker-collector/.ipynb_checkpoints/
+assignment2work/paper-metric-reporter/.spyproject/
+assignment2work/paper-metric-reporter/**/*.ini
+
+# ── Project-specific: Initial Data files ─────────────────────────
 data/Huge Stock Market Dataset/
 data/TradingAgents/
 Data2/
+# ── Project-specific: FRED Data ────────────────
+data/FRED_data/raw/
+data/FRED_data/outputs/grand_table_raw.csv
+data/FRED_data/outputs/macroeconomic_features.csv
+
+# ── Project-specific: Market Data ────────────────
+data/yFinance/raw/
+data/yFinance/*.zip
+data/yFinance/raw_metadata/
+data/yFinance/processed/sabeels_genertated_ohlcv_panel.csv
+data/yFinance/processed/ohlcv_original.csv
+data/yFinance/_CON - Copy.json
+data/yFinance/_CON - Copy.parquet
+data/yFinance/Huge_Market_Dataset/
+data/yFinance/d_us_txt/
+data/yFinance/nasdaq-nyse-nyse-a-otc-daily-stock-1962-2024/
+data/yFinance/coverage/
+data/yFinance/merged/
+data/yFinance/processed/sb_benchmark_relative.csv
+data/yFinance/processed/sb_features.csv
+data/yFinance/processed/sb_returns_panel.csv
+data/yFinance/processed/features_temporal.csv
+data/yFinance/Huge Stock Market Dataset.txt
+data/yFinance/move_to_processed_folder/
+
+# ── Project-specific: Filings Data ────────────────
+data/sec_edgar/existing_23y/
+data/sec_edgar/processed/filings_text/
+data/sec_edgar/processed/manifests/
+# !data/sec_edgar/processed/manifests/filings_manifest_2000_2024_merged.csv
+!data/sec_edgar/processed/filings_text/final/finbert_25y_cap40000_metadata.json
+
+# ── Project-specific: Fundamentals Data ────────────────
 data/sec_edgar/logs/
 data/sec_edgar/raw/
-# !data/sec_edgar/processed/manifests/filings_manifest_2000_2024_merged.csv
 data/sec_edgar/processed/companyfacts/
 data/sec_edgar/processed/submissions/
-data/sec_edgar/processed/manifests/
-<<<<<<< HEAD
-=======
+data/sec_edgar/processed/issuer_master/cik_ticker_map.csv
+data/sec_edgar/processed/issuer_master/issuer_master.csv
 
-data/FRED_data/raw/
-outputs/models/*/hpo/
-
-data/yFinance/raw/
-data/yFinance/*.zip
-data/yFinance/raw_metadata/
-data/yFinance/processed/sabeels_genertated_ohlcv_panel.csv
-data/yFinance/processed/ohlcv_original.csv
-data/yFinance/_CON - Copy.json
-data/yFinance/_CON - Copy.parquet
-data/yFinance/Huge_Market_Dataset/
-data/yFinance/d_us_txt/
-data/yFinance/nasdaq-nyse-nyse-a-otc-daily-stock-1962-2024/
-data/yFinance/coverage/
-data/yFinance/merged/
-data/yFinance/processed/sb_benchmark_relative.csv
-data/yFinance/processed/sb_features.csv
-data/yFinance/processed/sb_returns_panel.csv
-
-**/hpo/
-outputs/models/**/hpo/
-outputs/codeResults/**/hpo/
-outputs/results/**/hpo/
-outputs/codeResults/**/hpo/
-outputs/models/**/latest_checkpoint.pt
-outputs/models/**/**/latest_checkpoint.pt
-outputs/models/**/**/best_checkpoint.pt
-outputs/models/**/**/epoch_*.pt
-outputs/codeResults/**/*.log
-*latest_model.pt
-
-prd*/
-data/sec_edgar/existing_23y/
-data/sec_edgar/processed/filings_text/
-
-# FinBERT non-deliverable heavy artefacts
-outputs/embeddings/FinBERT/*embeddings768.npy
-outputs/embeddings/FinBERT/*manifest768.json
-outputs/embeddings/FinBERT/*pca_768_to_256.pkl
-outputs/embeddings/FinBERT/*pca_manifest.json
-
-# ── Project-specific: misc tool artefacts ────────────────
-assignment2work/LSTM/test_prediction/
-assignment2work/ticker-collector/.ipynb_checkpoints/
-assignment2work/paper-metric-reporter/.spyproject/
-assignment2work/paper-metric-reporter/**/*.ini
-.spyproject/
-.streamlit/
-ignore/
-*ignore*.*
-final/
-transfer_artifacts/
->>>>>>> 9ad612210b7604827c9fd3ff25198cb4a46dd785
-
-data/FRED_data/raw/
-outputs/models/*/hpo/
-
-data/yFinance/raw/
-data/yFinance/*.zip
-data/yFinance/raw_metadata/
-data/yFinance/processed/sabeels_genertated_ohlcv_panel.csv
-data/yFinance/processed/ohlcv_original.csv
-data/yFinance/_CON - Copy.json
-data/yFinance/_CON - Copy.parquet
-data/yFinance/Huge_Market_Dataset/
-data/yFinance/d_us_txt/
-data/yFinance/nasdaq-nyse-nyse-a-otc-daily-stock-1962-2024/
-data/yFinance/coverage/
-data/yFinance/merged/
-data/yFinance/processed/sb_benchmark_relative.csv
-data/yFinance/processed/sb_features.csv
-data/yFinance/processed/sb_returns_panel.csv
-
-**/hpo/
-outputs/models/**/hpo/
-outputs/codeResults/**/hpo/
-outputs/results/**/hpo/
-outputs/codeResults/**/hpo/
-outputs/models/**/latest_checkpoint.pt
-outputs/models/**/**/latest_checkpoint.pt
-outputs/models/**/**/best_checkpoint.pt
-outputs/models/**/**/epoch_*.pt
-outputs/codeResults/**/*.log
-*latest_model.pt
-
-prd*/
-data/sec_edgar/existing_23y/
-data/sec_edgar/processed/filings_text/
-
-# FinBERT non-deliverable heavy artefacts
-outputs/embeddings/FinBERT/*embeddings768.npy
-outputs/embeddings/FinBERT/*manifest768.json
-outputs/embeddings/FinBERT/*pca_768_to_256.pkl
-outputs/embeddings/FinBERT/*pca_manifest.json
-
-# ── Project-specific: misc tool artefacts ────────────────
-assignment2work/LSTM/test_prediction/
-assignment2work/ticker-collector/.ipynb_checkpoints/
-assignment2work/paper-metric-reporter/.spyproject/
-assignment2work/paper-metric-reporter/**/*.ini
-.spyproject/
-.streamlit/
-ignore/
-*ignore*.*
-final/
-transfer_artifacts/
-
+# ── Project-specific: Cross Asset Relational Data ────────────────
 data/graphs/snapshots/
 data/graphs/combined/
 data/graphs/snapshots/
 data/graphs/static/
-data/FRED_data/outputs/grand_table_raw.csv
-data/FRED_data/outputs/macroeconomic_features.csv
-data/yFinance/Huge Stock Market Dataset.txt
-data/sec_edgar/processed/issuer_master/cik_ticker_map.csv
-data/sec_edgar/processed/issuer_master/issuer_master.csv
-!data/sec_edgar/processed/filings_text/final/finbert_25y_cap40000_metadata.json
-data/yFinance/move_to_processed_folder/
+
+# ── Project-specific: Outputs Folder ────────────────
 outputs/
+outputs/codeResults/**/hpo/
+outputs/results/**/hpo/
+outputs/codeResults/**/hpo/
+outputs/codeResults/**/*.log
+
+# ── Project-specific: Output Hyper Parameter Search ────────────────
+outputs/models/**/chunk*/*hpo*/*
+outputs/models/**/*hpo*/*
+outputs/models/analysts/**/*hpo*/*
+outputs/models/analysts/**/chunk*/*hpo*/*
+outputs/results/**/chunk*/*hpo*/*
+outputs/results/**/*hpo*/*
+outputs/results/analysts/**/*hpo*/*
+outputs/results/analysts/**/chunk*/*hpo*/*
+outputs/embeddings/analysts/**/*hpo*/
+
+# ── Project-specific: Output Embeddings ────────────────
+outputs/embeddings/FinBERT/*embeddings768.npy
+outputs/embeddings/FinBERT/*pca_768_to_256.pkl
+# outputs/embeddings/FinBERT/*manifest768.json
+# outputs/embeddings/FinBERT/*pca_manifest.json
+# outputs/embeddings/analysts/**/*
+outputs/embeddings/TemporalEncoder/*.csv
+
+# ── Project-specific: Output Models ────────────────
+!outputs/models/**/**/latest_checkpoint.pt
+!outputs/models/**/**/final_model.pt
+outputs/models/**/**/best_checkpoint.pt
+outputs/models/**/**/epoch_*.pt
+*latest_model.pt
+outputs/models/**/chunk*/model_unfreezed/*
+
+# ── Project-specific: Remote Machine Files ────────────────
+jawwad_bhai.pem
+irrelevant/
+*cache*/
+prd*/
 *.qkdncr
 
+# ── Project-specific: misc tool artefacts ────────────────
+.spyproject/
+.streamlit/
+ignore/
+*ignore*.*
+final/
+transfer_artifacts/
 # ── OS & editor noise ───────────────────────────────────
 .DS_Store
 Thumbs.db
@@ -155,7 +129,6 @@ Thumbs.db
 .vscode/
 *.vsix
 *.code-workspace
-
 # ── Python byte-compiled / optimised ────────────────────
 __pycache__/
 *.whl
@@ -166,9 +139,6 @@ None/
 *$py.class
 *.so
 cython_debug/
-jawwad_bhai.pem
-irrelevant/
-
 # ── Virtual environments & Secrets & config ─────────────────────────────────
 .env
 *.env
@@ -178,17 +148,16 @@ irrelevant/
 .Python
 .envrc
 .venv
-env/
-*venv*/
+# env/
+*env*/
 ENV/
-env.bak/
-venv.bak/
-venv_windows/
+# env.bak/
+# venv.bak/
+# venv_windows/
 .pixi
 __pypackages__/
 .pdm-python
 .pdm-build/
-
 # ── Distribution / packaging ─────────────────────────────
 build/
 dist/
@@ -219,7 +188,6 @@ htmlcov/
 .nox/
 .coverage
 .coverage.*
-.cache/
 nosetests.xml
 coverage.xml
 *.cover
@@ -236,12 +204,6 @@ dmypy.json
 .pytype/
 .ruff_cache/
 .pypirc
-
-# ── Jupyter / IPython ────────────────────────────────────
-.ipynb_checkpoints/
-profile_default/
-ipython_config.py
-
 # ── Misc ─────────────────────────────────────────────────
 *.tmp
 *.log
@@ -254,5 +216,3 @@ ipython_config.py
 *.pyc
 *.pyo
 *.pyd
-
-data/yFinance/processed/features_temporal.csv

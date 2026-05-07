@@ -60,7 +60,7 @@ pip --version
 pip freeze > requirements.txt
 
 # Install from requirements file
-pip install -r requirements_linux_venv.txt
+pip install -r requirements.txt
 
 # Install a single package
 pip install <package_name>

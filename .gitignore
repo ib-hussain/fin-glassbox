@@ -110,9 +110,12 @@ outputs/models/**/**/best_checkpoint.pt
 outputs/models/**/**/epoch_*.pt
 *latest_model.pt
 outputs/models/**/chunk*/model_unfreezed/*
-outputs/models/**/chunk*/*.pt
+outputs/models/**/chunk*/model_freezed/*
+outputs/models/**/chunk*/best_model.pt
 outputs/models/**/chunk*/*.pkl
 outputs/models/**/chunk*/*.npz
+!outputs/models/QuantitativeAnalyst/chunk3/scaler.npz
+!outputs/models/FusionEngine/chunk3/scaler.npz
 training_history.csv
 outputs/results/analysts/**/xai/*.npy
 outputs/results/**/xai/*.npy

@@ -28,7 +28,7 @@ certifi==2026.2.25
 cffi==1.16.0
 charset-normalizer==3.3.2
 cinemagoer==2023.5.1
-click==8.3.3
+# click==8.3.3
 cloudpathlib==0.16.0
 cloudpickle==3.1.2
 colorlog==6.10.1
@@ -205,7 +205,7 @@ requests==2.31.0
 requests-toolbelt==1.0.0
 rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
-rich==13.9.4
+# rich==13.9.4
 shellingham==1.5.4
 rpds-py==0.30.0
 safetensors==0.7.0
@@ -248,7 +248,6 @@ tifffile==2026.4.11
 tiktoken==0.6.0
 annotated-doc==0.0.4
 tinycss2==1.5.1
-tokenizers==-0.22.2
 toml==0.10.2
 torch==2.2.2
 torchaudio==2.2.2
@@ -256,10 +255,16 @@ torchvision==0.17.2
 tornado==6.4
 tqdm==4.66.2
 traitlets==5.14.3
-transformers==5.7.0
+# transformers==5.7.0
+transformers>=4.51.0,<4.53.0
+tokenizers>=0.21,<0.22
+huggingface_hub>=0.30.0,<1.0
+rich>=10.14.0,<14.0.0
+typer>=0.3.0,<0.10.0
+click>=8.1.0,<9.0.0
 accelerate==1.13.0
 hf-xet==1.4.3
-typer==0.9.4
+# typer==0.9.4
 types-python-dateutil==2.9.0.20260323
 typing_extensions==4.15.0
 typing-inspect==0.9.0

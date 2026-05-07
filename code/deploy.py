@@ -296,25 +296,37 @@ def render_model_transparency(result: Dict[str, Any]) -> None:
     for name, row in modules.items():
         if not isinstance(row, dict):
             continue
+        risk_value = row.get("final_fusion_risk_score", row.get("quantitative_risk_score", row.get("drawdown_risk_score", row.get("volatility_risk_score", row.get("regime_risk_score", "")))))
+        conf_value = row.get("final_fusion_confidence", row.get("quantitative_confidence", row.get("qualitative_confidence", row.get("technical_confidence", row.get("regime_confidence", "")))))
         summary_rows.append({
-            "module": name,
-            "ticker": row.get("ticker", ""),
-            "date": row.get("date", ""),
-            "recommendation": row.get("final_recommendation", row.get("quantitative_recommendation", row.get("qualitative_recommendation", ""))),
-            "risk_score": row.get("final_fusion_risk_score", row.get("quantitative_risk_score", row.get("drawdown_risk_score", row.get("volatility_risk_score", row.get("regime_risk_score", ""))))),
-            "confidence": row.get("final_fusion_confidence", row.get("quantitative_confidence", row.get("qualitative_confidence", row.get("technical_confidence", row.get("regime_confidence", ""))))),
-            "xai_summary": row.get("fusion_xai_summary", row.get("quantitative_xai_summary", row.get("qualitative_xai_summary", row.get("xai_summary", row.get("size_reduction_reasons", ""))))),
+            "module": str(name),
+            "ticker": str(row.get("ticker", "")),
+            "date": str(row.get("date", "")),
+            "recommendation": str(row.get("final_recommendation", row.get("quantitative_recommendation", row.get("qualitative_recommendation", "")))),
+            "risk_score": "" if risk_value == "" else format_num(risk_value, 4),
+            "confidence": "" if conf_value == "" else format_num(conf_value, 4),
+            "xai_summary": str(row.get("fusion_xai_summary", row.get("quantitative_xai_summary", row.get("qualitative_xai_summary", row.get("xai_summary", row.get("size_reduction_reasons", "")))))),
         })
 
     if summary_rows:
-        st.dataframe(pd.DataFrame(summary_rows), use_container_width=True)
+        st.markdown("#### Module summary table")
+        st.dataframe(pd.DataFrame(summary_rows), use_container_width=True, hide_index=True)
 
-    for name, row in modules.items():
-        with st.expander(f"{name}", expanded=False):
-            st.json(json_safe(row))
+    names = [name for name, row in modules.items() if isinstance(row, dict)]
+    if not names:
+        return
+
+    st.markdown("#### Full per-module outputs")
+    tabs = st.tabs([str(name)[:28] for name in names])
+    for tab, name in zip(tabs, names):
+        with tab:
+            st.json(json_safe(modules[name]))
 
 
 def render_transparency_sections(result: Dict[str, Any]) -> None:
+    st.divider()
+    st.header("Full transparency")
+
     with st.expander("Full system decision JSON", expanded=False):
         st.json(json_safe(result.get("decision", {})))
 

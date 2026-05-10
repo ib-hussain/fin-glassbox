@@ -13,6 +13,7 @@
 multivariate-time-series-data/
 # models*/
 runs*/
+allMDs/
 
 # ── Project-specific: Assignment 2 Work ────────────────
 assignment2work/LSTM/test_prediction/

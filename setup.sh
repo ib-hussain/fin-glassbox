@@ -11,26 +11,26 @@ git lfs install --local
 git lfs pull
 
 # Install pyenv
-curl https://pyenv.run | bash
+# curl https://pyenv.run | bash
 
 # Add to shell configuration (for bash)
-cat >> ~/.bashrc << 'EOF'
-  export PYENV_ROOT="$HOME/.pyenv"
-  export PATH="$PYENV_ROOT/bin:$PATH"
-  eval "$(pyenv init -)"
-  EOF
+# cat >> ~/.bashrc << 'EOF'
+#   export PYENV_ROOT="$HOME/.pyenv"
+#   export PATH="$PYENV_ROOT/bin:$PATH"
+#   eval "$(pyenv init -)"
+#   EOF
 
 # Restart shell or source
-source ~/.bashrc
+# source ~/.bashrc
 
 # Verify pyenv is installed
-pyenv --version
+# pyenv --version
 
 # Install Python 3.12.7 (this takes time)
-pyenv install 3.12.7
+# pyenv install 3.12.7
 
 # Set local Python version for this directory
-pyenv local 3.12.7
+# pyenv local 3.12.7
 
 # Create virtual environment
 python -m venv venv3.12.7

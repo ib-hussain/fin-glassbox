@@ -348,40 +348,62 @@ outputs/codeResults/TemporalEncoder/hpo/best_params_chunk3.json
 
 ### 10.3 Known final HPO examples from the production run
 
-Chunk 2 used a large 256-dimensional configuration:
+Chunk 1:
 
 ```json
 {
-  "n_layers": 6,
-  "n_heads": 8,
-  "d_model": 256,
-  "dropout": 0.17854162005663654,
-  "attention_dropout": 0.19488416358230604,
-  "learning_rate": 0.0004982755066410893,
-  "weight_decay": 0.0002305298448157034,
-  "warmup_steps": 1000,
-  "batch_size": 32
+  "params": {
+    "n_layers": 3,
+    "n_heads": 2,
+    "d_model": 256,
+    "dropout": 0.12946407491739656,
+    "attention_dropout": 0.17204918134328429,
+    "learning_rate": 0.00032050950331890453,
+    "weight_decay": 0.0003087360648369751,
+    "warmup_steps": 1000,
+    "batch_size": 64
+  },
+  "value": 1.7111254166455785
 }
 ```
 
-Chunk 3 used:
+Chunk 2:
 
 ```json
 {
-  "n_layers": 4,
-  "n_heads": 4,
-  "d_model": 256,
-  "dropout": 0.12580726647987625,
-  "attention_dropout": 0.1243864375089663,
-  "learning_rate": 0.00045877596861583427,
-  "weight_decay": 0.000009225880372153381,
-  "warmup_steps": 1000,
-  "batch_size": 32
+  "params": {
+    "n_layers": 6,
+    "n_heads": 8,
+    "d_model": 256,
+    "dropout": 0.17854162005663654,
+    "attention_dropout": 0.19488416358230604,
+    "learning_rate": 0.0004982755066410893,
+    "weight_decay": 0.0002305298448157034,
+    "warmup_steps": 1000,
+    "batch_size": 32
+  },
+  "value": 0.17857432030974485
 }
 ```
 
-The exact active values should always be checked from the saved HPO JSON files in the repository.
+Chunk 3:
 
+```json
+{
+  "params": {
+    "n_layers": 4,
+    "n_heads": 4,
+    "d_model": 256,
+    "dropout": 0.12580726647987625,
+    "attention_dropout": 0.1243864375089663,
+    "learning_rate": 0.00045877596861583427,
+    "weight_decay": 9.225880372153381e-06,
+    "warmup_steps": 1000,
+    "batch_size": 32
+  },
+  "value": 0.19655309588954853
+}
+```
 ---
 
 ## 11. Training, Resume, and Checkpointing

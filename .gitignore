@@ -31,8 +31,8 @@ data/TradingAgents/
 Data2/
 # ── Project-specific: FRED Data ────────────────
 data/FRED_data/raw/
-data/FRED_data/outputs/grand_table_raw.csv
-data/FRED_data/outputs/macroeconomic_features.csv
+data/FRED_data/outputs/**.csv
+data/FRED_data/**.csv
 
 # ── Project-specific: Market Data ────────────────
 data/yFinance/raw/
@@ -53,13 +53,18 @@ data/yFinance/processed/sb_returns_panel.csv
 data/yFinance/processed/features_temporal.csv
 data/yFinance/Huge Stock Market Dataset.txt
 data/yFinance/move_to_processed_folder/
+data/yFinance/processed/common_tickers.csv
+data/yFinance/processed/liquidity_features.csv
+data/yFinance/processed/original_coverage.csv
+data/yFinance/processed/returns_long.csv
+data/yFinance/processed/returns_panel_wide.csv
 
 # ── Project-specific: Filings Data ────────────────
-data/sec_edgar/existing_23y/
-data/sec_edgar/processed/filings_text/
-data/sec_edgar/processed/manifests/
-# !data/sec_edgar/processed/manifests/filings_manifest_2000_2024_merged.csv
-!data/sec_edgar/processed/filings_text/final/finbert_25y_cap40000_metadata.json
+data/sec_edgar/existing_23y/*
+data/sec_edgar/processed/filings_text/*
+data/sec_edgar/processed/manifests/*
+data/sec_edgar/processed/fundamentals/*.csv
+data/sec_edgar/processed/cleaned/*.csv
 
 # ── Project-specific: Fundamentals Data ────────────────
 data/sec_edgar/logs/
@@ -70,13 +75,10 @@ data/sec_edgar/processed/issuer_master/cik_ticker_map.csv
 data/sec_edgar/processed/issuer_master/issuer_master.csv
 
 # ── Project-specific: Cross Asset Relational Data ────────────────
-data/graphs/snapshots/
-data/graphs/combined/
-data/graphs/snapshots/
-data/graphs/static/
+data/graphs/**/*
 
 # ── Project-specific: Outputs Folder ────────────────
-# outputs/
+outputs/*
 outputs/codeResults/**/hpo/
 outputs/results/**/hpo/
 outputs/codeResults/**/hpo/

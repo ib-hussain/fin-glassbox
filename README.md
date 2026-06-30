@@ -136,7 +136,8 @@ For the full system workflow, see [`WORKFLOW.md`](WORKFLOW.md). For the explaina
 ```text
 fin-glassbox/
 ├── README.md
-├── SETUP.md
+├── setup/
+│   ├── SETUP.md
 ├── WORKFLOW.md
 ├── xAI.md
 ├── LICENSE
@@ -184,7 +185,7 @@ The repository is intentionally documentation-heavy because the system is modula
 | File | Purpose |
 |---|---|
 | [`README.md`](README.md) | Repository overview, architecture, documentation map, and project introduction. |
-| [`SETUP.md`](SETUP.md) | Environment setup, dependency installation, Git LFS, CUDA notes, and validation commands. |
+| [`SETUP.md`](setup/SETUP.md) | Environment setup, dependency installation, Git LFS, CUDA notes, and validation commands. |
 | [`WORKFLOW.md`](WORKFLOW.md) | Full current workflow and module interaction design. |
 | [`xAI.md`](xAI.md) | XAI integration strategy across encoders, analysts, risk modules, fusion, and final outputs. |
 | [`LICENSE`](LICENSE) | Repository licence. |
@@ -472,7 +473,7 @@ For the full XAI design, see [`xAI.md`](xAI.md).
 
 ## Setup
 
-Environment setup, Git LFS, Python versioning, dependency installation, and smoke-test validation are documented in [`SETUP.md`](SETUP.md).
+Environment setup, Git LFS, Python versioning, dependency installation, and smoke-test validation are documented in [`SETUP.md`](setup/SETUP.md).
 
 A typical setup flow is:
 
@@ -492,7 +493,7 @@ cd ~/fin-glassbox && python -m py_compile code/encoders/temporal_encoder.py code
 cd ~/fin-glassbox && python code/fusion/final_fusion.py smoke --repo-root . --device cuda
 ```
 
-See [`SETUP.md`](SETUP.md) for the complete setup and validation procedure.
+See [`SETUP.md`](setup/SETUP.md) for the complete setup and validation procedure.
 
 ---
 

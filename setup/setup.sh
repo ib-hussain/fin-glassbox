@@ -1,9 +1,10 @@
-# Check Ubuntu version (22.04 or 24.04 recommended)
+#!/bin/bash
+
+echo "Ubuntu Version:"
 lsb_release -a
 
 # Update package list
 sudo apt update
-
 # Install essential build tools and dependencies
 sudo apt install -y python3 python3-venv python3-distutils git-lfs
 sudo apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev \
@@ -17,7 +18,16 @@ sudo apt install -y make libssl-dev zlib1g-dev libbz2-dev \
 git lfs install --local
 git lfs pull
 
+# Install essential build tools and dependencies
+sudo apt install -y python3-distutils git-lfs build-essential zlib1g-dev libncurses5-dev libgdbm-dev \
+  libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget \
+  libbz2-dev curl make llvm xz-utils tk-dev libxml2-dev libxmlsec1-dev  liblzma-dev
+
+git lfs install --local
+git lfs pull
+
 # Install pyenv
+echo "Installing pyenv:"
 curl https://pyenv.run | bash
 
 # Add to shell configuration (for bash)
@@ -25,51 +35,51 @@ cat >> ~/.bashrc << 'EOF'
   export PYENV_ROOT="$HOME/.pyenv"
   export PATH="$PYENV_ROOT/bin:$PATH"
   eval "$(pyenv init -)"
-  EOF
+EOF
 
 # Restart shell or source
 source ~/.bashrc
 
 # Verify pyenv is installed
+echo "pyenv version: " 
 pyenv --version
 
+cd ../
 # Install Python 3.12.7 (this takes time)
 pyenv install 3.12.7
 
-# Navigate to your project
-cd /path_to/fin-glassbox
-
 # Set local Python version for this directory
 pyenv local 3.12.7
-
-# Verify Python version
-python --version  # Should show 3.12.7
-
-# Create virtual environment
-python -m venv venv3.12.7
-
-# Activate virtual environment
-source venv3.12.7/bin/activate
 
 # Verify activation
 which python  # Should show path with venv3.12.7
 python --version
 pip --version
 
-# Generate requirements file from current environment
-pip freeze > requirements.txt
+cd setup/
+# Create virtual environment
+python -m venv ../venv3.12.7
+
+# Activate virtual environment
+source ../venv3.12.7/bin/activate
+
+# upgrade pip
+python -m pip install --upgrade pip
 
 # Install from requirements file
+pip install -r easyReqs.txt
+
+# incase of any failure
 pip install -r requirements.txt
 
 # Install a single package
-pip install <package_name>
+# pip install <package_name>
 
 # Uninstall a single package
-pip uninstall <package_name> -y
+# pip uninstall <package_name> -y
 
 # Uninstall multiple packages from requirements file
-pip uninstall -y -r requirements.txt
+# pip uninstall -y -r requirements.txt
 
 # Deactivate virtual environment
-deactivate
+# deactivate

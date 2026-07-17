@@ -2,7 +2,7 @@
 
 This document describes how to prepare a Linux or WSL2 environment for `fin-glassbox`, the repository for **An Explainable Multimodal Neural Framework for Financial Risk Management**.
 
-The recommended development environment is Linux with Python 3.12.7, Git LFS, a virtual environment, and CUDA-capable PyTorch when GPU acceleration is available.
+The recommended development environment is Linux with Python 3.12.7, Git LFS, a virtual environment named `venv3.12.7`, and CUDA-capable PyTorch when GPU acceleration is available.
 
 ---
 
@@ -39,10 +39,10 @@ Disk: large local storage recommended for SEC filings, market panels, embeddings
 ```
 
 The project can run inspection and smaller data-processing tasks on CPU, but encoder training, embedding generation, graph modules, and neural module training are substantially faster with CUDA.
-
+Install Python 3.12.7 and set it for the repository:
 ---
 
-## System packages
+pyenv install -s 3.12.7
 
 Check Ubuntu version:
 
@@ -51,9 +51,7 @@ lsb_release -a
 ```
 
 Update packages:
-
-```bash
-sudo apt update
+Create the virtual environment (the project convention is `venv3.12.7`):
 ```
 
 Install base tools:
@@ -63,9 +61,7 @@ sudo apt install -y python3 python3-venv python3-distutils git git-lfs build-ess
 ```
 
 Install build dependencies commonly needed by `pyenv` and scientific Python packages:
-
-```bash
-sudo apt install -y make zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev libbz2-dev llvm xz-utils tk-dev libxml2-dev libxmlsec1-dev liblzma-dev
+Activate it:
 ```
 
 Optional monitoring tools:
@@ -171,22 +167,30 @@ cd ~/fin-glassbox && python --version
 Expected:
 
 ```text
-Python 3.12.7
-```
-
+Upgrade packaging tools and install dependencies.
 ---
+Two convenient options are provided by this repository:
 
 ## Create and activate the virtual environment
 
 Create the virtual environment:
 
-```bash
 cd ~/fin-glassbox && python -m venv venv3.12.7
+```bash
+./setup/setup.sh --mode=cpu            # CPU-only install
+./setup/setup.sh --mode=gpu            # GPU install (make sure drivers/CUDA match)
 ```
 
-Activate it:
+- Or manually upgrade pip and install the requirements file appropriate for your platform:
 
 ```bash
+cd ~/fin-glassbox && pip install -r setup/requirements-cpu.txt
+cd ~/fin-glassbox && pip install -r setup/requirements-gpu.txt
+```
+```bash
+Notes:
+- `setup/requirements-cpu.txt` includes an `--extra-index-url` that points to the PyTorch CPU wheels.
+- `setup/requirements-gpu.txt` contains an example PyTorch CUDA wheel pin (e.g. `+cu118`). Edit that file if you require a different CUDA build (e.g. `+cu121`).
 cd ~/fin-glassbox && source venv3.12.7/bin/activate
 ```
 

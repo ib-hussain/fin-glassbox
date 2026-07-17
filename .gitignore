@@ -29,6 +29,9 @@ assignment2work/paper-metric-reporter/**/*.ini
 data/Huge Stock Market Dataset/
 data/TradingAgents/
 Data2/
+
+src/*
+
 # ── Project-specific: FRED Data ────────────────
 data/FRED_data/raw/
 data/FRED_data/outputs/**.csv

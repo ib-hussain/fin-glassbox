@@ -30,8 +30,9 @@ data/Huge Stock Market Dataset/
 data/TradingAgents/
 Data2/
 
-src/*
+src/
 
+# data/
 # ── Project-specific: FRED Data ────────────────
 data/FRED_data/raw/
 data/FRED_data/outputs/**.csv
@@ -39,12 +40,13 @@ data/FRED_data/**.csv
 
 # ── Project-specific: Market Data ────────────────
 data/yFinance/raw/
+data/yFinance/processed/
 data/yFinance/*.zip
 data/yFinance/raw_metadata/
 data/yFinance/processed/sabeels_genertated_ohlcv_panel.csv
 data/yFinance/processed/ohlcv_original.csv
-data/yFinance/_CON - Copy.json
-data/yFinance/_CON - Copy.parquet
+# data/yFinance/_CON - Copy.json
+# data/yFinance/_CON - Copy.parquet
 data/yFinance/Huge_Market_Dataset/
 data/yFinance/d_us_txt/
 data/yFinance/nasdaq-nyse-nyse-a-otc-daily-stock-1962-2024/
@@ -63,13 +65,15 @@ data/yFinance/processed/returns_long.csv
 data/yFinance/processed/returns_panel_wide.csv
 
 # ── Project-specific: Filings Data ────────────────
-data/sec_edgar/existing_23y/*
+data/sec_edgar/existing_23y/
 data/sec_edgar/processed/filings_text/*
 data/sec_edgar/processed/manifests/*
 data/sec_edgar/processed/fundamentals/*.csv
 data/sec_edgar/processed/cleaned/*.csv
 
 # ── Project-specific: Fundamentals Data ────────────────
+data/sec_edgar/**/
+data/sec_edgar/processed/**/
 data/sec_edgar/logs/
 data/sec_edgar/raw/
 data/sec_edgar/processed/companyfacts/
